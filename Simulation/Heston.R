@@ -9,7 +9,7 @@ sim.setup <- function(kappa=5, theta=0.0225, xi = 0.4, rho = -0.5, gamma = 0.5,
 }
 
 # Heston simulation (no scheduled bursts)
-sim.heston<-function(settings){
+sim.heston<-function(settings,optional_args){
   
   N = settings$Npath
   mat = settings$mat
@@ -20,22 +20,32 @@ sim.heston<-function(settings){
   rho = settings$rho
   gamma = settings$gamma
   
-  dt = mat/steps
+  dt = mat/steps #dt is in years
   time = 1:steps
   
   X = matrix(nrow = N, ncol = steps)
   Y = matrix(nrow = N, ncol = steps)
   vol = matrix(nrow = N, ncol = steps) #matrix if we want to save values along the way
   
-  startvol = rgamma(N, 2*kappa*theta/xi^2, 2*kappa/xi^2)
+  #When used in db and dv these arguments are provided
+  if(missing(optional_args)){
+    startvol = rgamma(N, 2*kappa*theta/xi^2, 2*kappa/xi^2)
+    X[, 1] = 0 #Changed from 1 to 0 /Seb 20.02.18
+    dW = replicate(steps-1,rnorm(N,0,1))
+    epsilon = rep(steps,rnorm(N,0,1))
+  } else {
+    startvol = optional_args$startvol
+    X[,1] = optional_args$X_init
+    dW = optional_args$dW
+    epsilon = optional_args$epsilon
+  }
   
-  X[, 1] = 1
   vol[, 1] = startvol
-  Y[, 1] = X[,1] + gamma*vol[,1]/sqrt(steps)*rnorm(N, 0, 1) #n corresponds to steps and not repetitions N?
+  Y[, 1] = X[,1] + gamma*sqrt(vol[,1])/sqrt(steps)*epsilon[,1] #Changed from vol to sqrt(vol) /Seb 20.02.18
   
   for(i in 2:steps){
-    NS = rnorm(N, 0, 1)
-    NV = rho*NS + sqrt(1-rho^2)*rnorm(N,0,1)
+    NS = dW[,i-1]
+    NV = rho*NS + sqrt(1-rho^2)*rnorm(N,0,1) #From StatØ (Olivier) Theorem I.5 or Graphical example 1.20 
     
     #X[,i] =   X[,i-1] + X[,i-1]*sqrt(vol[,i-1])*sqrt(dt)*NS         #non-ln x's
     X[,i] =   X[,i-1] + sqrt(vol[,i-1])*sqrt(dt)*NS
@@ -47,7 +57,7 @@ sim.heston<-function(settings){
     
     #Observed Y
     omega = gamma*sqrt(vol[,i])/sqrt(steps)     # n corresponds to steps and not repetitions N? #should vol be i-1? No?
-    Y[,i] = X[,i] + omega * rnorm(N, 0, 1)
+    Y[,i] = X[,i] + omega * epsilon[,i]
   }
   return(list(time = time, Y = Y, X = X, vol = vol))
 }
