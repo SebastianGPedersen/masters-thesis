@@ -20,7 +20,8 @@ est.mu <- function(data, hd, kern, t.index=NA, t.points=NA){
   n = length(t)
   mu = numeric(n)          # We can only have bandwidth to end amount of calcs
   
-  dy = cbind(0,t(diff(t(data$Y))))               # diff only does each column seperately / so we transpose to get row wise
+  #dy = cbind(0,t(diff(t(data$Y))))               # diff only does each column seperately / so we transpose to get row wise
+  dy = c(0,diff(data$Y))
   # we put in a column of zeros to fit our sizes - dy[i,1] should NEVER be used!
   
   for(j in 1:n){
@@ -30,8 +31,11 @@ est.mu <- function(data, hd, kern, t.index=NA, t.points=NA){
   return(list(time = t, mu = mu))
 }
 
-est.sigma <- function(data, hv, lag, kern, wkern, t.index=NA, t.points=NA){
+est.sigma <- function(data, hv, lag="auto", kern, wkern, t.index=NA, t.points=NA){   # we could do lag = "auto"
   # data list should include a times column and the Y column (log returns)
+  
+  # Handle lag
+  if(lag=="auto") lag = 2 #temp
   
   # kern handling
   if(is.list(kern)) kern<-kern$kern
@@ -56,7 +60,8 @@ est.sigma <- function(data, hv, lag, kern, wkern, t.index=NA, t.points=NA){
   n = length(t)
   sig = numeric(n)         
   
-  dy = cbind(0,t(diff(t(data$Y))))               # diff only does each column seperately / so we transpose to get row wise
+  #dy = cbind(0,t(diff(t(data$Y))))               # diff only does each column seperately / so we transpose to get row wise
+  dy = c(0,diff(data$Y))
   # we put in a column of zeros to fit our sizes - dy[i,1] should NEVER be used!
   
   gamma<-function(l, t){
