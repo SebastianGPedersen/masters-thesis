@@ -2,6 +2,9 @@ est.mu <- function(data, hd, kern, t.index=NA, t.points=NA){
   # data list should include a times column and the Y column (log returns)
   # t.index should be index - we use data$time[t]
   
+  # kern handling
+  if(is.list(kern)) kern<-kern$kern
+  
   # if missing handling:
   if(missing(t.index) & missing(t.points)){
     t<-1:(length(data$time)) # if nothing specified - every point in data
@@ -30,9 +33,13 @@ est.mu <- function(data, hd, kern, t.index=NA, t.points=NA){
 est.sigma <- function(data, hv, lag, kern, wkern, t.index=NA, t.points=NA){
   # data list should include a times column and the Y column (log returns)
   
-  start = lag+1
+  # kern handling
+  if(is.list(kern)) kern<-kern$kern
+  if(!is.function(kern)) stop("kern should be either function or list containing function")
+  
   # if missing handling:
   if(missing(t.index) & missing(t.points)){
+    start = lag+1
     t<-start:(length(data$time)) # if nothing specified - every point in data
   }
   else if(missing(t.index) & !missing(t.points)){        # SET UP WARNINGS IF POINTS/INDEX ARE NOT SMART

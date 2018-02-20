@@ -1,57 +1,64 @@
-teststat<-function(estimates, ht, ngroups){
-  # estimates list should include time, mu, sig
-  # possible to generalize tstar handling by inputing function (max)
+teststat<-function(time, mu, sig, ht, kern, time2=NA){
+  # list or individual input?
+  # kern MUST contain ksq as it is being used
   
-  n <- length(estimates$time)
-  m = dim(estimates$mu)[1]
-  k <- ngroups
-  tstar<-matrix(0, nrow = m, ncol = k)
+    # if whole list is passed - it will find ksq itself
+  if(is.list(kern)) ksq = kern$ksq
+  if(is.function(kern)) stop("kern argument should be either ksq or list containing ksq")
   
-  if(n/k%%1 > 0){
-    print("Imperfect partitioning of data (n/k)")     # Lav langt bedre warning!!
-  }
-  coef <- sqrt(ht/ksq)
-  
-  
-  # calculates t-stat
-  t <- coef*(estimates$mu/estimates$sig)
-  for(i in 1:m){
-    for(j in 1:k){
-      print((floor(n/k)*(j-1)+1):(floor(n/k)*j))
-      tstar[i,j] <- max(t[i,(floor(n/k)*(j-1)+1):(floor(n/k)*j)])  #(floor(n/k)*(j-1)+1):(floor(n/k)*j)
+  # check that time mu and sig has same length
+  if(missing(time2)){
+    if(length(time) != length(mu)){
+      stop("length(time) != length(mu)")
+    }
+    if(length(mu) != length(sig)){
+      stop("length(mu) != length(sig)")
     }
   }
+  else{
+    # if time2 is given, we will only calculate on intersection (snittet)
+     time <- intersect(time,time2)
+     
+     # goodluck finding indices that corresponds to the new time
+     # mu = ~~~~ 
+     # sig = ~~~~               #overwrites
+  }
+  
+  n <- length(time)
+  coef <- sqrt(ht/ksq)
+  
+  # calculates t-stat
+  t <- coef*(mu/sig)
   
   # returns list of the grouped and the raw
-  return(list(grouped = list(gstart = (floor(n/k)*((1:k)-1)+1), gend = (floor(n/k)*(1:k)), tstar = tstar) ), raw = list(time = estimates$time, test = t) )
+  return(list(time = time, test = t))
 }
 
-teststat<-function(estimates, ht, ngroups){
-  # estimates list should include time, mu, sig
-  # possible to generalize tstar handling by inputing function (max)
-  
-  n <- length(estimates$time)
-  m = dim(estimates$mu)[1]
+
+tstar<-function(data, ngroups, trun=floor){
+  # data should contain time and test
+  apply.partition(data$test, ngroups, data$time, func=max, trun=floor)
+}
+
+apply.partition<-function(x,ngroups, time=NA, func = max, trun=floor){
+  # x should be vector
+  n <- length(x)
   k <- ngroups
-  tstar<-matrix(0, nrow = m, ncol = k)
+  tstar<-numeric(k)
+  
+  # if time is not given, do 1:n
+  if(missing(time)) time<-1:n
   
   if(n/k%%1 > 0){
-    print("Imperfect partitioning of data (n/k)")     # Lav langt bedre warning!!
+    warning("Imperfect partitioning of data (n/k):" +n/k)     # Lav langt bedre warning!!
   }
-  coef <- sqrt(ht/ksq)
-  
-  
-  # calculates t-stat
-  t <- coef*(estimates$mu/estimates$sig)
-  for(i in 1:m){
     for(j in 1:k){
-      print((floor(n/k)*(j-1)+1):(floor(n/k)*j))
-      tstar[i,j] <- max(t[i,(floor(n/k)*(j-1)+1):(floor(n/k)*j)])  #(floor(n/k)*(j-1)+1):(floor(n/k)*j)
-    }
+    #print((trun(n/k)*(j-1)+1):(trun(n/k)*j)) # for help
+    res[j] <- func(x[(trun(n/k)*(j-1)+1):(trun(n/k)*j)])  #(floor(n/k)*(j-1)+1):(floor(n/k)*j)
   }
   
   # returns list of the grouped and the raw
-  return(list(grouped = list(gstart = (floor(n/k)*((1:k)-1)+1), gend = (floor(n/k)*(1:k)), tstar = tstar) ), raw = list(time = estimates$time, test = t) )
+  return(list(gstart = time[(trun(n/k)*((1:k)-1)+1)], gend = time[(trun(n/k)*(1:k))], res = res) )
 }
 
 
