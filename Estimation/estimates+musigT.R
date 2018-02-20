@@ -1,51 +1,78 @@
-estimates <- function(data, hd, hv, lag, kern){
+est.mu <- function(data, hd, kern, t.index=NA, t.points=NA){
   # data list should include a times column and the Y column (log returns)
-  n = length(data$time)
-  m = dim(data$Y)[1]                             # should very well be Npaths
-  start = lag+1
-  mu = matrix(0, nrow = m, ncol = n-start)          # We can only have bandwidth to end amount of calcs
-  sig = matrix(0, nrow = m, ncol = n-start)         
+  # t.index should be index - we use data$time[t]
+  
+  # if missing handling:
+  if(missing(t.index) & missing(t.points)){
+    t<-1:(length(data$time)) # if nothing specified - every point in data
+  }
+  else if(missing(t.index) & !missing(t.points)){
+    t<-t.points
+  }
+  else{
+    t<-data$time[t.index]
+  }
+  #t should now be data$time points
+
+  n = length(t)
+  mu = numeric(n)          # We can only have bandwidth to end amount of calcs
   
   dy = cbind(0,t(diff(t(data$Y))))               # diff only does each column seperately / so we transpose to get row wise
   # we put in a column of zeros to fit our sizes - dy[i,1] should NEVER be used!
   
-  gamma<-function(l, i, t){
+  for(j in 1:n){
+    mu[j] = (1/hd)*sum(kern((data$time[1:(n-1)] - t[j])/hd)*dy[2:n])   # maybe limit such that it doesnt include                                                                                    
+  }                                                                                      # future values that become zero anyway (1:t)
+  # return list
+  return(list(time = t, mu = mu))
+}
+
+est.sigma <- function(data, hv, lag, kern, t.index=NA, t.points=NA){
+  # data list should include a times column and the Y column (log returns)
+  
+  start = lag+1
+  # if missing handling:
+  if(missing(t.index) & missing(t.points)){
+    t<-start:(length(data$time)) # if nothing specified - every point in data
+  }
+  else if(missing(t.index) & !missing(t.points)){        # SET UP WARNINGS IF POINTS/INDEX ARE NOT SMART
+    t<-t.points
+  }
+  else{
+    t<-data$time[t.index]
+  }
+  # t should now be data$time points
+  
+  n = length(t)
+  sig = numeric(n)         
+  
+  dy = cbind(0,t(diff(t(data$Y))))               # diff only does each column seperately / so we transpose to get row wise
+  # we put in a column of zeros to fit our sizes - dy[i,1] should NEVER be used!
+  
+  gamma<-function(l, t){
     l <- abs(l)
-    out<- sum(   kern( (data$time[(l+1):(n-1)] - data$time[t])/hv )*dy[i,(1+l+1):n]*       #indices are literally #1 reason for bugs
-                   kern( (data$time[1:(n-l-1)] - data$time[t] ) * dy[i,2:(n-l)]   ) )  
-    # î--- fix this - 100p fejl somewhere
+    out<- sum(   kern( (data$time[(l+1):(n-1)] - t)/hv )*dy[(1+l+1):n]*       #indices are literally #1 reason for bugs
+                   kern( (data$time[1:(n-l-1)] - t ) * dy[2:(n-l)]   ) )  
     return(out)
   }
   
   L = -lag:lag
-  #mu estimation
-  
-  #pre calc kerns - very repetitive form - easily save comp time if we use indices in a smart way
-  prekern = matrix(0, nrow = n, ncol = n-1)
-  for(t in start:n){
-    prekern[t,] <- kern((data$time[1:(n-1)] - data$time[t])/hd)
-  }
-  
-  # repeat with the gamma's kernels?
-  
-  for(i in 1:m)
-  {
-    #Can we remove the t loop in some way?
-    for(t in start:n){
-      #mu[i,t-start] = (1/hd)*sum(kern((data$time[1:(n-1)] - data$time[t])/hd)*dy[i,2:n])   # maybe limit such that it doesnt include
-      mu[i,t-start] = (1/hd)*sum(prekern[t,]*dy[i,2:n])                                                                       # future values that become zero anyway (1:t)
-    }
-    
-    # sig
-    for(t in start:n){
-      for(l in L){                   # Optimize this!!!!
-        sig[i,t-start] = sig[i, t-start] + parzenkern(l/n)*gamma(l,i,t)
-      }
+
+  for(j in 1:n){
+    for(l in L){                   # Optimize this!!!!
+      sig[j] = sig[j] + parzenkern(l/n)*gamma(l,t[j])
     }
   }
   # return list
-  return(list(time = data$time[start:n], mu = mu, sig = sig))
+  return(list(time = t, sig = sig))
 }
+
+
+
+
+
+
+
 
 teststat<-function(estimates, ht, ksq, ngroups){
   # estimates list should include time, mu, sig
@@ -87,3 +114,5 @@ teststat<-function(estimates, ht, ksq, ngroups){
   # returns list of the grouped and the raw
   return(list(grouped = list(gstart = (floor(n/k)*((1:k)-1)+1), gend = (floor(n/k)*(1:k)), tstar = tstar) ), raw = list(time = estimates$time, test = t) )
 }
+
+
