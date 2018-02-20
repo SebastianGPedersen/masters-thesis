@@ -1,5 +1,18 @@
 
-leftexpkern<-function(x){
+###############################################
+#                                             #
+#  A kernel should be specified with as list  #
+#  containing kernel function and ksq value   #
+#  the ksq value can be NA if not used/known  #
+#                                             #
+###############################################
+
+# how do we prevent this function from being sourced on its own?
+# We could source in source functions, but what happens if we source something that sources?
+
+kern.leftexp<-list(kern = leftexpkernfunction, ksq = 0.5)
+
+leftexpkernfunction<-function(x){
   # Input has to be nicely 'sorted' such that lowest nr comes first
   # maybe make kernel a list of function and ksq value?
   neg<-exp(-abs(x[x<=0]))                                                      #only the negatives
@@ -7,7 +20,9 @@ leftexpkern<-function(x){
   return(c(neg,pos))
 }
 
-parzenkern<-function(x){
+kern.parzen<-list(kern = parzenkernfunction, ksq = NA)
+
+parzenkernfunction<-function(x){
   # Input has to be nicely 'sorted' such that lowest nr comes first
   xn <- abs(x[x<0])
   # handles negatives
