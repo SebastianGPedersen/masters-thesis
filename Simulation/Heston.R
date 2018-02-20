@@ -21,11 +21,11 @@ sim.heston<-function(settings,optional_args){
   gamma = settings$gamma
   
   dt = mat/steps #dt is in years
-  time = 1:steps
+  time = 0:steps
   
-  X = matrix(nrow = N, ncol = steps)
-  Y = matrix(nrow = N, ncol = steps)
-  vol = matrix(nrow = N, ncol = steps) #matrix if we want to save values along the way
+  X = matrix(nrow = N, ncol = steps+1)
+  Y = matrix(nrow = N, ncol = steps+1)
+  vol = matrix(nrow = N, ncol = steps+1) #matrix if we want to save values along the way
   
   #When used in db and dv these arguments are provided
   if(missing(optional_args)){
@@ -43,7 +43,7 @@ sim.heston<-function(settings,optional_args){
   vol[, 1] = startvol
   Y[, 1] = X[,1] + gamma*sqrt(vol[,1])/sqrt(steps)*epsilon[,1] #Changed from vol to sqrt(vol) /Seb 20.02.18
   
-  for(i in 2:steps){
+  for(i in 2:(steps+1)){
     NS = dW[,i-1]
     NV = rho*NS + sqrt(1-rho^2)*rnorm(N,0,1) #From StatØ (Olivier) Theorem I.5 or Graphical example 1.20 
     
