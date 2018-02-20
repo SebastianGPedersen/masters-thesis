@@ -37,6 +37,9 @@ est.sigma <- function(data, hv, lag, kern, wkern, t.index=NA, t.points=NA){
   if(is.list(kern)) kern<-kern$kern
   if(!is.function(kern)) stop("kern should be either function or list containing function")
   
+  if(is.list(wkern)) wkern<-wkern$kern
+  if(!is.function(wkern)) stop("wkern should be either function or list containing function")
+  
   # if missing handling:
   if(missing(t.index) & missing(t.points)){
     start = lag+1
@@ -67,7 +70,7 @@ est.sigma <- function(data, hv, lag, kern, wkern, t.index=NA, t.points=NA){
 
   for(j in 1:n){
     for(l in L){                   # Optimize this!!!!
-      sig[j] = sig[j] + parzenkern(l/n)*gamma(l,t[j])
+      sig[j] = sig[j] + wkern(l/n)*gamma(l,t[j])
     }
   }
   # return list

@@ -10,7 +10,6 @@
 # how do we prevent this function from being sourced on its own?
 # We could source in source functions, but what happens if we source something that sources?
 
-kern.leftexp<-list(kern = leftexpkernfunction, ksq = 0.5)
 
 leftexpkernfunction<-function(x){
   # Input has to be nicely 'sorted' such that lowest nr comes first
@@ -20,7 +19,7 @@ leftexpkernfunction<-function(x){
   return(c(neg,pos))
 }
 
-kern.parzen<-list(kern = parzenkernfunction, ksq = NA)
+kern.leftexp<-list(kern = leftexpkernfunction, ksq = 0.5)
 
 parzenkernfunction<-function(x){
   # Input has to be nicely 'sorted' such that lowest nr comes first
@@ -38,3 +37,5 @@ parzenkernfunction<-function(x){
   
   return(c(part3n,part2n,part1n,part1p,part2p,part3p))
 }
+
+kern.parzen<-list(kern = parzenkernfunction, ksq = NA)

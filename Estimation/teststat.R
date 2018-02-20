@@ -1,28 +1,37 @@
-teststat<-function(time, mu, sig, ht, kern, time2=NA){
-  # list or individual input?
+teststat<-function(data.mu, data.sig, ht, kern){
+  # data.mu should include time / mu
+  # data.sig should include time / sig
   # kern MUST contain ksq as it is being used
   
     # if whole list is passed - it will find ksq itself
   if(is.list(kern)) ksq = kern$ksq
   if(is.function(kern)) stop("kern argument should be either ksq or list containing ksq")
   
-  # check that time mu and sig has same length
-  if(missing(time2)){
-    if(length(time) != length(mu)){
-      stop("length(time) != length(mu)")
-    }
-    if(length(mu) != length(sig)){
-      stop("length(mu) != length(sig)")
-    }
+  time <- data.mu$time
+  mu<-data.mu$mu
+  time2 <- data.sig$time
+  sig <- data.sig$sig
+  
+  # check if lengths makes sense
+  if(length(time) != length(mu)){
+    stop("length(time) != length(mu)")
   }
-  else{
-    # if time2 is given, we will only calculate on intersection (snittet)
-     time <- intersect(time,time2)
-     
-     # goodluck finding indices that corresponds to the new time
-     # mu = ~~~~ 
-     # sig = ~~~~               #overwrites
+  if(length(time2) != length(sig)){
+    stop("length(mu) != length(sig)")
   }
+  
+  # check if time and time2 are NOT identical
+  if(!setequal(time, time2)){
+    print("time.mu and time.sig differs - attempting to match")
+    
+    int<-intersect(time,time2)
+    #adjust time, mu and sig
+    mu<-mu[match(int, time)]
+    sig<-sig[match(int, time2)]
+    time<-int
+  }
+  if(length(mu) == length(sig)) print("lengths succesfully matched")
+  else stop("Unable to match - clean up your input")
   
   n <- length(time)
   coef <- sqrt(ht/ksq)
@@ -37,20 +46,21 @@ teststat<-function(time, mu, sig, ht, kern, time2=NA){
 
 tstar<-function(data, ngroups, trun=floor){
   # data should contain time and test
-  apply.partition(data$test, ngroups, data$time, func=max, trun=floor)
+  out <- apply.partition(data$test, ngroups, data$time, max, trun)
+  return(list(start = out$start, end = out$end, tstar = out$res))
 }
 
-apply.partition<-function(x,ngroups, time=NA, func = max, trun=floor){
+apply.partition<-function(x, ngroups, time=NA, func = max, trun=floor){
   # x should be vector
   n <- length(x)
   k <- ngroups
-  tstar<-numeric(k)
+  res<-numeric(k)
   
   # if time is not given, do 1:n
   if(missing(time)) time<-1:n
   
-  if(n/k%%1 > 0){
-    warning("Imperfect partitioning of data (n/k):" +n/k)     # Lav langt bedre warning!!
+  if((n/k)%%1 > 0){
+    warning("Imperfect partitioning of data (n/k): ", n/k)     # Lav langt bedre warning!!
   }
     for(j in 1:k){
     #print((trun(n/k)*(j-1)+1):(trun(n/k)*j)) # for help
@@ -58,11 +68,8 @@ apply.partition<-function(x,ngroups, time=NA, func = max, trun=floor){
   }
   
   # returns list of the grouped and the raw
-  return(list(gstart = time[(trun(n/k)*((1:k)-1)+1)], gend = time[(trun(n/k)*(1:k))], res = res) )
+  return(list(start = time[(trun(n/k)*((1:k)-1)+1)], end = time[(trun(n/k)*(1:k))], res = res) )
 }
-
-
-
 
 
 
