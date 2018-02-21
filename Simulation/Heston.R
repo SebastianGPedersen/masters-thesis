@@ -4,12 +4,12 @@
 
 # List of needed input that can be sent to simulation function
 sim.setup <- function(kappa=5, theta=0.0225, xi = 0.4, rho = -0.5, gamma = 0.5,
-                   mat = 1, Nsteps = 1000, Npath = 10000){
+                   mat = 6.5/(24*52), Nsteps = 1000, Npath = 10000){
   list(kappa = kappa, theta = theta, xi = xi, rho = rho, gamma = gamma, mat = mat, Nsteps = Nsteps, Npath = Npath)
 }
 
 # Heston simulation (no scheduled bursts)
-sim.heston<-function(settings,optional_args){
+sim.heston<-function(settings){
   
   N = settings$Npath
   mat = settings$mat
@@ -21,30 +21,18 @@ sim.heston<-function(settings,optional_args){
   gamma = settings$gamma
   
   dt = mat/steps #dt is in years
-  time = 0:steps
+  time = 0:steps*dt
   
   X = matrix(nrow = N, ncol = steps+1)
   Y = matrix(nrow = N, ncol = steps+1)
   vol = matrix(nrow = N, ncol = steps+1) #matrix if we want to save values along the way
   
-  #When used in db and dv these arguments are provided
-  if(missing(optional_args)){
-    startvol = rgamma(N, 2*kappa*theta/xi^2, 2*kappa/xi^2)
-    X[, 1] = 0 #Changed from 1 to 0 /Seb 20.02.18
-    dW = replicate(steps-1,rnorm(N,0,1))
-    epsilon = rep(steps,rnorm(N,0,1))
-  } else {
-    startvol = optional_args$startvol
-    X[,1] = optional_args$X_init
-    dW = optional_args$dW
-    epsilon = optional_args$epsilon
-  }
-  
-  vol[, 1] = startvol
-  Y[, 1] = X[,1] + gamma*sqrt(vol[,1])/sqrt(steps)*epsilon[,1] #Changed from vol to sqrt(vol) /Seb 20.02.18
+  X[, 1] = 0
+  vol[, 1] = rgamma(N, 2*kappa*theta/xi^2, 2*kappa/xi^2)
+  Y[, 1] = X[,1] + gamma*sqrt(vol[,1])/sqrt(steps)*rnorm(N,0,1) #Changed from vol to sqrt(vol) /Seb 20.02.18
   
   for(i in 2:(steps+1)){
-    NS = dW[,i-1]
+    NS = rnorm(N,0,1)
     NV = rho*NS + sqrt(1-rho^2)*rnorm(N,0,1) #From StatØ (Olivier) Theorem I.5 or Graphical example 1.20 
     
     #X[,i] =   X[,i-1] + X[,i-1]*sqrt(vol[,i-1])*sqrt(dt)*NS         #non-ln x's
@@ -57,7 +45,7 @@ sim.heston<-function(settings,optional_args){
     
     #Observed Y
     omega = gamma*sqrt(vol[,i])/sqrt(steps)     # n corresponds to steps and not repetitions N? #should vol be i-1? No?
-    Y[,i] = X[,i] + omega * epsilon[,i]
+    Y[,i] = X[,i] + omega * rnorm(N,0,1)
   }
   return(list(time = time, Y = Y, X = X, vol = vol))
 }
