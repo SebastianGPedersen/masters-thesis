@@ -44,12 +44,14 @@ teststat<-function(data.mu, data.sig, ht, kern){
 }
 
 
+# change this
 tstar<-function(data, ngroups, trun=floor){
   # data should contain time and test
   out <- apply.partition(data$test, ngroups, data$time, max, trun)
   return(list(start = out$start, end = out$end, tstar = out$res))
 }
 
+# not really that useful
 apply.partition<-function(x, ngroups, time=NA, func = max, trun=floor){
   # x should be vector
   n <- length(x)
@@ -70,27 +72,3 @@ apply.partition<-function(x, ngroups, time=NA, func = max, trun=floor){
   # returns list of the grouped and the raw
   return(list(start = time[(trun(n/k)*((1:k)-1)+1)], end = time[(trun(n/k)*(1:k))], res = res) )
 }
-
-
-
-
-
-
-
-
-
-
-
-# FUTURE
-
-# Calculate Z
-
-#Zcorr = numeric(m)
-#for(i in 1:m){
-#  fit <- ar(t[i,], order.max = 1) # order.max = 1 corresponds to AR(1)
-#  Zcorr[i] <- fit$ar
-#}
-
-# Simulate Z from fitted
-
-# Return Z*
