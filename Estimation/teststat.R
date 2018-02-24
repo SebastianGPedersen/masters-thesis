@@ -47,28 +47,11 @@ teststat<-function(data.mu, data.sig, ht, kern){
 # change this
 tstar<-function(data, ngroups, trun=floor){
   # data should contain time and test
-  out <- apply.partition(data$test, ngroups, data$time, max, trun)
+  # Need vector/list of start and end for each period (or n. of observations in)
+  start = data$time[1]
+  end = data$time[length(data$time)]
+  tstar = max(data$test)
+  
   return(list(start = out$start, end = out$end, tstar = out$res))
 }
 
-# not really that useful
-apply.partition<-function(x, ngroups, time=NA, func = max, trun=floor){
-  # x should be vector
-  n <- length(x)
-  k <- ngroups
-  res<-numeric(k)
-  
-  # if time is not given, do 1:n
-  if(missing(time)) time<-1:n
-  
-  if((n/k)%%1 > 0){
-    warning("Imperfect partitioning of data (n/k): ", n/k)     # Lav langt bedre warning!!
-  }
-    for(j in 1:k){
-    #print((trun(n/k)*(j-1)+1):(trun(n/k)*j)) # for help
-    res[j] <- func(x[(trun(n/k)*(j-1)+1):(trun(n/k)*j)])  #(floor(n/k)*(j-1)+1):(floor(n/k)*j)
-  }
-  
-  # returns list of the grouped and the raw
-  return(list(start = time[(trun(n/k)*((1:k)-1)+1)], end = time[(trun(n/k)*(1:k))], res = res) )
-}

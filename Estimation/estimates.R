@@ -5,15 +5,26 @@ est.mu <- function(data, hd, kern, t.index=NA, t.points=NA){
   # kern handling
   if(is.list(kern)) kern<-kern$kern
   
-  # if missing handling:
+  # mode-handling
+  mode = NA
   if(missing(t.index) & missing(t.points)){
+    mode = 1
     t<-1:(length(data$time)) # if nothing specified - every point in data
   }
   else if(missing(t.index) & !missing(t.points)){
+    mode = 2
     t<-t.points
+    ind = numeric(length(t))
+    #ind[1] = sum(data$time < t[1])
+    #ind[i] = data$time[ind[i-1]+sum(data$time[ind[i-1]:n] < t[i] )] #for 2 to n this may be faster than which.max
+    for(i in 2:length(t)){
+      ind[i] = which.max(data$time[data$time<t[i]])
+    }
   }
   else{
+    mode = 3
     t<-data$time[t.index]
+    ind = t.index
   }
   #t should now be data$time points
 
@@ -24,9 +35,22 @@ est.mu <- function(data, hd, kern, t.index=NA, t.points=NA){
   dy = c(0,diff(data$Y))
   # we put in a column of zeros to fit our sizes - dy[i,1] should NEVER be used!
   
-  for(j in 1:n){
-    mu[j] = (1/hd)*sum(kern((data$time[1:(n-1)] - t[j])/hd)*dy[2:n])   # maybe limit such that it doesnt include                                                                                    
-  }                                                                                      # future values that become zero anyway (1:t)
+  
+  if(mode == 1){
+    for(j in 1:n){
+      mu[j] = (1/hd)*sum(kern((data$time[1:(j-1)] - t[j])/hd)*dy[2:j])   
+    }
+  }
+  else{
+    for(j in 1:n){
+      mu[j] = (1/hd)*sum(kern((data$time[1:ind[j]] - t[j])/hd)*dy[2:n])   
+    }
+  }
+  
+  #for(j in 1:n){
+  #  mu[j] = (1/hd)*sum(kern((data$time[1:(n-1)] - t[j])/hd)*dy[2:n])   
+  #}
+  
   # return list
   return(list(time = t, mu = mu))
 }
@@ -74,7 +98,7 @@ est.sigma <- function(data, hv, lag="auto", kern, wkern, t.index=NA, t.points=NA
   L = -lag:lag
 
   for(j in 1:n){
-    for(l in L){                   # Optimize this!!!!
+    for(l in L){                   # Optimize this?
       sig[j] = sig[j] + wkern(l/n)*gamma(l,t[j])
     }
   }
