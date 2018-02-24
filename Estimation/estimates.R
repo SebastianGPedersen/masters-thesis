@@ -59,7 +59,7 @@ est.sigma <- function(data, hv, lag="auto", kern, wkern, t.index=NA, t.points=NA
   # data list should include a times column and the Y column (log returns)
   
   # Handle lag
-  if(lag=="auto") lag = 2 #temp
+  if(lag=="auto") lag = 10 #temp
   
   # kern handling
   if(is.list(kern)) kern<-kern$kern

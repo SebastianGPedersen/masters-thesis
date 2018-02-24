@@ -50,8 +50,8 @@ tstar<-function(data, ngroups, trun=floor){
   # Need vector/list of start and end for each period (or n. of observations in)
   start = data$time[1]
   end = data$time[length(data$time)]
-  tstar = max(data$test)
+  res = max(data$test)
   
-  return(list(start = out$start, end = out$end, tstar = out$res))
+  return(list(start = start, end = end, tstar = res))
 }
 
