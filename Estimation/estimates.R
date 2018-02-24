@@ -1,3 +1,7 @@
+
+# BANDWIDTH SHOULD BE TRANSLATED FROM SECONDS TO YEARS ( BW / Seconds per year)
+# Consider multiplying time such that our unit is in seconds and not years...!
+
 est.mu <- function(data, hd, kern, t.index=NA, t.points=NA){
   # data list should include a times column and the Y column (log returns)
   # t.index should be index - we use data$time[t]
