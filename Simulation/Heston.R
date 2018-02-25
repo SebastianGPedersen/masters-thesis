@@ -21,7 +21,8 @@ sim.heston<-function(settings){
   gamma = settings$gamma
   
   dt = mat/steps #dt is in years
-  time = 0:steps*dt
+  time = 0:steps*dt # maybe time should be relative (0-1)
+  #time = 0:(steps)/(steps)
   
   X = matrix(nrow = N, ncol = steps+1)
   Y = matrix(nrow = N, ncol = steps+1)
