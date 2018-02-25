@@ -26,6 +26,7 @@ sim.heston<-function(settings){
   X = matrix(nrow = N, ncol = steps+1)
   Y = matrix(nrow = N, ncol = steps+1)
   vol = matrix(nrow = N, ncol = steps+1) #matrix if we want to save values along the way
+  call = numeric(N) # testing purpose
   
   X[, 1] = 0
   vol[, 1] = rgamma(N, 2*kappa*theta/xi^2, 2*kappa/xi^2)
@@ -33,10 +34,11 @@ sim.heston<-function(settings){
   
   for(i in 2:(steps+1)){
     NS = rnorm(N,0,1)
-    NV = rho*NS + sqrt(1-rho^2)*rnorm(N,0,1) #From StatÃ˜ (Olivier) Theorem I.5 or Graphical example 1.20 
+    NV = rho*NS + sqrt(1-rho^2)*rnorm(N,0,1) #From StatÃ (Olivier) Theorem I.5 or Graphical example 1.20 
     
-    #X[,i] =   X[,i-1] + X[,i-1]*sqrt(vol[,i-1])*sqrt(dt)*NS         #non-ln x's
-    X[,i] =   X[,i-1] + sqrt(vol[,i-1])*sqrt(dt)*NS
+    #X[,i] =   X[,i-1] -1/2*vol[,i-1]*dt+ sqrt(vol[,i-1])*sqrt(dt)*NS        # real heston
+    #X[,i] =   X[,i-1] + X[,i-1]*sqrt(vol[,i-1])*sqrt(dt)*NS                 # non-log
+    X[,i] =   X[,i-1] + sqrt(vol[,i-1])*sqrt(dt)*NS                          # logs (driftless)
     
     x = vol[,i-1] + kappa*(theta - vol[,i-1])*dt
     y = sqrt(  log(  (xi^2*vol[,i-1]*dt)/(x^2) + 1  )  )
@@ -46,9 +48,16 @@ sim.heston<-function(settings){
     #Observed Y
     omega = gamma*sqrt(vol[,i])/sqrt(steps)     # n corresponds to steps and not repetitions N? #should vol be i-1? No?
     Y[,i] = X[,i] + omega * rnorm(N,0,1)
+    
+    #pay<-100*exp(X[,steps+1])-100
+    #pay = X[, steps+1]-100
+    #price = sum(pay[pay>0])/N
+    
   }
   return(list(time = time, Y = Y, X = X, vol = vol))
 }
+
+setting<-sim.setup()
 
 # Helper functions to streamline simulation object to estimation object setup
 # (list of matrices from sim -> vector of lists of vectors)
