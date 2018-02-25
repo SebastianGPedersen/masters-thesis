@@ -45,7 +45,7 @@ teststat<-function(data.mu, data.sig, ht, kern){
 
 
 # change this
-tstar<-function(data, ngroups, trun=floor){
+tstar<-function(data){
   # data should contain time and test
   # Need vector/list of start and end for each period (or n. of observations in)
   start = data$time[1]

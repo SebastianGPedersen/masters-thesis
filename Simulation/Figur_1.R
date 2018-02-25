@@ -13,6 +13,8 @@ Heston <- sim.heston(settings)
 Heston_vb <- sim.addvb(Heston,burst_time = 0.5, interval_length = 0.05, c_2 = 0.15, beta = 0.4)
 Heston_vbdb <- sim.adddb(Heston_vb, burst_time=0.5,interval_length=0.05,c_1=3,alpha=0.75)
 
+
+
 #Get a single path
 path = 2
 
