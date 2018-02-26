@@ -42,23 +42,16 @@ study<-function(setting, t.index, h, q, beta, alpha){
     # Calculate T*
     Tstar[i]<-tstar(Tstat)$tstar
     
+    # fit rho
+    
     # plug in rest (q-quantile)
+    est.z_quantile(length(Tstat$time), rho, 0.95)
   }
   
   # return etwas
   return(list())
 }
 
-setting<-sim.setup(Nsteps = 23400, Npath = 1) # use this such that we can add things to this "constructor" without changing code
-
-# find T points
-tind<-seq(from = 60, to = 23400, by = 60)
-
-# params
-
-hset = c(120,300,600)/(3600*24*7*52)
-alphaset = c(0.55, 0.65, 0.75)
-betaset = c(0, 0.1, 0.2 ,0.3 ,0.4)
 
 res = numeric(length(betaset)*length(alphaset)*length(hset)) # right?
 for(beta in betaset){
@@ -70,17 +63,23 @@ for(beta in betaset){
   }
 }
 
+# params
+hset = c(120,300,600)/(3600*24*7*52)
+alphaset = c(0.55, 0.65, 0.75)
+betaset = c(0, 0.1, 0.2 ,0.3 ,0.4)
+setting<-sim.setup(Nsteps = 23400, Npath = 1) # use this such that we can add things to this "constructor" without changing code
+
+# find T points
+tind<-seq(from = 60, to = 23400, by = 60)
+
 sims<-sim.heston(sim.setup(Nsteps = 23400, Npath = 2))
 sim<-sim.path(1, sims)
 
-source("estimation/estimates.R")
-mu<-est.mu(sim, 120/(3600*24*7*52), kern.leftexp, t.index = tind)
-sigm<-est.sigma(sim, 5*120/(3600*24*7*52), kern.leftexp, kern.parzen, t.index = tind, lag = "auto")
+mu<-est.mu(sim, hset[1], kern.leftexp, t.index = tind)
+sigm<-est.sigma(sim, 5*hset[1], kern.leftexp, kern.parzen, t.index = tind, lag = "auto")
 
-plot(sigm$sig)
-plot(test-sigm$sig)
+test<-teststat(mu, sigm, hset[1], kern.leftexp)
+star <- tstar(test)
 
-plot(mu$mu, type = "l")
-plot(sqrt(120/(3600*24*7*52))*mu$mu)
-qqnorm(sqrt(120/(3600*24*7*52))*mu$mu)
+plot(test$test)
 

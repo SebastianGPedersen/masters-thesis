@@ -72,7 +72,7 @@ est.sigma <- function(data, hv, kern, wkern, t.index=NA, lag="auto"){   # we cou
   # data list should include a times column and the Y column (log returns)
   
   # Handle lag
-  if(lag=="auto") lag = 10 #temp
+  if(lag=="auto") lag = 15 #temp
   
   # kern handling
   if(is.list(kern)) kern<-kern$kern
@@ -95,7 +95,7 @@ est.sigma <- function(data, hv, kern, wkern, t.index=NA, lag="auto"){   # we cou
   
   n = length(data$time)
   tt = length(t)
-  sig = numeric(tt)         
+  sig = numeric(tt) 
   
   #dy = cbind(0,t(diff(t(data$Y))))               # diff only does each column seperately / so we transpose to get row wise
   dy = c(0,diff(data$Y))
@@ -105,21 +105,40 @@ est.sigma <- function(data, hv, kern, wkern, t.index=NA, lag="auto"){   # we cou
     # end is the highest needed index
     l <- abs(l)
     out<- sum(   kern( (data$time[(l+1):(end-1)] - t)/hv )* dy[(1+l+1):end]*       #indices are literally #1 reason for bugs
-                   kern( (data$time[1:(end-l-1)] - t)/hv )* dy[2:(end-l)]   )  
+                 kern( (data$time[1:(end-l-1)] - t)/hv )* dy[2:(end-l)]   )  
+    
+    # l <- abs(l)
+    # out<- sum(    dy[(1+l+1):end]*       #indices are literally #1 reason for bugs
+    #              dy[2:(end-l)]   )  
     return(out)
   }
   
-  L = lag
-
+  L = -lag:lag
+  deep = numeric(length(L))
+  parz = numeric(length(L))
   for(j in 1:tt){
-    end = n #ind[j]
-    sig[j] = sum((kern(   (data$time[1:(end-1)] - t[j])/hv   )*dy[2:end])^2)  # l = 0
-    for(l in 1:lag){                   # Optimize this?
-      sig[j] = sig[j] + 2*(wkern(l/n)*gamma(l,t[j], end))
+    if(j == 140){
+      flag = 1
+      q=0
     }
+    else {flag = 0}
+   end = ind[j]
+   
+   sig[j] = sum(  (kern(   (data$time[1:(end-1)] - t[j])/hv   )*dy[2:end])^2  )  # l = 0
+   #sig[j] = sum (  dy[2:end]^2  )
+   for(l in -lag:lag){
+     #sig[j] = sig[j] + 2*(wkern(l/n)*gamma(l,t[j], end))
+     sig[j] = sig[j] + 2*(wkern(l/(lag+1))*gamma(l,t[j], end))
+     if(flag == 1){
+       q = q+1
+       deep[q] = gamma(l, t[j], end)
+       parz[q] = wkern(l/(lag+1))
+     }
+   }
   }
+  
   # return list
-  return(list(time = t, sig = sig))
+  return(list(time = t, sig = (1/hv)*sig, deep = deep, parz = parz))
 }
 
 

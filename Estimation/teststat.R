@@ -34,10 +34,11 @@ teststat<-function(data.mu, data.sig, ht, kern){
   else stop("Unable to match - clean up your input")
   
   n <- length(time)
-  coef <- sqrt(ht/ksq)
+  #coef <- sqrt(ht/ksq)
+  coef <- sqrt(ht)
   
   # calculates t-stat
-  t <- coef*(mu/sig)
+  t <- coef*(mu/sqrt(sig))
   
   # returns list of the grouped and the raw
   return(list(time = time, test = t))
