@@ -55,3 +55,60 @@ tstar<-function(data){
   return(list(start = start, end = end, tstar = res))
 }
 
+est.z_quantile<-function(mym, myrho, myalpha){
+  #Implicitly uses: interpolList
+  #requires function interpolListInParent()
+  
+  #mym: vector of 'm' values to evalute at
+  #myrho: vector of 'rho' values to evaluate at
+  #myalpha: chosen confidence. Needs to match possible choices in interpolList
+  #interpolList: list of alphs, and list of fitted polynomials (lm-objects)
+  
+  #output: list of 
+  #q: quantile of (Zm-am)*bm
+  #qZm : raw quantile of Zm
+  
+  #for each pair of (mym,myrho)
+  
+  
+  interpolListInParent()
+  
+  alphaIndex<-match(myalpha,interpolList$alpha)
+  
+  if(is.na(alphaIndex)){
+    stop(paste0("Choose alpha in: ",interpolList$alpha))
+  }
+  
+  if(length(myrho)<=1 & length(mym)<=1){
+    print("Inefficient to call witth 'myrho' & 'mym' with length 1")
+    mym<-rep(mym,2)
+    OnedimFlag<-T
+  }
+  fit<-interpolList$fittedPoly[[alphaIndex]]
+  newdata<-data.frame(logm = log(mym), logrho = log(1-myrho))
+  q<-predict(fit,newdata)
+  #q
+  
+  am <- sqrt(2*log(mym));   
+  bm <- am-0.5*log(pi*log(mym))/am;
+  qZm <- q/am+bm;  
+  #qZm
+  
+  if(OnedimFlag){
+    q <- q[1]
+    qZm <- qZm[1]
+  }
+  
+  return(list(q=q, qZm=qZm))
+}
+
+
+est.interpolListInParent<-function(){
+  #creates interpolList in the global environment, if it does not exsists.
+  if(!exists("interPolList")){
+    cd<-getwd()
+    setwd(Sys.getenv("masters-thesis-data"))
+    assign("interpolList", readRDS("interpolList.rds"), envir = .GlobalEnv)
+    setwd(cd)
+  }
+}

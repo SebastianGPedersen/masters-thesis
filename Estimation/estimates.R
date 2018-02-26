@@ -123,5 +123,3 @@ est.sigma <- function(data, hv, kern, wkern, t.index=NA, lag="auto"){   # we cou
 }
 
 
-
-
