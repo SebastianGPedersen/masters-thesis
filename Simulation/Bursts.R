@@ -12,12 +12,7 @@ source(paste(Sys.getenv("masters-thesis"),"Simulation/Heston.R",sep="/"))
 
 
 
-
-
-
-
-
-sim.adddb <- function(Heston_res, burst_time = 0.5, interval_length = 0.5, c_1 = 3, alpha = 0.75) {
+sim.adddb <- function(Heston_res, burst_time = 0.5, interval_length = 0.05, c_1 = 3, alpha = 0.75) {
   
   #Intervals
   burst_begin_perc = burst_time-interval_length/2
@@ -40,7 +35,7 @@ sim.adddb <- function(Heston_res, burst_time = 0.5, interval_length = 0.5, c_1 =
   
   #initializations
   steps = length(Heston_res$time)-1
-  dt = Heston_res$time[2]
+  dt = Heston_res$time[2] - Heston_res$time[1]
   
   mu_add = vector(length=steps+1)
   mu_add[1] = 0
@@ -62,13 +57,7 @@ sim.adddb <- function(Heston_res, burst_time = 0.5, interval_length = 0.5, c_1 =
 
 
 
-
-
-
-
-
-
-sim.addvb <- function(Heston_res, burst_time = 0.5, interval_length = 0.5, c_2 = 0.15, beta = 0.4) {
+sim.addvb <- function(Heston_res, burst_time = 0.5, interval_length = 0.05, c_2 = 0.15, beta = 0.4) {
   
   #Intervals
   burst_begin_perc = burst_time-interval_length/2
@@ -81,7 +70,7 @@ sim.addvb <- function(Heston_res, burst_time = 0.5, interval_length = 0.5, c_2 =
   #Define sigma-function
   sigma <- function(t) {
     if ((t>=burst_begin) & (t <=burst_end) & (t !=tau)){
-        sigma_t = c_2*sign(t-tau)/abs(tau-t)^beta
+        sigma_t = c_2*0.0225/abs(tau-t)^beta
       } else {
         sigma_t = 0
     }
@@ -90,18 +79,18 @@ sim.addvb <- function(Heston_res, burst_time = 0.5, interval_length = 0.5, c_2 =
   
   #initializations
   steps = length(Heston_res$time)-1
-  dt = Heston_res$time[2]
+  dt = Heston_res$time[2]-Heston_res$time[1]
   
   sigma_add = matrix(nrow = nrow(Heston_res$X) ,ncol=(steps+1))
   sigma_add[,1] = 0
   
   #This time we need the dW to calculate sigma^{vb}*dW
-  dW = (Heston_res$X[,2:(steps+1)]-Heston_res$X[,1:steps]) / sqrt(Heston_res$vol[,1:steps])*sqrt(dt) #Isolate dW in eq. from Heston-function
+  dW = (Heston_res$X[,2:(steps+1)]-Heston_res$X[,1:steps]) / (sqrt(Heston_res$vol[,1:steps])*sqrt(dt)) #Isolate dW in eq. from Heston-function
   
   
   #Calculate sum(sigma*dW)
   for (i in 2:(steps+1)) {
-    sigma_add[,i] = sigma_add[,i-1]+sigma(Heston_res$time[i-1])*dW[,i-1]
+    sigma_add[,i] = sigma_add[,i-1]+sigma(Heston_res$time[i-1])*sqrt(dt)*dW[,i-1]
   }
   
   #From footnote 11 we need to recenter the sigma_add so it reverts

@@ -4,7 +4,7 @@
 
 # List of needed input that can be sent to simulation function
 sim.setup <- function(kappa=5, theta=0.0225, xi = 0.4, rho = -0.5, gamma = 0.5,
-                   mat = 6.5/(24*52), Nsteps = 1000, Npath = 10000){
+                   mat = 6.5/(24*7*52), Nsteps = 1000, Npath = 10000){
   list(kappa = kappa, theta = theta, xi = xi, rho = rho, gamma = gamma, mat = mat, Nsteps = Nsteps, Npath = Npath)
 }
 

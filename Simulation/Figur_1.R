@@ -6,15 +6,15 @@ source(paste(Sys.getenv("masters-thesis"),"Simulation/Bursts.R",sep="/"))
 
 
 #Set settings for Heston
-settings <- sim.setup(mat=1)
+settings <- sim.setup(mat=6.5/(24*7*52)) #6.5 hours
 
 #Get results with and without bursts
 Heston <- sim.heston(settings)
 Heston_vb <- sim.addvb(Heston,burst_time = 0.5, interval_length = 0.05, c_2 = 0.15, beta = 0.4)
-Heston_vbdb <- sim.adddb(Heston_vb, burst_time=0.5,interval_length=0.05,c_1=3,alpha=0.75)
+Heston_vbdb <- sim.adddb(Heston_vb, burst_time=0.5,interval_length=0.05,c_1 = 3,alpha=0.75)
 
 #Get a single path
-path = 2
+path = 1
 
 Heston_path = sim.path(path,Heston)$Y
 vb_path = sim.path(path,Heston_vb)$Y
@@ -56,4 +56,3 @@ ggplot(tmp, aes(x_akse, y_akse,color = rx)) +
   #      plot.title = element_text(hjust = 0.5, size = 20)) +
   ggtitle("Log-return of asset") +
   theme(plot.title = element_text(hjust = 0.5, size = 20))
-
