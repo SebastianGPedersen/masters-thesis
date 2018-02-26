@@ -6,6 +6,8 @@ est.mu <- function(data, hd, kern, t.index=NA, t.points=NA){
   # data list should include a times column and the Y column (log returns)
   # t.index should be index - we use data$time[t]
   
+  # t.points might not work correctly....
+  
   # kern handling
   if(is.list(kern)) kern<-kern$kern
   
@@ -13,7 +15,8 @@ est.mu <- function(data, hd, kern, t.index=NA, t.points=NA){
   mode = NA
   if(missing(t.index) & missing(t.points)){
     mode = 1
-    t<-1:(length(data$time)) # if nothing specified - every point in data
+    t<-data$time[1:(length(data$time))] # if nothing specified - every point in data
+    ind = 1:(length(data$time))
   }
   else if(missing(t.index) & !missing(t.points)){
     mode = 2
@@ -32,23 +35,29 @@ est.mu <- function(data, hd, kern, t.index=NA, t.points=NA){
   }
   #t should now be data$time points
 
-  n = length(t)
-  mu = numeric(n)          # We can only have bandwidth to end amount of calcs
+  #n = length(t)
+  tt = length(t)
+  n = length(data$time)
+  mu = numeric(tt)          # We can only have bandwidth to end amount of calcs
   
   #dy = cbind(0,t(diff(t(data$Y))))               # diff only does each column seperately / so we transpose to get row wise
   dy = c(0,diff(data$Y))
   # we put in a column of zeros to fit our sizes - dy[i,1] should NEVER be used!
   
-  
+  # Optimization removed
   if(mode == 1){
-    for(j in 1:n){
-      mu[j] = (1/hd)*sum(kern((data$time[1:(j-1)] - t[j])/hd)*dy[2:j])   
+    for(j in 1:tt){
+      mu[j] = (1/hd)*sum(kern((data$time[1:(n-1)] - t[j])/hd)*dy[2:n])   
     }
   }
-  else{
-    for(j in 1:n){
-      mu[j] = (1/hd)*sum(kern((data$time[1:ind[j]] - t[j])/hd)*dy[2:n])   
+  else if(mode == 3){
+    for(j in 1:tt){
+      #mu[j] = (1/hd)*sum(kern((data$time[1:(ind[j]-1)] - t[j])/hd)*dy[ 2:ind[j] ]) # mu[1] = 0...?
+      mu[j] = (1/hd)*sum(kern((data$time[1:(n-1)] - t[j])/hd)*dy[2:n])
     }
+  }
+  else{ # time points not implemented
+    mu[j] = NA
   }
   
   #for(j in 1:n){
@@ -59,7 +68,7 @@ est.mu <- function(data, hd, kern, t.index=NA, t.points=NA){
   return(list(time = t, mu = mu))
 }
 
-est.sigma <- function(data, hv, lag="auto", kern, wkern, t.index=NA, t.points=NA){   # we could do lag = "auto"
+est.sigma <- function(data, hv, kern, wkern, t.index=NA, lag="auto"){   # we could do lag = "auto"
   # data list should include a times column and the Y column (log returns)
   
   # Handle lag
@@ -73,37 +82,40 @@ est.sigma <- function(data, hv, lag="auto", kern, wkern, t.index=NA, t.points=NA
   if(!is.function(wkern)) stop("wkern should be either function or list containing function")
   
   # if missing handling:
-  if(missing(t.index) & missing(t.points)){
+  if(missing(t.index)){
     start = lag+1
-    t<-start:(length(data$time)) # if nothing specified - every point in data
-  }
-  else if(missing(t.index) & !missing(t.points)){        # SET UP WARNINGS IF POINTS/INDEX ARE NOT SMART
-    t<-t.points
+    t<-data$time[start:(length(data$time))] # if nothing specified - every point in data
+    ind<-start:(length(data$time))
   }
   else{
     t<-data$time[t.index]
+    ind<-t.index
   }
   # t should now be data$time points
   
-  n = length(t)
-  sig = numeric(n)         
+  n = length(data$time)
+  tt = length(t)
+  sig = numeric(tt)         
   
   #dy = cbind(0,t(diff(t(data$Y))))               # diff only does each column seperately / so we transpose to get row wise
   dy = c(0,diff(data$Y))
   # we put in a column of zeros to fit our sizes - dy[i,1] should NEVER be used!
   
-  gamma<-function(l, t){
+  gamma<-function(l, t, end){
+    # end is the highest needed index
     l <- abs(l)
-    out<- sum(   kern( (data$time[(l+1):(n-1)] - t)/hv )*dy[(1+l+1):n]*       #indices are literally #1 reason for bugs
-                   kern( (data$time[1:(n-l-1)] - t ) * dy[2:(n-l)]   ) )  
+    out<- sum(   kern( (data$time[(l+1):(end-1)] - t)/hv )* dy[(1+l+1):end]*       #indices are literally #1 reason for bugs
+                   kern( (data$time[1:(end-l-1)] - t)/hv )* dy[2:(end-l)]   )  
     return(out)
   }
   
-  L = -lag:lag
+  L = lag
 
-  for(j in 1:n){
-    for(l in L){                   # Optimize this?
-      sig[j] = sig[j] + wkern(l/n)*gamma(l,t[j])
+  for(j in 1:tt){
+    end = n #ind[j]
+    sig[j] = sum((kern(   (data$time[1:(end-1)] - t[j])/hv   )*dy[2:end])^2)  # l = 0
+    for(l in 1:lag){                   # Optimize this?
+      sig[j] = sig[j] + 2*(wkern(l/n)*gamma(l,t[j], end))
     }
   }
   # return list

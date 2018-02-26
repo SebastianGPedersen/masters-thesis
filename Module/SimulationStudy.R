@@ -9,7 +9,7 @@
 setwd(Sys.getenv("masters-thesis"))
 
 source("simulation/heston.R")
-source("bursts.R")
+source("simulation/bursts.R")
 source("estimation/estimates.R")
 source("estimation/teststat.R")
 source("kernels/kernels.R")
@@ -34,7 +34,7 @@ study<-function(setting, t.index, h, q, beta, alpha){
     
     # Estimation of mu/sig
     mu<-est.mu(simpath, h, kern.leftexp, t.index = t.index)
-    sig <- est.sigma(simpath, 5*h, "auto", kern.leftexp, kern.parzen, t.index = t.index)
+    sig <- est.sigma(simpath, 5*h, kern.leftexp, kern.parzen, t.index = t.index, lag = "auto")
     
     # Calculate T
     Tstat<-teststat(mu, sig, h, kern.leftexp)
@@ -70,23 +70,17 @@ for(beta in betaset){
   }
 }
 
+sims<-sim.heston(sim.setup(Nsteps = 23400, Npath = 2))
+sim<-sim.path(1, sims)
 
+source("estimation/estimates.R")
+mu<-est.mu(sim, 120/(3600*24*7*52), kern.leftexp, t.index = tind)
+sigm<-est.sigma(sim, 5*120/(3600*24*7*52), kern.leftexp, kern.parzen, t.index = tind, lag = "auto")
 
+plot(sigm$sig)
+plot(test-sigm$sig)
 
-
-
-#require(profvis)
-#require(microbenchmark)
-
-# 1 sti ? 23 400 steps
-
-#sims<-sim.path(1,sim)
-#mu<-est.mu(sims, 120, kern.leftexp)
-#sig<-est.sigma(sims, 600, "auto", kern.leftexp, kern.parzen)
-
-#microbenchmark(sim.heston(setting), times = 10)                                               # 519 ms
-#microbenchmark(sim.path(1, sim), times = 10)                                                   
-#microbenchmark(est.mu(sims, 120, kern.leftexp), times = 1)                                    # 24 s
-#microbenchmark(est.sigma(sims, 600, "auto", kern.leftexp, kern.parzen), times = 1)            # 1900s (31min)
-#microbenchmark(teststat(mu, sig, 1200, kern.leftexp), times = 10)                             # 15 ms
+plot(mu$mu, type = "l")
+plot(sqrt(120/(3600*24*7*52))*mu$mu)
+qqnorm(sqrt(120/(3600*24*7*52))*mu$mu)
 
