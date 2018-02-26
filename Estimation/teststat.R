@@ -44,53 +44,71 @@ teststat<-function(data.mu, data.sig, ht, kern){
 }
 
 
-tstar<-function(data, ngroups, trun=floor){
+# change this
+tstar<-function(data){
   # data should contain time and test
-  out <- apply.partition(data$test, ngroups, data$time, max, trun)
-  return(list(start = out$start, end = out$end, tstar = out$res))
+  # Need vector/list of start and end for each period (or n. of observations in)
+  start = data$time[1]
+  end = data$time[length(data$time)]
+  res = max(data$test)
+  
+  return(list(start = start, end = end, tstar = res))
 }
 
-apply.partition<-function(x, ngroups, time=NA, func = max, trun=floor){
-  # x should be vector
-  n <- length(x)
-  k <- ngroups
-  res<-numeric(k)
+est.z_quantile<-function(mym, myrho, myalpha){
+  #Implicitly uses: interpolList
+  #requires function interpolListInParent()
   
-  # if time is not given, do 1:n
-  if(missing(time)) time<-1:n
+  #mym: vector of 'm' values to evalute at
+  #myrho: vector of 'rho' values to evaluate at
+  #myalpha: chosen confidence. Needs to match possible choices in interpolList
+  #interpolList: list of alphs, and list of fitted polynomials (lm-objects)
   
-  if((n/k)%%1 > 0){
-    warning("Imperfect partitioning of data (n/k): ", n/k)     # Lav langt bedre warning!!
+  #output: list of 
+  #q: quantile of (Zm-am)*bm
+  #qZm : raw quantile of Zm
+  
+  #for each pair of (mym,myrho)
+  
+  
+  interpolListInParent()
+  
+  alphaIndex<-match(myalpha,interpolList$alpha)
+  
+  if(is.na(alphaIndex)){
+    stop(paste0("Choose alpha in: ",interpolList$alpha))
   }
-    for(j in 1:k){
-    #print((trun(n/k)*(j-1)+1):(trun(n/k)*j)) # for help
-    res[j] <- func(x[(trun(n/k)*(j-1)+1):(trun(n/k)*j)])  #(floor(n/k)*(j-1)+1):(floor(n/k)*j)
+  
+  if(length(myrho)<=1 & length(mym)<=1){
+    print("Inefficient to call witth 'myrho' & 'mym' with length 1")
+    mym<-rep(mym,2)
+    OnedimFlag<-T
+  }
+  fit<-interpolList$fittedPoly[[alphaIndex]]
+  newdata<-data.frame(logm = log(mym), logrho = log(1-myrho))
+  q<-predict(fit,newdata)
+  #q
+  
+  am <- sqrt(2*log(mym));   
+  bm <- am-0.5*log(pi*log(mym))/am;
+  qZm <- q/am+bm;  
+  #qZm
+  
+  if(OnedimFlag){
+    q <- q[1]
+    qZm <- qZm[1]
   }
   
-  # returns list of the grouped and the raw
-  return(list(start = time[(trun(n/k)*((1:k)-1)+1)], end = time[(trun(n/k)*(1:k))], res = res) )
+  return(list(q=q, qZm=qZm))
 }
 
 
-
-
-
-
-
-
-
-
-
-# FUTURE
-
-# Calculate Z
-
-#Zcorr = numeric(m)
-#for(i in 1:m){
-#  fit <- ar(t[i,], order.max = 1) # order.max = 1 corresponds to AR(1)
-#  Zcorr[i] <- fit$ar
-#}
-
-# Simulate Z from fitted
-
-# Return Z*
+est.interpolListInParent<-function(){
+  #creates interpolList in the global environment, if it does not exsists.
+  if(!exists("interPolList")){
+    cd<-getwd()
+    setwd(Sys.getenv("masters-thesis-data"))
+    assign("interpolList", readRDS("interpolList.rds"), envir = .GlobalEnv)
+    setwd(cd)
+  }
+}
