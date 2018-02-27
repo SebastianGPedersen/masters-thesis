@@ -138,7 +138,7 @@ est.sigma <- function(data, hv, kern, wkern, t.index=NA, lag="auto"){   # we cou
   }
   
   # return list
-  return(list(time = t, sig = (1/hv)*sig, deep = deep, parz = parz))
+  return(list(time = t, sig = sig, deep = deep, parz = parz))
 }
 
 
