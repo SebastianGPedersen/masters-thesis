@@ -113,27 +113,14 @@ est.sigma <- function(data, hv, kern, wkern, t.index=NA, lag="auto"){   # we cou
     return(out)
   }
   
-  L = -lag:lag
-  deep = numeric(length(L))
-  parz = numeric(length(L))
-  for(j in 1:tt){
-    if(j == 140){
-      flag = 1
-      q=0
-    }
-    else {flag = 0}
-   end = ind[j]
-   
+  end = n
+  for (j in 1:tt) {
    sig[j] = sum(  (kern(   (data$time[1:(end-1)] - t[j])/hv   )*dy[2:end])^2  )  # l = 0
+   
    #sig[j] = sum (  dy[2:end]^2  )
-   for(l in -lag:lag){
+   for(l in 1:lag){
      #sig[j] = sig[j] + 2*(wkern(l/n)*gamma(l,t[j], end))
      sig[j] = sig[j] + 2*(wkern(l/(lag+1))*gamma(l,t[j], end))
-     if(flag == 1){
-       q = q+1
-       deep[q] = gamma(l, t[j], end)
-       parz[q] = wkern(l/(lag+1))
-     }
    }
   }
   
