@@ -4,25 +4,28 @@
 #                                                                     #
 #######################################################################
 
-# working directory should be /masters-thesis
 
+# working directory should be "masters-thesis"
 setwd(Sys.getenv("masters-thesis"))
-
 source("simulation/heston.R")
 source("simulation/bursts.R")
 source("estimation/estimates.R")
+source("estimation/rho.R")
 source("estimation/teststat.R")
 source("kernels/kernels.R")
 
 
 
-study<-function(setting, t.index, h, q, beta, alpha){
+study<-function(setting, t.index, h, q, beta, alpha, conf){
+  # The study simulates a heston, adds vol burst and evaluates the critical T* value
+  # to replicate table 1
+  
   # simulation
   heston<-sim.heston(setting)
   
   # Add Burst
   Heston_vb <-   sim.addvb(Heston,    burst_time = 0.5, interval_length = 0.05, c_2 = 0.15, beta  = beta)
-  Heston_vbdb <- sim.adddb(Heston_vb, burst_time = 0.5,   interval_length = 0.05, c_1 = 3,    alpha = alpha)
+  Heston_vbdb <- sim.adddb(Heston_vb, burst_time = 0.5,   interval_length = 0.05, c_1 = 3,  alpha = alpha)
   
   Tstar = numeric(m)
   
@@ -43,9 +46,10 @@ study<-function(setting, t.index, h, q, beta, alpha){
     Tstar[i]<-tstar(Tstat)$tstar
     
     # fit rho
+    rho <- est.rho(Tstat$test)
     
     # plug in rest (q-quantile)
-    est.z_quantile(length(Tstat$time), rho, 0.95)
+    est.z_quantile(rho$m, rho$rho, conf)
   }
   
   # return etwas
