@@ -116,7 +116,7 @@ qqnorm(mu_normal)
 
 
 
-############ Test convergence of sigma with noise (convergence of eq. 25 to Theorem 5 p. 43) ############
+############ Test convergence of sigma with noise (convergence of eq. 26 to equation in Theorem 6 p. 44) ############
 
 #Simulate the BM with noise
 x <- rnorm(n = length(t) , mean = 0, sd = sqrt(sig2*dt))
@@ -130,8 +130,8 @@ dataY<-data.frame(time = t*dt, Y = y)
 #Get sigma estimates on 1000 different time_points (vigtigt at bandwidth er rigtig lille)
 sigma_1000_times <- est.sigma(data = dataY, hv = hv, kern = kern.leftexp, wkern = kern.parzen,t.index = seq(1000,10000,by=10),lag=15)$sig
 
-est_omega <- dt*sigma_1000_times #This should converge to K_2 * E(delta_eps^2) = K_2*2*E(eps^2) = K_2*2*omega2
-est_one <- est_omega/(2*ksq*omega2) #This should converge in probability to K_2*omega^2
+est_omega <- sqrt(dt)*sqrt(sigma_1000_times) #This should converge to K_2 * E(delta_eps^2) = K_2*2*E(eps^2) = K_2*2*omega2
+est_one <- est_omega/(2*ksq*omega2) #This should converge in probability to 1
 
 #Test that this is close to 1
 plot(est_one)

@@ -103,8 +103,10 @@ est.sigma <- function(data, hv, kern, wkern, t.index=NA, lag="auto"){   # we cou
   gamma<-function(l, t, end){
     # end is the highest needed index
     l <- abs(l)
-    out<- sum(   kern( (data$time[(l+1):(end-1)] - t)/hv )* dy[(1+l+1):end]*       #indices are literally #1 reason for bugs
-                 kern( (data$time[1:(end-l-1)] - t)/hv )* dy[2:(end-l)]   )
+    out<- sum(   kern( (data$time[(l+1):(end-1)] - t)/hv )* 
+                  dy[(1+l+1):end]*       #indices are literally #1 reason for bugs
+                 kern( (data$time[1:(end-l-1)] - t)/hv )*
+                    dy[2:(end-l)]   )
     # l <- abs(l)
     # out<- sum(    dy[(1+l+1):end]*       #indices are literally #1 reason for bugs
     #              dy[2:(end-l)]   )  
@@ -113,13 +115,15 @@ est.sigma <- function(data, hv, kern, wkern, t.index=NA, lag="auto"){   # we cou
   
   end = n
   for (j in 1:tt) {
-   sig[j] = sum(  (kern(   (data$time[1:(end-1)] - t[j])/hv   )*dy[2:end])^2  )  # l = 0
+   sig[j] = sum(  (kern(   (data$time[1:(end-1)] - t[j])/hv   )*
+                   dy[2:end])^2  )  # l = 0
    
    #sig[j] = sum (  dy[2:end]^2  )
    if (lag >=1) {
      for(l in 1:lag){
        #sig[j] = sig[j] + 2*(wkern(l/n)*gamma(l,t[j], end))
        sig[j] = sig[j] + 2*(wkern(l/(lag+1))*gamma(l,t[j], end))
+       #sig[j] = sig[j] + 2*((1-l/(lag+1))*gamma(l,t[j], end))
      }
    }
   }
