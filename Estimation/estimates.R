@@ -113,6 +113,7 @@ est.sigma <- function(data, hv, kern, wkern, t.index=NA, lag="auto"){   # we cou
     return(out)
   }
   
+
   end = n
   for (j in 1:tt) {
    sig[j] = sum(  (kern(   (data$time[1:(end-1)] - t[j])/hv   )*

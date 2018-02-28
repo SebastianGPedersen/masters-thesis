@@ -54,7 +54,7 @@ timePoints<-function(x, timeOffset = 0, lagOffset = 0, initialDelay = max(timeOf
   
   #x data.table with Date, Time column
   #timeOffset (double) offset in seconds 
-  #lagOffset (int) offset in number of observations (refered to as lag)
+  #lagOffset (int) offset in number of observations (referred to as lag)
   #initialDelay (double or int) how far to move into each day before choosing the first point.
     #can only specify either timeOffset or lagOffset, and assumes initialDelay 
     #to be on same "scale" i.e. either seconds or lag
@@ -132,6 +132,20 @@ timePoints<-function(x, timeOffset = 0, lagOffset = 0, initialDelay = max(timeOf
   }
   
   #returns data.table with 1 column named "I"
-  return(rbindlist(indexList))
+  return(rbindlist(indexList)$I)
+  
+}
+
+prepareForEstimation<-function(x){
+  #x data.table with columns: Date, Time, wprice
+  
+  #returns data.table:
+      #log-return, convention first obs is log(wprice[2]) - log(wprice[1])
+      #Time, rescaled to running from time point 0.
+      #Date, same as input date. Important for ability of running timePoints()
+  logRet  <- diff(log(x$wprice))
+  timeCol <- x$Time[-1]-x$Time[1]
+  dateCol <- x$Date[-1]
+  return(data.table(Date = dateCol, Time = timeCol, Y = logRet))
   
 }
