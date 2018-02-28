@@ -8,10 +8,10 @@ t <- 0:10000  # time_points
 dt <- mat/t[length(t)]
 
 # Define sigma
-sig <- 0.1
+sig <- 0.01
 sig2 <- sig^2
-omega2 <- 1
 omega <- 1
+omega2 <- omega^2
 ksq <- 0.5 # K2
 hd <- 0.01 #bandwidth in mu
 hv <- 0.05 #bandwidth in sigma
@@ -33,7 +33,7 @@ plot(y[1:100],type = "l")
 
 ############ Test convergence of mu without noise (eq. 12 and 13) ############
 
-N <- 5000
+N <- 1000
 mu <- numeric(N)
 
 for(i in 1:N) #Takes approx 10sec
@@ -48,7 +48,7 @@ for(i in 1:N) #Takes approx 10sec
   mu[i] <- est.mu(dataX, hd, kern.leftexp, t.index = 500)$mu[1] #Take out a random timeindex (500)
 }
 
-mu <- sqrt(hd)*mu #This should be N(0,ksq*omega^2) distributed from eq. (13)
+mu <- sqrt(hd)*mu #This should be N(0,ksq*sgima^2) distributed from eq. (13)
 
 #Normalize
 mu_normal <- mu*sqrt(1/(ksq*sig2))
@@ -86,7 +86,7 @@ plot(est_sig2)
 
 ############ Test convergence of mu with noise (convergence of eq. 25 to Theorem 5 p. 43) ############
 
-N <- 5000
+N <- 500
 mu <- numeric(N)
 
 for(i in 1:N) #Takes approx 30sec
@@ -103,10 +103,10 @@ for(i in 1:N) #Takes approx 30sec
   mu[i] <- est.mu(dataY, hd, kern.leftexp, t.index = 500)$mu[1] #Take out a random timeindex (500)
 }
 
-mu_ <- sqrt(hd)*mu *sqrt(dt/2) #This should be N(0,ksq*omega^2) distributed from theorem 5
+mu_ <- sqrt(hd)*sqrt(dt)*mu #This should be N(0,ksq*omega^2) distributed from theorem 5
 
 #Normalize
-mu_normal <- sqrt(1/(ksq*sig2))*mu_
+mu_normal <- sqrt(1/(ksq*(2*omega2)))*mu_
 
 #test - it all looks really fine
 mean(mu_normal)
