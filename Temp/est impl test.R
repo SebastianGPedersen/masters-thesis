@@ -6,14 +6,11 @@ source("estimation/rho.R")
 source("estimation/teststat.R")
 source("kernels/kernels.R")
 
-setting <- sim.setup(Npath = 2, Nstep = 100)
+setting <- sim.setup(Npath = 2, Nstep = 10000)
 sims<-sim.heston(setting)
 sim<-sim.path(1, sims)
 
-tind<-seq(from=2, to=100, by=1)
-#test<-est.mu(data = sim, hd = 0.001, kern = kern.leftexp)$mu-est.mu2(data = sim, hd = 0.001, kern = kern.leftexp)$mu
-
-test<-est.mu(data = sim, hd = 0.001, kern = kern.leftexp, t.index = tind)$mu-est.mu2(data = sim, hd = 0.001, kern = kern.leftexp, t.index = tind)$mu
+tind<-seq(from=2, to=10000, by=100)
 
 est.mu2 <- function(data, hd, kern, t.index=NA, t.points=NA){
   # data list should include a times column and the Y column (log returns)
@@ -109,12 +106,35 @@ est.sigma2 <- function(data, hv, kern, wkern, t.index=NA, lag="auto"){   # we co
   dy = diff(data$Y)
   
   gamma2<-function(l, t){
-    # to be used in the loop with j as n                  
-    #l <- abs(l)
-    out<- sum(   kern( (data$time[(l+1):j] - t)/hv )* 
-                   dy[(l+1):j]*       
-                   kern( (data$time[1:j] - t)/hv )*   # TEGN Hvordan Autocov vinduet ser ud
-                   dy[1:j]   )
+    # to be used in the loop with j as n            
+    {
+      # if j+l+1 < n then we should not hit out of range
+      #if(ind[j]+l < n){
+      #if(1 > 2){
+      #  out<- sum(   kern( (data$time[(l+1):(ind[j]+l)] - t)/hv )* 
+      #                 dy[(l+1):(ind[j]+l)]*       
+      #                 kern( (data$time[1:ind[j]] - t)/hv )*   # TEGN Hvordan Autocov vinduet ser ud
+      #                 dy[1:ind[j]]   )
+      #  if(is.na(out)) stop("out is NA")
+      #  
+      #}
+      #else{
+      #  out<- sum(   kern( (data$time[(l+1):(n-1)] - t)/hv )* 
+      #                 dy[(l+1):(n-1)]*       #indices are literally #1 reason for bugs
+      #                 kern( (data$time[1:(n-l-1)] - t)/hv )*
+      #                 dy[1:(n-l-1)]   )
+      #}
+    }
+    
+    out<-ifelse(ind[j]+l < n, sum(   kern( (data$time[(l+1):(ind[j]+l)] - t)/hv )* 
+                                  dy[(l+1):(ind[j]+l)]*       
+                                  kern( (data$time[1:ind[j]] - t)/hv )*   # TEGN Hvordan Autocov vinduet ser ud
+                                  dy[1:ind[j]]   ),
+                        sum(   kern( (data$time[(l+1):(n-1)] - t)/hv )* 
+                                  dy[(l+1):(n-1)]*       #indices are literally #1 reason for bugs
+                                  kern( (data$time[1:(n-l-1)] - t)/hv )*
+                                  dy[1:(n-l-1)]   ))
+    
     return(out)
   }
   
@@ -129,11 +149,11 @@ est.sigma2 <- function(data, hv, kern, wkern, t.index=NA, lag="auto"){   # we co
   }
   
   for (j in 1:(tt-1)) {
-    sig[j] = sum(  (kern(   (data$time[1:j] - t[j])/hv   )*dy[1:j])^2  )  # l = 0
+    sig[j] = sum(  (kern(   (data$time[1:ind[j]] - t[j])/hv   )*dy[1:ind[j]])^2  )  # l = 0
     if (lag >=1) {
       for(l in 1:lag){
-        sig[j] = sig[j] + 2*(wkern(l/(lag+1))*gamma2(l,t[j]))      # gamma is harder to optimize
-                                                                   # / maybe intersection?
+        sig[j] = sig[j] + 2*(wkern(l/(lag+1))*gamma2(l,t[j])) #gamma2
+                                                                   
       }
     }
   }
@@ -147,6 +167,24 @@ est.sigma2 <- function(data, hv, kern, wkern, t.index=NA, lag="auto"){   # we co
   # return list
   return(list(time = t, sig = sig))
 }
+tind
 
-test<-(est.sigma(data = sim, hv = 0.001, kern = kern.leftexp, wkern = kern.parzen)$sig
-       -est.sigma2(data = sim, hv = 0.001, kern = kern.leftexp, wkern = kern.parzen)$sig)
+(test<-est.mu(data = sim, hd = 0.001, kern = kern.leftexp, t.index = tind)$mu-est.mu2(data = sim, hd = 0.001, kern = kern.leftexp, t.index = tind)$mu)
+
+(lags<-(est.sigma(lag=0, data = sim, hv = 0.001, kern = kern.leftexp, wkern = kern.parzen)$sig
+       -est.sigma2(lag=0, data = sim, hv = 0.001, kern = kern.leftexp, wkern = kern.parzen)$sig))
+
+#(test<-(est.sigma(data = sim, hv = 0.001, kern = kern.leftexp, wkern = kern.parzen)$sig
+#       -est.sigma2(data = sim, hv = 0.001, kern = kern.leftexp, wkern = kern.parzen)$sig))
+
+(netto<-(est.sigma(data = sim, hv = 0.001, kern = kern.leftexp, wkern = kern.parzen, t.index = tind)$sig
+         -est.sigma2(data = sim, hv = 0.001, kern = kern.leftexp, wkern = kern.parzen, t.index = tind)$sig))
+
+require(microbenchmark)
+
+microbenchmark(est.sigma(data = sim, hv = 0.001, kern = kern.leftexp, wkern = kern.parzen, t.index = tind),
+               est.sigma2(data = sim, hv = 0.001, kern = kern.leftexp, wkern = kern.parzen, t.index = tind), times = 10)
+
+require(profvis)
+profvis(est.sigma(data = sim, hv = 0.001, kern = kern.leftexp, wkern = kern.parzen))
+profvis(est.sigma2(data = sim, hv = 0.001, kern = kern.leftexp, wkern = kern.parzen))
