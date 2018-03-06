@@ -2,7 +2,7 @@
 # BANDWIDTH SHOULD BE TRANSLATED FROM SECONDS TO YEARS ( BW / Seconds per year)
 # Consider multiplying time such that our unit is in seconds and not years...!
 
-est.mu <- function(data, hd, kern, t.index=NA, t.points=NA, originalEstimator=FALSE){
+est.mu <- function(data, hd, kern = kern.leftexp, t.index=NA, t.points=NA, originalEstimator=FALSE){
   # data list should include a times column and the Y column (log returns)
   # t.index should be index - we use data$time[t]
   
@@ -79,7 +79,7 @@ est.mu <- function(data, hd, kern, t.index=NA, t.points=NA, originalEstimator=FA
   return(list(time = t, mu = mu))
 }
 
-est.sigma <- function(data, hv, kern, wkern, t.index=NA, lag="auto", originalEstimator=FALSE){   # we could do lag = "auto"
+est.sigma <- function(data, hv, kern = kern.leftexp, wkern = kern.parzen, t.index=NA, lag="auto", originalEstimator=FALSE){   # we could do lag = "auto"
   # data list should include a times column and the Y column (log returns)
   
   # Handle lag
