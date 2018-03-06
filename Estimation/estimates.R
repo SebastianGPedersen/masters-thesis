@@ -2,7 +2,7 @@
 # BANDWIDTH SHOULD BE TRANSLATED FROM SECONDS TO YEARS ( BW / Seconds per year)
 # Consider multiplying time such that our unit is in seconds and not years...!
 
-est.mu <- function(data, hd, kern, t.index=NA, t.points=NA){
+est.mu <- function(data, hd, kern, t.index=NA, t.points=NA, originalEstimator=FALSE){
   # data list should include a times column and the Y column (log returns)
   # t.index should be index - we use data$time[t]
   
@@ -33,16 +33,27 @@ est.mu <- function(data, hd, kern, t.index=NA, t.points=NA){
     t<-data$time[t.index]
     ind = t.index
   }
+  
+  
+  if(!originalEstimator){
+    diffY<-diff(data$Y)
+    everySecondSeq<-seq(1L, length(diffY), by=2L)
+    dy<-c(0,diffY[everySecondSeq])
+    tempTime <- data$time[seq(1L, length(data$time), by = 2L)] #temporary placeholder, for compatibility
+    data <- NULL #remove data. Handles errors with e.g. data.frames
+    data$time <- tempTime #creates list compatable with below
+    
+    # we put in a column of zeros to fit our sizes - dy[i,1] should NEVER be used!
+  } else {
+    #dy = cbind(0,t(diff(t(data$Y))))               # diff only does each column seperately / so we transpose to get row wise
+    dy = c(0,diff(data$Y))
+  }
+  
   #t should now be data$time points
-
   #n = length(t)
   tt = length(t)
   n = length(data$time)
   mu = numeric(tt)          # We can only have bandwidth to end amount of calcs
-  
-  #dy = cbind(0,t(diff(t(data$Y))))               # diff only does each column seperately / so we transpose to get row wise
-  dy = c(0,diff(data$Y))
-  # we put in a column of zeros to fit our sizes - dy[i,1] should NEVER be used!
   
   # Optimization removed
   if(mode == 1){
@@ -68,7 +79,7 @@ est.mu <- function(data, hd, kern, t.index=NA, t.points=NA){
   return(list(time = t, mu = mu))
 }
 
-est.sigma <- function(data, hv, kern, wkern, t.index=NA, lag="auto"){   # we could do lag = "auto"
+est.sigma <- function(data, hv, kern, wkern, t.index=NA, lag="auto", originalEstimator=FALSE){   # we could do lag = "auto"
   # data list should include a times column and the Y column (log returns)
   
   # Handle lag
@@ -92,23 +103,33 @@ est.sigma <- function(data, hv, kern, wkern, t.index=NA, lag="auto"){   # we cou
   }
   # t should now be data$time points
   
+  if(!originalEstimator){
+    diffY<-diff(data$Y)
+    everySecondSeq<-seq(1L, length(diffY), by=2L)
+    dy<-c(0,diffY[everySecondSeq])
+    tempTime <- data$time[seq(1L, length(data$time), by = 2L)] #temporary placeholder. 0-entry for compatibility
+    data <- NULL #remove data. Handles errors with e.g. data.frames
+    data$time <- tempTime #creates list compatable with below
+    
+    # we put in a column of zeros to fit our sizes - dy[i,1] should NEVER be used!
+  } else {
+    #dy = cbind(0,t(diff(t(data$Y))))               # diff only does each column seperately / so we transpose to get row wise
+    dy = c(0,diff(data$Y))
+  }
+
   n = length(data$time)
   tt = length(t)
   sig = numeric(tt) 
-  
-  #dy = cbind(0,t(diff(t(data$Y))))               # diff only does each column seperately / so we transpose to get row wise
-  dy = c(0,diff(data$Y))
-  # we put in a column of zeros to fit our sizes - dy[i,1] should NEVER be used!
   
   gamma<-function(l, t, end){
     # end is the highest needed index
     l <- abs(l)
     out<- sum(   kern( (data$time[(l+1):(end-1)] - t)/hv )* 
-                  dy[(1+l+1):end]*       #indices are literally #1 reason for bugs
+                  dy[(1+l+1):end]*       
                  kern( (data$time[1:(end-l-1)] - t)/hv )*
                     dy[2:(end-l)]   )
     # l <- abs(l)
-    # out<- sum(    dy[(1+l+1):end]*       #indices are literally #1 reason for bugs
+    # out<- sum(    dy[(1+l+1):end]*    
     #              dy[2:(end-l)]   )  
     return(out)
   }
@@ -116,7 +137,7 @@ est.sigma <- function(data, hv, kern, wkern, t.index=NA, lag="auto"){   # we cou
 
   end = n
   for (j in 1:tt) {
-   sig[j] = sum(  (kern(   (data$time[1:(end-1)] - t[j])/hv   )*
+   sig[j] = sum(  (kern(   (data$time[2:end] - t[j])/hv   )*
                    dy[2:end])^2  )  # l = 0
    
    #sig[j] = sum (  dy[2:end]^2  )
