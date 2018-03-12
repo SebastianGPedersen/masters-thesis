@@ -36,18 +36,13 @@ est.mu <- function(data, hd, kern = kern.leftexp, t.index, t.points, originalEst
   
   
   if(!originalEstimator){
-    diffY<-diff(data$Y)
-    everySecondSeq<-seq(1L, length(diffY), by=2L)
-    dy<-c(0,diffY[everySecondSeq])
-    tempTime <- data$time[seq(1L, length(data$time), by = 2L)] #temporary placeholder, for compatibility
-    data <- NULL #remove data. Handles errors with e.g. data.frames
-    data$time <- tempTime #creates list compatable with below
-    if(length(data$time)<length(dy)){ #handles uneven vs even number of input
-      data$time<-c(data$time, 0) #0 unused, just need the right length
-    }
+    tempData<-est.EveryOtherDiffData(data) 
+    data<-NULL #Handles issues with data.frame input
+    data$time<-tempData$time #compatability
+    dy<-tempData$dy #compatability
     
-    # we put in a column of zeros to fit our sizes - dy[i,1] should NEVER be used!
   } else {
+    # we put in a column of zeros to fit our sizes - dy[i,1] should NEVER be used!
     #dy = cbind(0,t(diff(t(data$Y))))               # diff only does each column seperately / so we transpose to get row wise
     dy = c(0,diff(data$Y))
   }
@@ -107,15 +102,10 @@ est.sigma <- function(data, hv, kern = kern.leftexp, wkern = kern.parzen, t.inde
   # t should now be data$time points
   
   if(!originalEstimator){
-    diffY<-diff(data$Y)
-    everySecondSeq<-seq(1L, length(diffY), by=2L)
-    dy<-c(0,diffY[everySecondSeq])
-    tempTime <- data$time[seq(1L, length(data$time), by = 2L)] #temporary placeholder. 0-entry for compatibility
-    data <- NULL #remove data. Handles errors with e.g. data.frames
-    data$time <- tempTime #creates list compatable with below
-    if(length(data$time)<length(dy)){ #handles uneven vs even number of input
-      data$time<-c(data$time, 0) #0 unused, just need the right length
-    }
+    tempData<-est.EveryOtherDiffData(data) 
+    data<-NULL #Handles issues with data.frame input
+    data$time<-tempData$time #compatability
+    dy<-tempData$dy #compatability
     
     # we put in a column of zeros to fit our sizes - dy[i,1] should NEVER be used!
   } else {
@@ -412,14 +402,10 @@ est.mu2 <- function(data, hd, kern = kern.leftexp, t.index, t.points, originalEs
   # t should now be data$time points
   
   if(!originalEstimator){
-    diffY<-diff(data$Y)
-    everySecondSeq<-seq(1L, length(diffY), by=2L)
-    dy<-diffY[everySecondSeq]
-    tempTime <- data$time[seq(1L, length(data$time), by = 2L)] #temporary placeholder, for compatibility
-    data <- NULL #remove data. Handles errors with e.g. data.frames
-    data$time <- tempTime #creates list compatable with below
-    
-    # we put in a column of zeros to fit our sizes - dy[i,1] should NEVER be used!
+    tempData<-est.EveryOtherDiffData(data) 
+    data<-NULL #Handles issues with data.frame input
+    data$time<-tempData$time #compatability
+    dy<-tempData$dy #compatability
   } else {
     
     dy = diff(data$Y)
@@ -436,4 +422,18 @@ est.mu2 <- function(data, hd, kern = kern.leftexp, t.index, t.points, originalEs
   
   # return list
   return(list(time = t, mu = mu))
+}
+
+est.EveryOtherDiffData<-function(data){
+  #data as in other estimates functions
+  
+  diffY<-diff(data$Y)
+  everySecondSeq<-seq(1L, length(diffY), by=2L)
+  dy<-c(0, diffY[everySecondSeq])
+  tempTime <- data$time[seq(1L, length(data$time), by = 2L)] 
+  if(length(tempTime)<length(dy)){ #handles uneven vs even number of input
+    tempTime<-c(tempTime, 0) #0 unused, just need the right length
+  }
+  
+  return(list(time = tempTime, dy = dy))
 }
