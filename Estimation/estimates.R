@@ -42,6 +42,9 @@ est.mu <- function(data, hd, kern = kern.leftexp, t.index, t.points, originalEst
     tempTime <- data$time[seq(1L, length(data$time), by = 2L)] #temporary placeholder, for compatibility
     data <- NULL #remove data. Handles errors with e.g. data.frames
     data$time <- tempTime #creates list compatable with below
+    if(length(data$time)<length(dy)){ #handles uneven vs even number of input
+      data$time<-c(data$time, 0) #0 unused, just need the right length
+    }
     
     # we put in a column of zeros to fit our sizes - dy[i,1] should NEVER be used!
   } else {
@@ -110,6 +113,9 @@ est.sigma <- function(data, hv, kern = kern.leftexp, wkern = kern.parzen, t.inde
     tempTime <- data$time[seq(1L, length(data$time), by = 2L)] #temporary placeholder. 0-entry for compatibility
     data <- NULL #remove data. Handles errors with e.g. data.frames
     data$time <- tempTime #creates list compatable with below
+    if(length(data$time)<length(dy)){ #handles uneven vs even number of input
+      data$time<-c(data$time, 0) #0 unused, just need the right length
+    }
     
     # we put in a column of zeros to fit our sizes - dy[i,1] should NEVER be used!
   } else {
@@ -137,7 +143,7 @@ est.sigma <- function(data, hv, kern = kern.leftexp, wkern = kern.parzen, t.inde
 
   end = n
   for (j in 1:tt) {
-   sig[j] = sum(  (kern(   (data$time[2:end] - t[j])/hv   )*
+   sig[j] = sum(  (kern(   (data$time[1:(end-1)] - t[j])/hv   )*
                    dy[2:end])^2  )  # l = 0
    
    #sig[j] = sum (  dy[2:end]^2  )
