@@ -6,7 +6,13 @@ est.mu <- function(data, hd, kern = kern.leftexp, t.index, t.points, originalEst
   # data list should include a times column and the Y column (log returns)
   # t.index should be index - we use data$time[t]
   
-  # t.points might not work correctly....
+  # t.points does NOT work yet!
+  
+  if(is.null(data$dy)){
+    dy <- diff(data$Y)
+  } else {
+    dy <- data$dy
+  }
   
   # kern handling
   if(is.list(kern)) kern<-kern$kern
@@ -34,19 +40,6 @@ est.mu <- function(data, hd, kern = kern.leftexp, t.index, t.points, originalEst
     ind = t.index
   }
   
-  
-  if(!originalEstimator){
-    tempData<-est.EveryOtherDiffData(data) 
-    data<-NULL #Handles issues with data.frame input
-    data$time<-tempData$time #compatability
-    dy<-tempData$dy #compatability
-    
-  } else {
-    # we put in a column of zeros to fit our sizes - dy[i,1] should NEVER be used!
-    #dy = cbind(0,t(diff(t(data$Y))))               # diff only does each column seperately / so we transpose to get row wise
-    dy = c(0,diff(data$Y))
-  }
-  
   #t should now be data$time points
   #n = length(t)
   tt = length(t)
@@ -56,22 +49,17 @@ est.mu <- function(data, hd, kern = kern.leftexp, t.index, t.points, originalEst
   # Optimization removed
   if(mode == 1){
     for(j in 1:tt){
-      mu[j] = (1/hd)*sum(kern((data$time[1:(n-1)] - t[j])/hd)*dy[2:n])   
+      mu[j] = (1/hd)*sum(kern((data$time[1:(n-1)] - t[j])/hd)*dy[1:(n-1)])   
     }
   }
   else if(mode == 3){
     for(j in 1:tt){
-      #mu[j] = (1/hd)*sum(kern((data$time[1:(ind[j]-1)] - t[j])/hd)*dy[ 2:ind[j] ]) # mu[1] = 0...?
-      mu[j] = (1/hd)*sum(kern((data$time[1:(n-1)] - t[j])/hd)*dy[2:n])
+      mu[j] = (1/hd)*sum(kern((data$time[1:(n-1)] - t[j])/hd)*dy[1:(n-1)])
     }
   }
   else{ # time points not implemented
     mu[j] = NA
   }
-  
-  #for(j in 1:n){
-  #  mu[j] = (1/hd)*sum(kern((data$time[1:(n-1)] - t[j])/hd)*dy[2:n])   
-  #}
   
   # return list
   return(list(time = t, mu = mu))
@@ -82,6 +70,12 @@ est.sigma <- function(data, hv, kern = kern.leftexp, wkern = kern.parzen, t.inde
   
   # Handle lag
   if(lag=="auto") lag = 15 #temp
+  
+  if(is.null(data$dy)){
+    dy <- diff(data$Y)
+  } else {
+    dy <- data$dy
+  }
   
   # kern handling
   if(is.list(kern)) kern<-kern$kern
@@ -100,18 +94,6 @@ est.sigma <- function(data, hv, kern = kern.leftexp, wkern = kern.parzen, t.inde
     ind<-t.index
   }
   # t should now be data$time points
-  
-  if(!originalEstimator){
-    tempData<-est.EveryOtherDiffData(data) 
-    data<-NULL #Handles issues with data.frame input
-    data$time<-tempData$time #compatability
-    dy<-tempData$dy #compatability
-    
-    # we put in a column of zeros to fit our sizes - dy[i,1] should NEVER be used!
-  } else {
-    #dy = cbind(0,t(diff(t(data$Y))))               # diff only does each column seperately / so we transpose to get row wise
-    dy = c(0,diff(data$Y))
-  }
 
   n = length(data$time)
   tt = length(t)
@@ -119,14 +101,10 @@ est.sigma <- function(data, hv, kern = kern.leftexp, wkern = kern.parzen, t.inde
   
   gamma<-function(l, t, end){
     # end is the highest needed index
-    l <- abs(l)
     out<- sum(   kern( (data$time[(l+1):(end-1)] - t)/hv )* 
-                  dy[(1+l+1):end]*       
+                  dy[(1+l):(end-1)]*       
                  kern( (data$time[1:(end-l-1)] - t)/hv )*
-                    dy[2:(end-l)]   )
-    # l <- abs(l)
-    # out<- sum(    dy[(1+l+1):end]*    
-    #              dy[2:(end-l)]   )  
+                    dy[1:(end-1-l)]   )
     return(out)
   }
   
@@ -134,7 +112,7 @@ est.sigma <- function(data, hv, kern = kern.leftexp, wkern = kern.parzen, t.inde
   end = n
   for (j in 1:tt) {
    sig[j] = sum(  (kern(   (data$time[1:(end-1)] - t[j])/hv   )*
-                   dy[2:end])^2  )  # l = 0
+                   dy[1:(end-1)])^2  )  # l = 0
    
    #sig[j] = sum (  dy[2:end]^2  )
    if (lag >=1) {
@@ -214,7 +192,7 @@ est.sigma.raw <- function(data, hd, kern, t.index=NA, t.points=NA){
 }
 
 # faster versions
-est.mu.next <-function(data, prevmu, hd, t.index){
+est.mu.next <-function(data, prevmu, hd, t.index, originalEstimator = F){
   # data should contain time | logreg - prevmu should contain time | mu
   # t.index indicates where we wish to calculate the estimator
   
@@ -224,6 +202,11 @@ est.mu.next <-function(data, prevmu, hd, t.index){
   # prevmu <- est.mu(data, hd, t.index = 1:3, originalEstimator = T)
   # t.index<-c(3,5,9)
   
+  if(is.null(data$dy)){
+    dy <- diff(data$Y)
+  } else {
+    dy <- data$dy
+  }
   
   kern <- kern.leftexp$kern
   # latest mu is picked out
@@ -246,7 +229,6 @@ est.mu.next <-function(data, prevmu, hd, t.index){
   dt<-c(dt1, diff(t))
   rescale <- exp(-dt/hd)
   
-  dy <- diff(data$Y)
   if(anyNA(dy[t.index])) warning("t.index cannot be higher than t_n-1 (this will rightfully give you NAs)")
   
   n <- length(data$time)
@@ -283,7 +265,12 @@ est.sigma.next <- function(data, prevsig, hv, t.index, wkern=kern.parzen, lag="a
   
   kern <- kern.leftexp$kern
   wkern = kern.parzen$kern
-  # latest mu is picked out
+  
+  if(is.null(data$dy)){
+    dy <- diff(data$Y)
+  } else {
+    dy <- data$dy
+  }
   
   # --- debug ---
   {
@@ -311,7 +298,6 @@ est.sigma.next <- function(data, prevsig, hv, t.index, wkern=kern.parzen, lag="a
   dt<-c(dt1, diff(t))
   rescale <- exp(-2*dt/hv)
   
-  dy <- diff(data$Y)
   if(anyNA(dy[t.index])) warning("t.index cannot be higher than t_n-1 (this will rightfully give you NAs)")
   
   n <- length(data$time)
@@ -429,7 +415,9 @@ est.EveryOtherDiffData<-function(data){
   
   diffY<-diff(data$Y)
   everySecondSeq<-seq(1L, length(diffY), by=2L)
-  dy<-c(0, diffY[everySecondSeq])
+  
+  dy<-diffY[everySecondSeq]
+  
   tempTime <- data$time[seq(1L, length(data$time), by = 2L)] 
   if(length(tempTime)<length(dy)){ #handles uneven vs even number of input
     tempTime<-c(tempTime, 0) #0 unused, just need the right length
