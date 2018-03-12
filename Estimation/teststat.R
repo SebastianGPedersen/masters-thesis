@@ -57,8 +57,10 @@ tstar<-function(data){
 }
 
 est.z_quantile<-function(mym, myrho, myalpha){
+  #Vectorized in mym and myrho (should be same length)
+  
   #Implicitly uses: interpolList
-  #requires function interpolListInParent()
+  #requires function est.interpolListInParent()
   
   #mym: vector of 'm' values to evalute at
   #myrho: vector of 'rho' values to evaluate at
@@ -72,18 +74,28 @@ est.z_quantile<-function(mym, myrho, myalpha){
   #for each pair of (mym,myrho)
   
   
-  interpolListInParent()
+  est.interpolListInParent()
   
   alphaIndex<-match(myalpha,interpolList$alpha)
   
   if(is.na(alphaIndex)){
-    stop(paste0("Choose alpha in: ",interpolList$alpha))
+    stop(paste0("Choose alpha in: ",paste0(interpolList$alpha, collapse = ", ")))
+  }
+  
+  if( myrho < 0 || 0.999 < myrho ){
+    print("Extrapolating on rho")
+  }
+  
+  if( mym < 100 || 10000 < mym ){
+    print("Extrapolating on m")
   }
   
   if(length(myrho)<=1 & length(mym)<=1){
-    print("Inefficient to call witth 'myrho' & 'mym' with length 1")
+    print("Inefficient to call with 'myrho' & 'mym' with length 1")
     mym<-rep(mym,2)
     OnedimFlag<-T
+  } else {
+    OnedimFlag<-F
   }
   fit<-interpolList$fittedPoly[[alphaIndex]]
   newdata<-data.frame(logm = log(mym), logrho = log(1-myrho))
