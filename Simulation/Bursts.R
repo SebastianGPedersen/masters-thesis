@@ -10,6 +10,11 @@ source(paste(Sys.getenv("masters-thesis"),"Simulation/Heston.R",sep="/"))
 
 #OBS: burst_time og interval_length skal være i % and intervallængde.
 
+sim.burstsetting <- function(alpha, beta, burst_time = 0.5, interval_length = 0.05,
+                         c_1 = 3, c_2= 0.15){
+  return(list(alpha = alpha, beta = beta, burst_time = burst_time,
+              interval_length = interval_length, c_1 = c_1, c_2 = c_2))
+}
 
 sim.adddb <- function(Heston_res, burst_time = 0.5, interval_length = 0.5, c_1 = 3, alpha = 0.75) {
 

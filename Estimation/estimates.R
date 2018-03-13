@@ -65,7 +65,7 @@ est.mu <- function(data, hd, kern = kern.leftexp, t.index, t.points, originalEst
   return(list(time = t, mu = mu))
 }
 
-est.sigma <- function(data, hv, kern = kern.leftexp, wkern = kern.parzen, t.index=NA, lag="auto", originalEstimator=FALSE){   # we could do lag = "auto"
+est.sigma <- function(data, hv, kern = kern.leftexp, wkern = kern.parzen, t.index, lag="auto", originalEstimator=FALSE){   # we could do lag = "auto"
   # data list should include a times column and the Y column (log returns)
   
   # Handle lag
@@ -85,7 +85,7 @@ est.sigma <- function(data, hv, kern = kern.leftexp, wkern = kern.parzen, t.inde
   if(!is.function(wkern)) stop("wkern should be either function or list containing function")
   
   # if missing handling:
-  if(is.na(t.index)){
+  if(missing(t.index)){
     start = lag+1
     t<-data$time[start:(length(data$time))] # if nothing specified - every point in data
     ind<-start:(length(data$time))
