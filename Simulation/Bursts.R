@@ -17,7 +17,6 @@ sim.burstsetting <- function(alpha, beta, burst_time = 0.5, interval_length = 0.
 }
 
 sim.adddb <- function(Heston_res, burst_time = 0.5, interval_length = 0.5, c_1 = 3, alpha = 0.75) {
-
   #Intervals
   burst_begin_perc = burst_time-interval_length/2
   burst_end_perc = burst_time+interval_length/2

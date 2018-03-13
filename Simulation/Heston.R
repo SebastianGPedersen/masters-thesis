@@ -3,8 +3,8 @@
 
 
 # List of needed input that can be sent to simulation function
-sim.setup <- function(kappa=5, theta=0.0225, xi = 0.4, rho = -0.5, omega = 0.5,
-                   mat = 6.5/(24*7*52), Nsteps = 1000, Npath = 10000){
+sim.setup <- function(kappa=5, theta=0.0225, xi = 0.4, rho = -0.5, omega = 0.00001,
+                   mat = 6.5/(24*7*52), Nsteps = 23400, Npath = 1000){
   list(kappa = kappa, theta = theta, xi = xi, rho = rho, omega = omega, mat = mat, Nsteps = Nsteps, Npath = Npath)
 }
 
@@ -18,7 +18,7 @@ sim.heston<-function(settings){
   theta = settings$theta
   xi = settings$xi       ##vol of vol
   rho = settings$rho
-  gamma = settings$gamma
+  omega = settings$omega
   
   dt = mat/steps #dt is in years
   time = 0:steps*dt # maybe time should be relative (0-1)
@@ -31,7 +31,8 @@ sim.heston<-function(settings){
   
   X[, 1] = 0
   vol[, 1] = rgamma(N, 2*kappa*theta/xi^2, 2*kappa/xi^2)
-  Y[, 1] = X[,1] + gamma*sqrt(vol[,1])/sqrt(steps)*rnorm(N,0,1) #Changed from vol to sqrt(vol) /Seb 20.02.18
+  #Y[, 1] = X[,1] + gamma*sqrt(vol[,1])/sqrt(steps)*rnorm(N,0,1) #Changed from vol to sqrt(vol) /Seb 20.02.18
+  Y[ ,1] = X[, 1] + omega*rnorm(N,0,1)
   
   for(i in 2:(steps+1)){
     NS = rnorm(N,0,1)
