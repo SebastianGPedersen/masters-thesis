@@ -3,9 +3,9 @@
 
 
 # List of needed input that can be sent to simulation function
-sim.setup <- function(kappa=5, theta=0.0225, xi = 0.4, rho = -0.5, gamma = 0.5,
+sim.setup <- function(kappa=5, theta=0.0225, xi = 0.4, rho = -0.5, omega = 0.5,
                    mat = 6.5/(24*7*52), Nsteps = 1000, Npath = 10000){
-  list(kappa = kappa, theta = theta, xi = xi, rho = rho, gamma = gamma, mat = mat, Nsteps = Nsteps, Npath = Npath)
+  list(kappa = kappa, theta = theta, xi = xi, rho = rho, omega = omega, mat = mat, Nsteps = Nsteps, Npath = Npath)
 }
 
 # Heston simulation (no scheduled bursts)
@@ -47,12 +47,8 @@ sim.heston<-function(settings){
     vol[, i] = x*exp(-0.5*y^2+y*NV  )
     
     #Observed Y
-    omega = gamma*sqrt(vol[,i])/sqrt(steps)     # n corresponds to steps and not repetitions N? #should vol be i-1? No?
+    #omega = gamma*sqrt(vol[,i])/sqrt(steps)     # n corresponds to steps and not repetitions N? #should vol be i-1? No?
     Y[,i] = X[,i] + omega * rnorm(N,0,1)
-    
-    #pay<-100*exp(X[,steps+1])-100
-    #pay = X[, steps+1]-100
-    #price = sum(pay[pay>0])/N
     
   }
   return(list(time = time, Y = Y, X = X, vol = vol))
