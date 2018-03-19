@@ -9,6 +9,13 @@ est.mu <- function(data, hd, kern, t.index=NA, t.points=NA, originalEstimator=FA
   # t.points might not work correctly....
   
   # kern handling
+  
+  #data <- dataY
+  #hd <- hd
+  #kern <- kern.leftexp
+  #t.index <- 10000
+  #t.points <- NA
+  
   if(is.list(kern)) kern<-kern$kern
   
   # mode-handling
@@ -17,8 +24,7 @@ est.mu <- function(data, hd, kern, t.index=NA, t.points=NA, originalEstimator=FA
     mode = 1
     t<-data$time[1:(length(data$time))] # if nothing specified - every point in data
     ind = 1:(length(data$time))
-  }
-  else if(is.na(t.index) & !is.na(t.points)){
+  } else if(is.na(t.index) & !is.na(t.points)){
     mode = 2
     t<-t.points
     ind = numeric(length(t))
@@ -27,18 +33,19 @@ est.mu <- function(data, hd, kern, t.index=NA, t.points=NA, originalEstimator=FA
     for(i in 2:length(t)){
       ind[i] = which.max(data$time[data$time<t[i]])
     }
-  }
-  else{
+  }else{
     mode = 3
     t<-data$time[t.index]
     ind = t.index
   }
   
+  #Vi tager tidspunkt 1:(n-1)
+  #Vi bruger dy[2:n]
   
   if(!originalEstimator){
-    diffY<-diff(data$Y)
-    everySecondSeq<-seq(1L, length(diffY), by=2L)
-    dy<-c(0,diffY[everySecondSeq])
+    diffY<-diff(data$Y) #length er én mindre end Y
+    everySecondSeq<-seq(1L, length(diffY), by=2L) #Et ulige tal. Tager første dy osv.
+    dy<-c(0,diffY[everySecondSeq]) #Tager ikke den sidste
     tempTime <- data$time[seq(1L, length(data$time), by = 2L)] #temporary placeholder, for compatibility
     data <- NULL #remove data. Handles errors with e.g. data.frames
     data$time <- tempTime #creates list compatable with below
