@@ -3,7 +3,7 @@ source("Kernels/kernels.R")
 source("Estimation/estimates.R")
 
 tester<-function(testfun, norm = 1, sub = T, mode = FALSE, h = hd, t.index = 10000,
-                 mean = 0, sd = sig, noise = 0, rho=0,
+                 mean = 0, sd = sig, noise = 0, rho=0, last = 1,
                  t = 0:10000, mat = 1, N = 100000, plt = FALSE){
   # runs the testfun(ction) N times and returns mean/var/values/(plot)
   # sd is multiplied by sqrt(dt)

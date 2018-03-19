@@ -15,13 +15,6 @@ est.mu <- function(data, hd, kern = kern.leftexp, t.index, t.points, originalEst
   }
   
   # kern handling
-  
-  #data <- dataY
-  #hd <- hd
-  #kern <- kern.leftexp
-  #t.index <- 10000
-  #t.points <- NA
-  
   if(is.list(kern)) kern<-kern$kern
   
   # mode-handling
@@ -30,8 +23,8 @@ est.mu <- function(data, hd, kern = kern.leftexp, t.index, t.points, originalEst
     mode = 1
     t<-data$time[1:(length(data$time))] # if nothing specified - every point in data
     ind = 1:(length(data$time))
-  } else if(is.na(t.index) & !is.na(t.points)){
-
+  }
+  else if(missing(t.index) & !missing(t.points)){
     mode = 2
     t<-t.points
     ind = numeric(length(t))
@@ -40,27 +33,11 @@ est.mu <- function(data, hd, kern = kern.leftexp, t.index, t.points, originalEst
     for(i in 2:length(t)){
       ind[i] = which.max(data$time[data$time<t[i]])
     }
-  }else{
+  }
+  else{
     mode = 3
     t<-data$time[t.index]
     ind = t.index
-  }
-  
-  #Vi tager tidspunkt 1:(n-1)
-  #Vi bruger dy[2:n]
-  
-  if(!originalEstimator){
-    diffY<-diff(data$Y) #length er én mindre end Y
-    everySecondSeq<-seq(1L, length(diffY), by=2L) #Et ulige tal. Tager første dy osv.
-    dy<-c(0,diffY[everySecondSeq]) #Tager ikke den sidste
-    tempTime <- data$time[seq(1L, length(data$time), by = 2L)] #temporary placeholder, for compatibility
-    data <- NULL #remove data. Handles errors with e.g. data.frames
-    data$time <- tempTime #creates list compatable with below
-    
-    # we put in a column of zeros to fit our sizes - dy[i,1] should NEVER be used!
-  } else {
-    #dy = cbind(0,t(diff(t(data$Y))))               # diff only does each column seperately / so we transpose to get row wise
-    dy = c(0,diff(data$Y))
   }
   
   #t should now be data$time points
@@ -354,7 +331,7 @@ est.sigma.next <- function(data, prevsig, hv, t.index, wkern=kern.parzen, lag="a
   
   # --- debug ---
   {
-    # husk at j bruges i udregning 1 - husk at k?r j<-1 hver gang der tjekkes op mod noget i sig[1]!!!!
+    # husk at j bruges i udregning 1 - husk at k�r j<-1 hver gang der tjekkes op mod noget i sig[1]!!!!
     
     #sum( (kern( (data$time[1:(n-1)] - t[1])/hv)*dy[1:(n-1)])^2 )+2*wkern(1/2)*gamma2(1, t[1])
     #startsig$sig<-sum( (kern( (data$time[1:(n-1)] - data$time[4])/hv)*dy[1:(n-1)])^2 )+2*wkern(1/2)*gamma2(1, data$time[4])

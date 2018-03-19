@@ -1,6 +1,6 @@
 setwd(Sys.getenv("masters-thesis"))
 source("Kernels/kernels.R")
-source("Estimation/estimates.R")
+#source("Estimation/estimates.R")
 
 # Time parameters
 mat <- 1
@@ -175,13 +175,9 @@ mean(est_one)
 var(est_one)
 
 ######################################### Normal Correlated noise ######################################
-N <- 200
-mu <- numeric(N)
-sigmaEst <- numeric(N)
-
 simAR<-function(n, rho, sd){
   X<-rep(NA,n)
-  X[1]<-rnorm(1, 0, sd/sqrt(1-rho^2))
+  X[1]<-rnorm(1, 0, sd/(1-rho))
   eps<-rnorm(n-1,0,sd)
   for(i in 2:n){
     X[i] <- rho*X[i-1]+eps[i-1]
@@ -189,35 +185,29 @@ simAR<-function(n, rho, sd){
   return(X)
 }
 
-rho<- 0.5
+rho<-0.1
 for(i in 1:N) #Takes approx 30sec (i.e. slow)
 {
   #simulate brownian motion with noise
   x <- rnorm(n = length(t) , mean = 0, sd = sqrt(sig2*dt))
   x <- cumsum(x)
   eps <- simAR(length(t), rho, sqrt(omega2))
-  #eps <- rnorm(n = length(t), mean = 0, sd = sqrt(omega2))
   y <- x + eps
   
   #put in data.frame for use in est.mu function
   dataY<-data.frame(time = t*dt, Y = y)
   
   #Get sigma estimates (vigtigt at bandwidth er rigtig lille)
-  mu[i] <- est.mu(dataY, hd, kern.leftexp, t.index = length(t))$mu[1] #Take out a random timeindex (9000)
-  sigmaEst[i] <- est.sigma(data = dataY, hv = hv, kern = kern.leftexp, wkern = kern.parzen,t.index = 10000,lag=15)$sig
+  mu[i] <- est.mu(dataY, hd, kern.leftexp, t.index = 9000)$mu[1] #Take out a random timeindex (9000)
+  sigmaEst[i] <- est.sigma(data = dataY, hv = hv, kern = kern.leftexp, wkern = kern.parzen,t.index = 9000,lag=15)$sig
   
 }
 
-C2 <- ksq/2*(2*omega2/(1-rho^2))*(1-rho)/(1+rho)
+estT<-hd*(mu/sqrt(sigmaEst))
 
-estT<-sqrt(hd)*sqrt(hv)*(mu/sqrt(sigmaEst)) #Giver Varians på én, rimelig præcist
-estSig <- dt/hv*sigmaEst/C2
-estMu <- sqrt(dt*hd)*mu/sqrt(C2) #Har en for lav varians ved små h
 
-mean(estSig) #1 meget præcist, både i - og + tilfældet
-mean(estMu^2)
-var(estT) #Alt for lavt m. bandwidth 0.01 og rho = 0.5
-
+mean(estT)
+var(estT)
 plot(estT)
 qqnorm(estT)
 qqline(estT)
