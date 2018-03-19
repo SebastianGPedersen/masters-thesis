@@ -4,7 +4,9 @@ source("simulation/bursts.R")
 source("estimation/estimates.R")
 source("kernels/kernels.R")
 
-est.mu.next <-function(data, prevmu, hd, t.index, originalEstimator = F){
+# needs something to handle every second - right now it is assumed that data can be used raw
+# last point is abit weird...
+est.mu.next <-function(data, prevmu, hd, t.index){
   # data should contain time | logreg - prevmu should contain time | mu
   # t.index indicates where we wish to calculate the estimator
   
@@ -14,11 +16,6 @@ est.mu.next <-function(data, prevmu, hd, t.index, originalEstimator = F){
   # prevmu <- est.mu(data, hd, t.index = 1:3, originalEstimator = T)
   # t.index<-c(3,5,9)
   
-  if(is.null(data$dy)){
-    dy <- diff(data$Y)
-  } else {
-    dy <- data$dy
-  }
   
   kern <- kern.leftexp$kern
   # latest mu is picked out
@@ -41,6 +38,7 @@ est.mu.next <-function(data, prevmu, hd, t.index, originalEstimator = F){
   dt<-c(dt1, diff(t))
   rescale <- exp(-dt/hd)
   
+  dy <- diff(data$Y)
   if(anyNA(dy[t.index])) warning("t.index cannot be higher than t_n-1 (this will rightfully give you NAs)")
   
   n <- length(data$time)
@@ -77,19 +75,14 @@ est.sigma.next <- function(data, prevsig, hv, t.index, wkern=kern.parzen, lag="a
   
   kern <- kern.leftexp$kern
   wkern = kern.parzen$kern
-  
-  if(is.null(data$dy)){
-    dy <- diff(data$Y)
-  } else {
-    dy <- data$dy
-  }
+  # latest mu is picked out
   
   # --- debug ---
   {
-    #data<-list(time = 1:100/100, Y = 1:100)
-    #hv = 0.1
-    #prevsig <- est.sigma(data, hv, t.index = 2:4, originalEstimator = T, lag = lag)
-    #t.index<-c(5,9)
+   #data<-list(time = 1:100/100, Y = 1:100)
+   #hv = 0.1
+   #prevsig <- est.sigma(data, hv, t.index = 2:4, originalEstimator = T, lag = lag)
+   #t.index<-c(5,9)
   }
   
   if(missing(prevsig)){
@@ -110,6 +103,7 @@ est.sigma.next <- function(data, prevsig, hv, t.index, wkern=kern.parzen, lag="a
   dt<-c(dt1, diff(t))
   rescale <- exp(-2*dt/hv)
   
+  dy <- diff(data$Y)
   if(anyNA(dy[t.index])) warning("t.index cannot be higher than t_n-1 (this will rightfully give you NAs)")
   
   n <- length(data$time)
@@ -121,7 +115,7 @@ est.sigma.next <- function(data, prevsig, hv, t.index, wkern=kern.parzen, lag="a
   #Define gamma
   gamma<-function(l){
     out<-sum(   kern( (data$time[start[j]:end[j]] - t[j])/hv )    *dy[start[j]:end[j]]*       
-                  kern( (data$time[(start[j]-l):(end[j]-l)] - t[j])/hv )*dy[(start[j]-l):(end[j]-l)]   )
+                kern( (data$time[(start[j]-l):(end[j]-l)] - t[j])/hv )*dy[(start[j]-l):(end[j]-l)]   )
     return(out)
   }
   # CALCULATE NEXT 'BLOCK'
@@ -143,16 +137,16 @@ est.sigma.next <- function(data, prevsig, hv, t.index, wkern=kern.parzen, lag="a
   
   # --- debug ---
   {
-    # husk at j bruges i udregning 1 - husk at kør j<-1 hver gang der tjekkes op mod noget i sig[1]!!!!
-    
-    #sum( (kern( (data$time[1:(n-1)] - t[1])/hv)*dy[1:(n-1)])^2 )+2*wkern(1/2)*gamma2(1, t[1])
-    #startsig$sig<-sum( (kern( (data$time[1:(n-1)] - data$time[4])/hv)*dy[1:(n-1)])^2 )+2*wkern(1/2)*gamma2(1, data$time[4])
-    
-    #gamma2<-function(l, t){
-    #  out<- sum(   kern( (data$time[(l+1):(n-1)] - t)/hv )*dy[(l+1):(n-1)]*       
-    #                 kern( (data$time[1:(n-l-1)] - t)/hv )*dy[1:(n-l-1)]   )
-    #  return(out)
-    #}
+  # husk at j bruges i udregning 1 - husk at kør j<-1 hver gang der tjekkes op mod noget i sig[1]!!!!
+  
+  #sum( (kern( (data$time[1:(n-1)] - t[1])/hv)*dy[1:(n-1)])^2 )+2*wkern(1/2)*gamma2(1, t[1])
+  #startsig$sig<-sum( (kern( (data$time[1:(n-1)] - data$time[4])/hv)*dy[1:(n-1)])^2 )+2*wkern(1/2)*gamma2(1, data$time[4])
+  
+  #gamma2<-function(l, t){
+  #  out<- sum(   kern( (data$time[(l+1):(n-1)] - t)/hv )*dy[(l+1):(n-1)]*       
+  #                 kern( (data$time[1:(n-l-1)] - t)/hv )*dy[1:(n-l-1)]   )
+  #  return(out)
+  #}
   }
   
   #ADD BLOCK TO EXISTING (wow much blockchainy) (if it existed)
@@ -162,7 +156,6 @@ est.sigma.next <- function(data, prevsig, hv, t.index, wkern=kern.parzen, lag="a
   # return list
   return(list(time = t, sig = sig))
 }
-
 
 est.mu2 <- function(data, hd, kern = kern.leftexp, t.index, t.points, originalEstimator=FALSE){
   # data list should include a times column and the Y column (log returns)
@@ -226,101 +219,40 @@ est.mu2 <- function(data, hd, kern = kern.leftexp, t.index, t.points, originalEs
   # return list
   return(list(time = t, mu = mu))
 }
-est.sigma2 <- function(data, hv, kern, wkern, t.index, lag="auto"){   # we could do lag = "auto"
-  # data list should include a times column and the Y column (log returns)
-  
-  # Handle lag
-  if(lag=="auto") lag = 15 #temp
-  
-  t<-data$time[t.index]
-  ind<-t.index
-  
-  tt = length(t)
-  sig = numeric(tt) 
-  
-  
-  dy = diff(data$Y)
-  
-  gamma2<-function(l, t){
-    # to be used in the loop with j as n            
-    out<-ifelse(ind[j]+l < n,
-                sum(   kern( (data$time[(l+1):(ind[j]+l)] - t)/hv )*         #if true
-                         dy[(l+1):(ind[j]+l)]*       
-                         kern( (data$time[1:ind[j]] - t)/hv )*
-                         dy[1:ind[j]]   ),
-                sum(   kern( (data$time[(l+1):(n-1)] - t)/hv )*              #if false
-                         dy[(l+1):(n-1)]*       
-                         kern( (data$time[1:(n-l-1)] - t)/hv )*
-                         dy[1:(n-l-1)]   ))
-    return(out)
-  }
-  
-  gamma<-function(l, t){
-    # the standard where end = n
-    l <- abs(l)
-    out<- sum(   kern( (data$time[(l+1):(n-1)] - t)/hv )* 
-                   dy[(l+1):(n-1)]*       #indices are literally #1 reason for bugs
-                   kern( (data$time[1:(n-l-1)] - t)/hv )*
-                   dy[1:(n-l-1)]   )
-    return(out)
-  }
-  
-  for (j in 1:(tt-1)) {
-    sig[j] = sum(  (kern(   (data$time[1:ind[j]] - t[j])/hv   )*dy[1:ind[j]])^2  )  # l = 0
-    if (lag >=1) {
-      for(l in 1:lag){
-        sig[j] = sig[j] + 2*(wkern(l/(lag+1))*gamma2(l,t[j])) #gamma2
-        
-      }
-    }
-  }
-  sig[tt] = sum(  (kern(   (data$time[1:(n-1)] - t[tt])/hv   )*dy[1:(n-1)])^2  )  # l = 0
-  if (lag >=1) {
-    for(l in 1:lag){
-      sig[tt] = sig[tt] + 2*(wkern(l/(lag+1))*gamma(l, t[tt]))
-    }
-  }
-  
-  # return list
-  return(list(time = t, sig = sig))
-}
+
 
 setting <- sim.setup(Npath = 2, Nstep = 23400)
 sims<-sim.heston(setting)
 sim<-sim.path(1, sims)
 
-plot(sims$vol[1,], type = "l")
-
-(tind<-seq(from=60, to=10000, by=60))
+(tind<-seq(from=60, to=23399, by=60))
 # ~~~~~~~~~~~~~~~~~~ MU ~~~~~~~~~~~~~~~~
-
-data2 <- est.EveryOtherDiffData(sim)
-
-(test<-est.mu(data = data2, hd = 0.0001, kern = kern.leftexp, t.index = tind,  originalEstimator = T)$mu
-  -est.mu.next(data = data2, hd = 0.0001, t.index = tind, originalEstimator = T)$mu)
-
-(timer<-est.mu(data = data2, hd = 0.0001, kern = kern.leftexp, t.index = tind,  originalEstimator = T)$time
-  -est.mu.next(data = data2, hd = 0.0001, t.index = tind, originalEstimator = T)$time)
+(test<-est.mu(data = sim, hd = 0.001, kern = kern.leftexp, t.index = tind,  originalEstimator = T)$mu
+  -est.mu.next(data = sim, hd = 0.001, t.index = tind)$mu)
 
 
 # ~~~~~~~~~~~~~~~~~~SIGMA ~~~~~~~~~~~~~~
-(lags<-(est.sigma(lag=0, data = data2, hv = 0.0001, t.index = tind, originalEstimator = T)$sig
-        -est.sigma.next(lag=0, data = data2, hv = 0.0001, t.index = tind)$sig))
+(lags<-(est.sigma(lag=0, data = sim, hv = 0.01, t.index = tind, originalEstimator = T)$sig
+        -est.sigma.next(lag=0, data = sim, hv = 0.01, t.index = tind)$sig))
 
-(timematch<-est.sigma(lag=0, data = sim, hv = 0.0001, t.index = tind, originalEstimator = T)$time
-  -est.sigma.next(lag=0, data = sim, hv = 0.0001, t.index = tind)$time)
+(timematch<-est.sigma(lag=0, data = sim, hv = 0.01, t.index = tind, originalEstimator = T)$time
+  -est.sigma.next(lag=0, data = sim, hv = 0.01, t.index = tind)$time)
 
-plot(est.sigma(lag=0, data = sim, hv = 0.0001, t.index = tind, originalEstimator = T)$sig, type = "l")
-lines(est.sigma.next(lag=0, data = sim, hv = 0.0001, t.index = tind)$sig, col = "red")
+plot(est.sigma(lag=0, data = sim, hv = 0.01, t.index = tind, originalEstimator = T)$sig, type = "l")
+lines(est.sigma.next(lag=0, data = sim, hv = 0.01, t.index = tind)$sig, col = "red")
 
-(netto<-(est.sigma(data = data2, hv = 0.0001, kern = kern.leftexp, wkern = kern.parzen, t.index = tind, originalEstimator = T)$sig
-         -est.sigma.next(data = data2, hv = 0.0001, t.index = tind)$sig))
+(netto<-(est.sigma(data = sim, hv = 0.01, kern = kern.leftexp, wkern = kern.parzen, t.index = tind, originalEstimator = T)$sig
+        -est.sigma.next(data = sim, hv = 0.01, t.index = tind)$sig))
+
+# food 4 thought
+plot(netto-lags, type = "l") # the errors are completely identical for lag = 15 and lag = 0.
+                             # this would indicate that the gammas are perfectly similar
 
 require(microbenchmark)
 
 (comp.mu<-microbenchmark(est.mu(data = sim, hd = 0.01, t.index = tind, originalEstimator = T),
-                         est.mu2(data = sim, hd = 0.01, t.index = tind, originalEstimator = T),
-                         est.mu.next(data = sim, hd = 0.01, t.index = tind), times = 100))
+               est.mu2(data = sim, hd = 0.01, t.index = tind, originalEstimator = T),
+               est.mu.next(data = sim, hd = 0.01, t.index = tind), times = 100))
 
 (comp.sig<-microbenchmark(est.sigma(data = sim, hv = 0.01, t.index = tind, originalEstimator = T)$sig,
-                          -est.sigma.next(data = sim, hv = 0.01, t.index = tind)$sig, times = 5))
+                          est.sigma.next(data = sim, hv = 0.01, t.index = tind)$sig, times = 5))

@@ -6,7 +6,7 @@ source(paste(Sys.getenv("masters-thesis"),"Simulation/Bursts.R",sep="/"))
 
 
 #Set settings for Heston
-settings <- sim.setup(mat=6.5/(24*7*52)) #6.5 hours
+settings <- sim.setup(mat=6.5/(24*7*52), Npath = 2, omega = 0.0001) #6.5 hours
 
 #Get results with and without bursts. OBS: I have replaced c_1=3 with c_1 = 0.3
 Heston <- sim.heston(settings)
