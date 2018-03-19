@@ -2,9 +2,9 @@ setwd(Sys.getenv("masters-thesis"))
 source("Kernels/kernels.R")
 source("Estimation/estimates.R")
 
-tester<-function(testfun, norm = 1, sub = T, mode = FALSE, h = hd, t.index = 1000,
+tester<-function(testfun, norm = 1, sub = T, mode = FALSE, h = hd, t.index = 10000,
                  mean = 0, sd = sig, noise = 0, rho=0,
-                 t = 0:1000, mat = 1, N = 10000, plt = FALSE){
+                 t = 0:10000, mat = 1, N = 100000, plt = FALSE){
   # runs the testfun(ction) N times and returns mean/var/values/(plot)
   # sd is multiplied by sqrt(dt)
   
@@ -35,7 +35,7 @@ tester<-function(testfun, norm = 1, sub = T, mode = FALSE, h = hd, t.index = 100
     data<-data.frame(time = t*dt, Y = y)
     out[i]<-as.numeric(testfun(data, h, t.index = t.index, originalEstimator = mode)[2])
     out[i] <- norm*(out[i]-mean*sub)
-    eps.last[i] <- eps[t.index]
+    eps.last[i] <- eps[length(t)]
     if(i == 1){
       plot(y, type="l")
     }
@@ -46,6 +46,7 @@ tester<-function(testfun, norm = 1, sub = T, mode = FALSE, h = hd, t.index = 100
     
   }
   
+  
   return(list(mean = mean(out), var = var(out), val = out, noise = noise, eps = eps.last))
 }
 # deets
@@ -53,7 +54,7 @@ tester<-function(testfun, norm = 1, sub = T, mode = FALSE, h = hd, t.index = 100
 
 hd <- 0.01 #bandwidth
 
-test4eps <- tester(est.mu, hd, F, T, mean = 1, sd = 1, noise = 0.01, rho = 0.1, plt = F)
+test4eps <- tester(est.mu, hd, F, T, mean = 1, sd = 1, noise = 0.01, rho = 0.1, plt = F, last = 0.1)
 test4eps$eps
 test4eps$val
 
