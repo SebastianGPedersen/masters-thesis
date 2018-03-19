@@ -21,7 +21,7 @@ tstar<-function(data){
   # Need vector/list of start and end for each period (or n. of observations in)
   start = data$time[1]
   end = data$time[length(data$time)]
-  res = max(data$test)
+  res = max(abs(data$test))
   
   return(list(start = start, end = end, tstar = res))
 }

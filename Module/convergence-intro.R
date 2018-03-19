@@ -2,7 +2,8 @@ setwd(Sys.getenv("masters-thesis"))
 source("Kernels/kernels.R")
 source("Estimation/estimates.R")
 
-tester<-function(testfun, norm = 1, sub = T, mode = FALSE, h = hd, t.index = 9000, mean = 0, sd = sig, noise = 0,
+tester<-function(testfun, norm = 1, sub = T, mode = FALSE, h = hd, t.index = 10000,
+                 mean = 0, sd = sig, noise = 0,
                  t = 0:10000, mat = 1, N = 10000, plt = FALSE){
   # runs the testfun(ction) N times and returns mean/var/values/(plot)
   # sd is multiplied by sqrt(dt)
@@ -21,7 +22,7 @@ tester<-function(testfun, norm = 1, sub = T, mode = FALSE, h = hd, t.index = 900
     data<-data.frame(time = t*dt, Y = y)
     out[i]<-as.numeric(testfun(data, h, t.index = t.index, originalEstimator = mode)[2])
     out[i] <- norm*(out[i]-mean*sub)
-  
+    eps.last[i] <- eps[length(t)]
   }
   if(plt){
     qqnorm(out)
@@ -30,9 +31,10 @@ tester<-function(testfun, norm = 1, sub = T, mode = FALSE, h = hd, t.index = 900
   }
   
 
-  return(list(mean = mean(out), var = var(out), val = out, noise = noise))
+  return(list(mean = mean(out), var = var(out), val = out, noise = noise, eps = eps.last))
 }
 # deets
+
 
 mat <- 1
 t <- 0:10000  # time_points
@@ -47,6 +49,11 @@ hd <- 0.01 #bandwidth
 
 C <- sqrt(ksq*omega^2) # K2/2 E (deps^2)
 
+test4eps <- tester(est.mu, hd, T, T, mean = 0, noise = omega, plt = F)
+test4eps$val
+test4eps$eps
+
+stop()
 ###########################
 #       convergence       #
 ###########################
@@ -97,9 +104,10 @@ test4b$var
 
 # EXTRA 
 #############################################
-test4a <- tester(est.mu, hd/(omega), T, T, mean = 0, noise = omega, plt = T) # kim's #different scaling
+test4a <- tester(est.mu, hd, T, T, mean = 0, noise = omega, plt = T) # kim's #different scaling
 test4a$mean
 test4a$var
+
 
 test4b <- tester(est.mu, sqrt(hd*dt)/C, T, F, mean = 0, noise = omega*(dt*t), plt = T) # ours
 test4b$mean
