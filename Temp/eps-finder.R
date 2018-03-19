@@ -1,0 +1,61 @@
+setwd(Sys.getenv("masters-thesis"))
+source("Kernels/kernels.R")
+source("Estimation/estimates.R")
+
+tester<-function(testfun, norm = 1, sub = T, mode = FALSE, h = hd, t.index = 10000,
+                 mean = 0, sd = sig, noise = 0, rho=0, last = 1,
+                 t = 0:10000, mat = 1, N = 100000, plt = FALSE){
+  # runs the testfun(ction) N times and returns mean/var/values/(plot)
+  # sd is multiplied by sqrt(dt)
+  
+  simAR<-function(n, rho, sd){
+    X<-rep(NA,n)
+    X[1]<-rnorm(1, 0, sd/(1-rho))
+    eps<-rnorm(n-1,0,sd)
+    for(i in 2:n){
+      X[i] <- rho*X[i-1]+eps[i-1]
+    }l
+    return(X)
+  }
+  
+  dt <- mat/t[length(t)]
+  out <- numeric(N)
+  eps.last <- numeric(N)
+  for(i in 1:N)
+  {
+    x <- rnorm(length(t) , mean = mean*dt, sd = sd*sqrt(dt))
+    x <- cumsum(x)
+    if(rho != 0){
+      eps <- simAR(length(t), rho, noise)
+    }
+    else{
+      eps <- rnorm(length(t), mean = 0, sd = noise)
+    }
+    y <- x + eps
+    data<-data.frame(time = t*dt, Y = y)
+    out[i]<-as.numeric(testfun(data, h, t.index = t.index, originalEstimator = mode)[2])
+    out[i] <- norm*(out[i]-mean*sub)
+    eps.last[i] <- eps[length(t)]
+    if(i == 1){
+      plot(y, type="l")
+    }
+  }
+  if(plt){
+    qqnorm(out)
+    abline(0,sd(out))
+    
+  }
+  
+  
+  return(list(mean = mean(out), var = var(out), val = out, noise = noise, eps = eps.last))
+}
+# deets
+
+
+hd <- 0.01 #bandwidth
+
+test4eps <- tester(est.mu, hd, F, T, mean = 1, sd = 1, noise = 0.01, rho = 0.1, plt = F, last = 0.1)
+test4eps$eps
+test4eps$val
+
+plot(test4eps$val - test4eps$eps)

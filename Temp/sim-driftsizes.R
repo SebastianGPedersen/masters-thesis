@@ -2,9 +2,11 @@ setwd(Sys.getenv("masters-thesis"))
 source("simulation/heston.R")
 source("simulation/bursts.R")
 source("estimation/estimates.R")
+source("estimation/rho.R")
+source("estimation/teststat.R")
 source("kernels/kernels.R")
 
-bursts <- function(settings, burstsetting){
+bursts <- function(settings, burstsetting, plot = F){
   alpha <- burstsetting$alpha
   beta <- burstsetting$beta
   burst_time <- burstsetting$burst_time
@@ -21,16 +23,16 @@ bursts <- function(settings, burstsetting){
                                 c_1 = c_1,  alpha = alpha)
                     
 
-  #plot(sim.db$Y, type = "l", col = "blue")
-  #lines(sim.vb$Y, col = "red")
-  #lines(sim$Y)
-  
   #Get a single path
   path = 1
   
   Heston_path = sim.path(path,sims)$Y
   vb_path = sim.path(path, sims.vb)$Y
   vbdb_path = sim.path(path, sims.db)$Y
+  
+  if(!plot){
+    return(list(raw = sim.path(path,sims), vb = sim.path(path, sims.vb), vbdb = sim.path(path, sims.db)))
+  }
   
   #Set time index for plot
   time_index = sims$time/settings$mat
@@ -62,14 +64,57 @@ bursts <- function(settings, burstsetting){
     xlab("time") + ylab("log-return")  + 
     ggtitle("Log-return of asset") +
     theme(plot.title = element_text(hjust = 0.5, size = 20))
-  
-  #return(sim$Y[11700]-sim.db$Y[11700])
 }
 
 require(ggplot2)
-setting <- sim.setup(Npath = 2, Nstep = 23400, omega = 0.0225/10000)
-burst<-sim.burstsetting(alpha = 0.55, beta = 0.2 ,c_1 = 0.2, c_2 = 0.03)
+setting <- sim.setup(Npath = 2, Nstep = 23400, omega = 0.0225/23400*10)
+
+#burst<-sim.burstsetting(alpha = 0.5, beta = 0.2 ,c_1 = 0.2, c_2 = 0.03)
+
+burst<-sim.burstsetting(alpha = 0.55, beta = 0.2 ,c_1 = 0.2, c_2 = 0.015)
+
+#burst<-sim.burstsetting(alpha = 0.6, beta = 0.2 ,c_1 = 0.2, c_2 = 0.03)
 
 set.seed(1234)
 
-bursts(setting, burst)
+bursts(setting, burst, T)
+sim.bursts <- bursts(setting, burst, F)
+
+sims <- sim.bursts$vbdb
+
+data <- est.EveryOtherDiffData(sims)
+
+tind <- seq(from = 2000, to = 9000, by = 10)
+#tind <- 23400/4
+
+dt <- diff(sims$time)[1]
+hd <- 100*dt
+hv <- 1200*dt
+conf = 0.95
+
+# Estimation of mu/sig
+# mu<-est.mu(data, hd, kern.leftexp, t.index = tind)
+# sig <- est.sigma(data, hv, kern.leftexp, kern.parzen, t.index = tind, lag = "auto")
+
+mu<-est.mu.next(data = data, hd = hd, t.index = tind)
+sig <- est.sigma.next(data, hv = hv, t.index = tind, lag = "auto")
+
+# Calculate T
+Tstat<-teststat(mu, sig, hd, hv)
+
+# Calculate T*
+Tstar<-tstar(Tstat)$tstar
+
+# fit rho
+rho <- est.rho(Tstat$test)
+
+z<-est.z_quantile(rho$m, rho$rho, conf)$qZm
+res<-Tstar>=z
+
+a<-c(res, Tstar, z)
+names(a) <- c("T/F", "Tstar", "z")
+
+print(a)
+
+plot(Tstat$test, type = "l")
+points(3500, Tstat$test[3500])
