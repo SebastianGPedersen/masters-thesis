@@ -3,8 +3,8 @@ source("Kernels/kernels.R")
 source("Estimation/estimates.R")
 
 tester<-function(testfun, norm = 1, sub = T, mode = FALSE, h = hd, t.index = 10000,
-                 mean = 0, sd = sig, noise = 0, rho=0, last = 1,
-                 t = 0:10000, mat = 1, N = 100000, plt = FALSE){
+                 mean = 0, sd = sig, noise = 0, rho=0,
+                 t = 0:100000, mat = 1, N = 1000){
   # runs the testfun(ction) N times and returns mean/var/values/(plot)
   # sd is multiplied by sqrt(dt)
   
@@ -35,7 +35,7 @@ tester<-function(testfun, norm = 1, sub = T, mode = FALSE, h = hd, t.index = 100
     data<-data.frame(time = t*dt, Y = y)
     out[i]<-as.numeric(testfun(data, h, t.index = t.index, originalEstimator = mode)[2])
     out[i] <- norm*(out[i]-mean*sub)
-    eps.last[i] <- eps[length(t)]
+    eps.last[i] <- eps[t.index]
     if(i == 1){
       plot(y, type="l")
     }
@@ -45,17 +45,51 @@ tester<-function(testfun, norm = 1, sub = T, mode = FALSE, h = hd, t.index = 100
     abline(0,sd(out))
     
   }
-  
-  
   return(list(mean = mean(out), var = var(out), val = out, noise = noise, eps = eps.last))
 }
-# deets
-
 
 hd <- 0.01 #bandwidth
 
-test4eps <- tester(est.mu, hd, F, T, mean = 1, sd = 1, noise = 0.01, rho = 0.1, plt = F, last = 0.1)
-test4eps$eps
-test4eps$val
+# JUST NOISE #
+test0 <- tester(est.mu, hd, F, T, mean = 0, sd = 0.001, noise = 0.05, rho = 0, plt = F, last = 0.1)
+test0$eps
+test0$val
+plot(test0$eps - test0$val)
+plot(abs((test0$eps - test0$val)/test0$eps), ylim = c(0, 100))
 
-plot(test4eps$val - test4eps$eps)
+
+# MILD NOISE #
+test1 <- tester(est.mu, hd, F, T, mean = 1, sd = 1, noise = 0.01, rho = 0, plt = F, last = 0.1)
+test1$eps
+test1$val
+plot(test1$eps - test1$val)
+plot(abs((test1$eps - test1$val)/test1$eps), ylim = c(0, 100))
+
+
+# MILD NOISE STRONG DIFF#
+test2 <- tester(est.mu, hd, F, T, mean = 1, sd = 10, noise = 0.1, rho = 0, plt = F, last = 0.1)
+test2$eps
+test2$val
+plot(test2$eps - test2$val)
+plot((test2$eps - test2$val)/test2$eps, ylim = c(-100, 100))
+
+# STRONG NOISE #
+test3 <- tester(est.mu, hd, F, T, mean = 1, sd = 1, noise = 0.5, rho = 0, plt = F, last = 0.1)
+test3$eps
+test3$val
+plot(test3$eps - test3$val)
+plot((test3$eps - test3$val)/test3$eps, ylim = c(-100, 100))
+
+# MILD AR #
+test4 <- tester(est.mu, hd, F, T, mean = 1, sd = 1, noise = 0.01, rho = 0.1, plt = F, last = 0.1)
+test4$eps
+test4$val
+plot(test4$eps - test4$val)
+plot((test4$eps - test4$val)/test4$eps, ylim = c(-100, 100))
+
+# STRONG AR #
+test5 <- tester(est.mu, hd, F, T, mean = 1, sd = 1, noise = 0.01, rho = 0.5, plt = F, last = 0.1)
+test5$eps
+test5$val
+plot(test5$eps - test5$val)
+plot((test5$eps - test5$val)/test5$eps, ylim = c(-100, 100))
