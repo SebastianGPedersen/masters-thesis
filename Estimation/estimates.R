@@ -128,7 +128,6 @@ est.sigma <- function(data, hv, kern = kern.leftexp, wkern = kern.parzen, t.inde
   return(list(time = t, sig = sig))
 }
 
-
 est.sigma.raw <- function(data, hd, kern, t.index, t.points){
   # data list should include a times column and the Y column (log returns)
   # t.index should be index - we use data$time[t]
