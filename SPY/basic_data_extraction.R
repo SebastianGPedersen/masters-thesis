@@ -6,7 +6,7 @@ setwd(paste0(Sys.getenv("masters-thesis"),"/SPY"))
 source("dataFunctions.R")
 
 setwd(paste0(Sys.getenv("masters-thesis-data"),"/SPY"))
-fullData<-readRDS("2014_SPY_Vol_Avg.rdata")
+fullData<-readRDS("2014_SPY_Vol_Avg.rds")
 setwd(cd)
 rm(cd)
 #### various data extractions
