@@ -13,7 +13,6 @@ est.mu <- function(data, hd, kern = kern.leftexp, t.index, t.points, originalEst
   #} else {
   #  dy <- data$dy
   #}
-  dy <- data$Y
   
   # kern handling
   if(is.list(kern)) kern<-kern$kern
@@ -69,14 +68,14 @@ est.mu <- function(data, hd, kern = kern.leftexp, t.index, t.points, originalEst
 est.sigma <- function(data, hv, kern = kern.leftexp, wkern = kern.parzen, t.index, lag="auto", originalEstimator=FALSE){   # we could do lag = "auto"
   # data list should include a times column and the Y column (log returns)
   
-  lagset <- lag
+  # Handle lag
+  if(lag=="auto") lag = 15 #temp
   
   #if(is.null(data$dy)){
   #  dy <- diff(data$Y)
   #} else {
   #  dy <- data$dy
   #}
-  dy <- data$Y
   
   # kern handling
   if(is.list(kern)) kern<-kern$kern
@@ -95,20 +94,10 @@ est.sigma <- function(data, hv, kern = kern.leftexp, wkern = kern.parzen, t.inde
     ind<-t.index
   }
   # t should now be data$time points
-  
 
   n = length(data$time)
   tt = length(t)
   sig = numeric(tt) 
-  
-  # Handle lag
-  if(lagset=="auto"){
-    # more elegant solution to nmu should be implemented
-    nmu <- numeric(tt)
-    for(j in 1:tt){
-      nmu[j] <- sum(kern((data$time[1:(n-1)] - t[j])/hd))
-    }
-  }
   
   gamma<-function(l, t, end){
     # end is the highest needed index
@@ -118,21 +107,18 @@ est.sigma <- function(data, hv, kern = kern.leftexp, wkern = kern.parzen, t.inde
                     dy[1:(end-1-l)]   )
     return(out)
   }
+  
 
   end = n
   for (j in 1:tt) {
-    if(lagset =="auto")
-    {
-      lag <- laglength(dy, nmu[j])       # NOT EXACTLY LIKE KIM'S / BUT SHOULD NOT MAKE A HUGE ENOUGH IMPACT
-      #print(lag)
-    }
-   sig[j] <- sum(  (kern(   (data$time[1:(end-1)] - t[j])/hv)*dy[1:(end-1)]  )^2  )  # l = 0
+   sig[j] = sum(  (kern(   (data$time[1:(end-1)] - t[j])/hv   )*
+                   dy[1:(end-1)])^2  )  # l = 0
    
    #sig[j] = sum (  dy[2:end]^2  )
    if (lag >=1) {
      for(l in 1:lag){
        #sig[j] = sig[j] + 2*(wkern(l/n)*gamma(l,t[j], end))
-       sig[j] <- sig[j] + 2*(wkern(l/(lag))*gamma(l,t[j], end))
+       sig[j] = sig[j] + 2*(wkern(l/(lag+1))*gamma(l,t[j], end))
        #sig[j] = sig[j] + 2*((1-l/(lag+1))*gamma(l,t[j], end))
      }
    }
@@ -407,39 +393,66 @@ est.mu2 <- function(data, hd, kern = kern.leftexp, t.index, t.points, originalEs
   return(list(time = t, mu = mu))
 }
 
-# LAG LENGTH #
-# find Newey-West (1994) -- automatic lag selection with parzen kernel
-
-laglength = function(dx, nmu){
-  # dx are NOT preavr
-  # only dx from backwards in time should be considered
-  # Indices may be wrong due to zero index (or is it? Matlab is index 1...)
-  c <- 2.6614
-  q <- 2
+est.sigma.kim <- function(data, hv, kern = kern.leftexp, wkern = kern.parzen, t.index, lag="auto"){
+  # data list should include a times column and the Y column (log returns)
+  # INPUT SHOULD ALREADY BE PREAVERAGED!
   
-  n <- round(4*(nmu/100)^(4/25))
-  root <- 1/(2*q+1)
+  # kern handling
+  if(is.list(kern)) kern<-kern$kern
+  if(!is.function(kern)) stop("kern should be either function or list containing function")
   
-  # pre-estimate autocovariance of noise increment
-  E_deij <- numeric(n+1)
-  for(i in 1:(n+1)){
-    E_deij[i] <- mean(dx[(i+1):length(dx)]*dx[1:(length(dx)-i)])
+  if(is.list(wkern)) wkern<-wkern$kern
+  if(!is.function(wkern)) stop("wkern should be either function or list containing function")
+  
+  # Handle lag
+  if(lag=="auto"){
+    lag <- 15 #temp
+    if(missing(data$raw) & missing(nmu)){
+      stop("Cannot calculate lag length without un-preaveraged - data$raw") #hmm
+    }
+  } 
+  
+  dy <- diff(data$Y)
+  
+  # if missing handling:
+  if(missing(t.index)){
+    start = lag+1
+    t<-data$time[start:(length(data$time))] # if nothing specified - every point in data
+    ind<-start:(length(data$time))
+  }else{
+    t<-data$time[t.index]
+    ind<-t.index
+  }
+  # t should now be data$time points
+  
+  n = length(data$time)
+  tt = length(t)
+  sig = numeric(tt) 
+  
+  gamma<-function(l, t, end){
+    # end is the highest needed index
+    out<- sum(   kern( (data$time[(l+1):(end-1)] - t)/hv )* 
+                   dy[(1+l):(end-1)]*       
+                   kern( (data$time[1:(end-l-1)] - t)/hv )*
+                   dy[1:(end-1-l)]   )
+    return(out)
   }
   
-  v0 <-  -sum(   (1:(n+1))*E_deij   )
   
-  ac<- numeric(n)
-  for(i in 1:n){
-    ac[i] <- -sum(   (1:(n+1-i))*E_deij[(i+1):(n+1)]   )
+  end = n
+  for (j in 1:tt) {
+    sig[j] = sum(  (kern(   (data$time[1:(end-1)] - t[j])/hv   )*
+                      dy[1:(end-1)])^2  )  # l = 0
+    
+    if (lag >=1) {
+      for(l in 1:lag){
+        sig[j] = sig[j] + 2*(wkern(l/(lag+1))*gamma(l,t[j], end))
+      }
+    }
   }
   
-  # determine lag length
-  
-  s0 <- v0 + 2 * sum(ac)
-  sq <- 2*sum(   (1:n)^(q)*ac   ) # sq = 2*sum((1:n).^q.*ac); - regnehieraki
-  
-  gamma <- c*(   ((sq/s0)^q)^root   )
-  return(round(gamma*nmu^root))
+  # return list
+  return(list(time = t, sig = sig))
 }
 
 

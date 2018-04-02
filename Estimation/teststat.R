@@ -6,7 +6,7 @@ teststat<-function(data.mu, data.sig, hd, hv){
   mu<-data.mu$mu
   sig <- data.sig$sig
   
-  coef <- sqrt(hd)*sqrt(hv)
+  coef <- sqrt(hd)    #sqrt(hd)*sqrt(hv) <- our previous version
   
   # calculates t-stat
   t <- coef*(mu/sqrt(sig))

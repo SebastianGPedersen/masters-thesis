@@ -3,7 +3,6 @@ est.PreAverage<-function(logRet_Data, K){
     stop("Needs K even")
   }
   
-  
   N <- length(logRet_Data) 
   lOut <- N-K+1
   r <- rep(NA, lOut)
@@ -15,3 +14,5 @@ est.PreAverage<-function(logRet_Data, K){
   
   return(r/K)
 }
+
+# Consider adding k-1 zeros in the beginning

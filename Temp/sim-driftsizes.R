@@ -4,6 +4,7 @@ source("simulation/bursts.R")
 source("estimation/estimates.R")
 source("estimation/rho.R")
 source("estimation/teststat.R")
+source("estimation/pre-average.R")
 source("kernels/kernels.R")
 
 bursts <- function(settings, burstsetting, plot = F){
@@ -71,33 +72,35 @@ setting <- sim.setup(Npath = 2, Nstep = 23400, omega = 0.0225/23400*10)
 
 #burst<-sim.burstsetting(alpha = 0.5, beta = 0.2 ,c_1 = 0.2, c_2 = 0.03)
 
-burst<-sim.burstsetting(alpha = 0.55, beta = 0.2 ,c_1 = 0.2, c_2 = 0.015)
+#burst<-sim.burstsetting(alpha = 0.55, beta = 0.2 ,c_1 = 0.2, c_2 = 0.015)
 
-#burst<-sim.burstsetting(alpha = 0.6, beta = 0.2 ,c_1 = 0.2, c_2 = 0.03)
+burst<-sim.burstsetting(alpha = 0.6, beta = 0.2 ,c_1 = 0.2, c_2 = 0.03)
 
 set.seed(1234)
 
 bursts(setting, burst, T)
 sim.bursts <- bursts(setting, burst, F)
 
-sims <- sim.bursts$vbdb
+sims <- sim.bursts$vbdb # choose the one with vbdb
 
-data <- est.EveryOtherDiffData(sims)
+k <- 152#1*sqrt(length(sims$time))
+prev <- c(rep(0,k-1),est.PreAverage(sims$Y, k))
 
 tind <- seq(from = 2000, to = 9000, by = 10)
-#tind <- 23400/4
 
-dt <- diff(sims$time)[1]
+data <- list(time = sims$time, Y = prev)
+
+plot(data$Y, type ="l")
+
+dt <- diff(data$time)[1]
 hd <- 100*dt
-hv <- 1200*dt
+hv <- 500*dt
 conf = 0.95
 
 # Estimation of mu/sig
-# mu<-est.mu(data, hd, kern.leftexp, t.index = tind)
-# sig <- est.sigma(data, hv, kern.leftexp, kern.parzen, t.index = tind, lag = "auto")
-
 mu<-est.mu.next(data = data, hd = hd, t.index = tind)
-sig <- est.sigma.next(data, hv = hv, t.index = tind, lag = "auto")
+#sig <- est.sigma.next(data, hv = hv, t.index = tind, lag = "auto")
+sig <- est.sigma(data, hv, kern.leftexp, kern.parzen, t.index = tind, lag = "auto")
 
 # Calculate T
 Tstat<-teststat(mu, sig, hd, hv)
@@ -118,3 +121,9 @@ print(a)
 
 plot(Tstat$test, type = "l")
 points(3500, Tstat$test[3500])
+
+# EXPORT TO MATLAB FOR PARALLEL VIEW
+stop()
+exp<-cbind(sims$time,sims$Y)
+require(R.matlab)
+writeMat(con="C:/Users/Frederik/Dropbox/Lspeciale/test.m", x=as.matrix(exp))
