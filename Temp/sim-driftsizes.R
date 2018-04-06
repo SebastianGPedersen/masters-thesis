@@ -81,7 +81,7 @@ set.seed(1234)
 bursts(setting, burst, T)
 sim.bursts <- bursts(setting, burst, F)
 
-sims <- sim.bursts$vbdb # choose the one with vbdb
+sims <- sim.bursts$raw#vbdb # choose the one with vbdb
 
 k <- 1*152#1*sqrt(length(sims$time))
 prev <- c(rep(0,k-2),est.PreAverage(sims$Y, k)) # Kim does not divide by k - scaling does not change results
@@ -92,7 +92,7 @@ tind <- seq(from = 1000, to = 23000, by = 10)
 
 # 1*52*7*24*60*60*1000 - YEAR TO MILLISECONDS
 
-data <- list(time = sims$time*1*52*7*24*60*60*1000, Y = prev*k)
+data <- list(time = sims$time*1*52*7*24*60*60*1000, Y = prev)
 
 plot(data$Y, type ="l")
 
