@@ -143,7 +143,7 @@ est.sigma <- function(data, hv, kern = kern.leftexp, wkern = kern.parzen, t.inde
   return(list(time = t, sig = sig))
 }
 
-est.sigma.raw <- function(data, hd, kern, t.index, t.points){
+est.sigma.raw <- function(data, hv, kern, t.index, t.points){
   # data list should include a times column and the Y column (log returns)
   # t.index should be index - we use data$time[t]
   
@@ -174,25 +174,25 @@ est.sigma.raw <- function(data, hd, kern, t.index, t.points){
   
   tt = length(t)
   n = length(data$time)
-  mu = numeric(tt)          # We can only have bandwidth to end amount of calcs
+  sig = numeric(tt)          # We can only have bandwidth to end amount of calcs
   
-  dy = diff(data$Y)
+  dy <- data$Y
   
   # Optimization removed
   if(mode == 1){
     for(j in 1:tt){
-      mu[j] = sqrt((1/hd)*sum(kern((data$time[1:(n-1)] - t[j])/hd)*(dy[1:(n-1)])^2))   
+      sig[j] = sqrt((1/hd)*sum(kern((data$time[1:(n-1)] - t[j])/hd)*(dy[1:(n-1)])^2))   
     }
   }
   else if(mode == 3){
     for(j in 1:tt){
-      mu[j] = sqrt((1/hd)*sum(kern((data$time[1:(n-1)] - t[j])/hd)*(dy[1:(n-1)])^2))
+      sig[j] = sqrt((1/hd)*sum(kern((data$time[1:(n-1)] - t[j])/hd)*(dy[1:(n-1)])^2))
     }
   }
   else{ # time points not implemented
-    mu[j] = NA
+    sig[j] = NA
   }
-  return(list(time = t, sigRaw = mu))
+  return(list(time = t, sig = sig/hv))
 }
 
 # faster versions

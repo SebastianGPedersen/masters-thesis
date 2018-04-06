@@ -74,7 +74,7 @@ setting <- sim.setup(Npath = 2, Nstep = 23400, omega = 0.0225/23400*10)
 
 #burst<-sim.burstsetting(alpha = 0.55, beta = 0.2 ,c_1 = 0.2, c_2 = 0.015)
 
-burst<-sim.burstsetting(alpha = 0.6, beta = 0.2 ,c_1 = 0.2, c_2 = 0.03)
+burst<-sim.burstsetting(alpha = 0.6, beta = 0.2 ,c_1 = 0.2, c_2 = 0.03, interval_length = 0.1)
 
 set.seed(1234)
 
@@ -83,24 +83,32 @@ sim.bursts <- bursts(setting, burst, F)
 
 sims <- sim.bursts$vbdb # choose the one with vbdb
 
-k <- 152#1*sqrt(length(sims$time))
-prev <- c(rep(0,k-1),est.PreAverage(sims$Y, k))
+k <- 1*152#1*sqrt(length(sims$time))
+prev <- c(rep(0,k-2),est.PreAverage(sims$Y, k)) # Kim does not divide by k - scaling does not change results
 
-tind <- seq(from = 2000, to = 9000, by = 10)
+tind <- seq(from = 1000, to = 23000, by = 10)
 
-data <- list(time = sims$time, Y = prev)
+# 6.5/(24*7*52)
+
+# 1*52*7*24*60*60*1000 - YEAR TO MILLISECONDS
+
+data <- list(time = sims$time*1*52*7*24*60*60*1000, Y = prev*k)
 
 plot(data$Y, type ="l")
 
 dt <- diff(data$time)[1]
-hd <- 100*dt
-hv <- 500*dt
+hd <- 300000#300*dt
+hv <- 1500000#1500*dt
 conf = 0.95
 
 # Estimation of mu/sig
-mu<-est.mu.next(data = data, hd = hd, t.index = tind)
-#sig <- est.sigma.next(data, hv = hv, t.index = tind, lag = "auto")
-sig <- est.sigma(data, hv, kern.leftexp, kern.parzen, t.index = tind, lag = "auto")
+mu<-est.mu(data = data, hd = hd, t.index = tind)
+sig <- est.sigma.raw(data, hv, kern.leftexp, kern.parzen, t.index = tind)
+plot(sig$sig, type="l")
+sig <- est.sigma(data, hv, kern.leftexp, kern.parzen, t.index = tind, lag = 0)
+plot(sig$sig, type="l")
+
+#sig <- list(time = sig$time, sig = sig$sig*hv)
 
 # Calculate T
 Tstat<-teststat(mu, sig, hd, hv)
@@ -120,10 +128,16 @@ names(a) <- c("T/F", "Tstar", "z")
 print(a)
 
 plot(Tstat$test, type = "l")
-points(3500, Tstat$test[3500])
+#points(3500, Tstat$test[3500])
 
 # EXPORT TO MATLAB FOR PARALLEL VIEW
 stop()
-exp<-cbind(sims$time,sims$Y)
-require(R.matlab)
-writeMat(con="C:/Users/Frederik/Dropbox/Lspeciale/test.m", x=as.matrix(exp))
+exp<-cbind(sims$time*1*52*7*24*60*60*1000,sims$Y)
+tim <- sims$time[tind]*1*52*7*24*60*60*1000
+
+write.csv(x = exp, file = "C:/Users/Frederik/Dropbox/Lspeciale/exp.csv")
+write.csv(x = tim, file = "C:/Users/Frederik/Dropbox/Lspeciale/tim.csv")
+write.csv(x = mu$mu, file = "C:/Users/Frederik/Dropbox/Lspeciale/mu.csv")
+write.csv(x = sig$sig, file = "C:/Users/Frederik/Dropbox/Lspeciale/sig.csv")
+#require(R.matlab)
+#writeMat(con="C:/Users/Frederik/Dropbox/Lspeciale/test.m", x=as.matrix(exp))
