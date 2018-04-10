@@ -1,6 +1,8 @@
 setwd(Sys.getenv("masters-thesis"))
 source("Kernels/kernels.R")
 source("Estimation/estimates.R")
+source("estimation/pre-average.R")
+
 
 # Time parameters
 mat <- 1
@@ -16,6 +18,10 @@ ksq <- 0.5 # K2
 hd <- 0.1 #bandwidth in mu
 hv <- 0.1 #bandwidth in sigma
 
+#Set k_n and phi
+k_n <- floor(1/2*1/(sqrt(dt)))
+phi <- 1/12 #int(g^2)
+
 
 # Simulate a Brownian motion (X) and one with mcrostrucutre noise (Y)
 x <- rnorm(n = length(t) , mean = 0, sd = sqrt(sig2*dt))
@@ -23,6 +29,8 @@ eps <- rnorm(length(t), mean = 0, sd = sqrt(omega))
 x <- cumsum(x)
 y <- x + eps
 
+#Pre-avg y
+pre_y <- est.PreAverage(y,k_n)
 
 # Plot part of x and y to validate it is done correctly
 plot(x[1:100],type="l")
@@ -38,20 +46,23 @@ mu <- numeric(N)
 
 for(i in 1:N) #Takes approx 10sec
 {
+  #i <- 1
   #simulate brownian motion
   x <- rnorm(n = length(t) , mean = 0, sd = sqrt(sig2*dt))
   x <- cumsum(x)
   
-  #put in data.frame for use in est.mu function
-  dataX<-data.frame(time = t*dt, Y = x)
+  pre_x <- est.PreAverage(x,k_n)
   
-  mu[i] <- est.mu(dataX, hd, kern.leftexp, t.index = 500)$mu[1] #Take out a random timeindex (500)
+  #put in data.frame for use in est.mu function
+  dataX<-data.frame(time = t*dt, Y = pre_x)
+  
+  mu[i] <- est.mu(dataX, hd, kern.leftexp, t.index = length(t)-1)$mu[1] #Take out a random timeindex (500)
 }
 
-mu <- sqrt(hd)*mu #This should be N(0,ksq*sgima^2) distributed from eq. (13)
+mu <- sqrt(hd) / sqrt(k_n*phi) *mu #This should be N(0,ksq*sgima^2) distributed from eq. (13)
 
 #Normalize
-mu_normal <- mu*sqrt(1/(ksq*sig2))
+mu_normal <- mu*sqrt(1/(ksq*sig2*mat))
 
 #test - it all looks really fine
 mean(mu_normal)
@@ -68,16 +79,21 @@ qqnorm(mu_normal)
 x <- rnorm(n = length(t) , mean = 0, sd = sqrt(sig2*dt))
 x <- cumsum(x)
 
+pre_x <- est.PreAverage(x,k_n)
+
 #Put in dataframe
-dataX<-data.frame(time = t*dt, Y = x)
+dataX<-data.frame(time = t*dt, Y = pre_x)
 
 #Get sigma estimates on 1000 different time_points (vigtigt at bandwidth er rigtig lille)
-sigma_1000_times <-est.sigma.raw(data = dataX, hv, kern.leftexp, t.index = seq(1000, 10000, by = 10))$sigRaw
+sigma_1000_times <- est.sigma.raw(data = dataX, hv, kern.leftexp, t.index = seq(1000, 10000, by = 10))$sig
 
-est_sig2 <- sigma_1000_times^2
+mean(sigma_1000_times^2)
+
+est_sig2 <- 1/(phi*k_n)*sigma_1000_times^2 #Tæt på 2*phi?
+
 
 #Test that this is close to sig2 (0.01)
-plot(est_sig2)
+plot(est_sig2) #utrolig tæt på 100?
 
 #It looks centralized plus minus 20% so not bad
 

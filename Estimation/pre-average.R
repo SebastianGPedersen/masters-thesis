@@ -9,10 +9,39 @@ est.PreAverage<-function(logRet_Data, K){
   
   for(i in 1:(lOut)){
     
-    r[i] <- sum(logRet_Data[i+(K/2):(K-1)])-sum(logRet_Data[i+(0):(K/2-1)])
+    r[i] <- 1/K * (sum(logRet_Data[i+(K/2):(K-1)])-sum(logRet_Data[i+(0):(K/2-1)]))
   }  
   
-  return(r/K)
+  #Zeros at first
+  r_w_zeros <- c(rep(0,K-1),r)
+  
+  return(r_w_zeros/K)
 }
 
 # Consider adding k-1 zeros in the beginning
+
+
+#The function below has to be quick, so the loop is in counter-intuitive order (k_n is outer and n is inner loop)
+est.NewPreAverage <- function(delta_y, k_n, kernel_func = NA) {
+
+  #If kernel function is missing, let it be standard
+  if (is.na(kernel_func)) {
+    kernel_func <- function(x) {min(x,1-x)}
+  }
+  
+  #Calculate kernel_values outside loop
+  kernel_values <- sapply((1:k_n-1)/k_n, kernel_func)
+  
+  #Initialize
+  y_bar <- rep(0,length(delta_y)-k_n)
+  
+  #Loop over k_n
+  for (i in 1:(k_n-1)){
+    y_bar <-  y_bar + kernel_values[i]*delta_y[i:(length(delta_y)-k_n-1+i)]
+  }
+
+  return(y_bar)
+}
+
+
+
