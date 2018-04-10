@@ -150,46 +150,46 @@ est.sigma.raw <- function(data, hv, kern, t.index, t.points){
   if(is.list(kern)) kern<-kern$kern
   
   # mode-handling
-  mode = NA
+  mode <- NA
   if(missing(t.index) & missing(t.points)){
-    mode = 1
+    mode <- 1
     t<-data$time[1:(length(data$time))] # if nothing specified - every point in data
-    ind = 1:(length(data$time))
+    ind <- 1:(length(data$time))
   }
   else if(missing(t.index) & !missing(t.points)){
-    mode = 2
+    mode <- 2
     t<-t.points
-    ind = numeric(length(t))
+    ind <- numeric(length(t))
     for(i in 2:length(t)){
-      ind[i] = which.max(data$time[data$time<t[i]])
+      ind[i] <- which.max(data$time[data$time<t[i]])
     }
   }
   else{
-    mode = 3
+    mode <- 3
     t<-data$time[t.index]
-    ind = t.index
+    ind <- t.index
   }
   #t should now be data$time points
   
-  tt = length(t)
-  n = length(data$time)
-  sig = numeric(tt)          # We can only have bandwidth to end amount of calcs
+  tt <- length(t)
+  n <- length(data$time)
+  sig <- numeric(tt)          # We can only have bandwidth to end amount of calcs
   
   dy <- data$Y
   
   # Optimization removed
   if(mode == 1){
     for(j in 1:tt){
-      sig[j] = sqrt((1/hv)*sum(kern((data$time[1:(n-1)] - t[j])/hv)*(dy[1:(n-1)])^2))   
+      sig[j] <- sqrt((1/hv)*sum(kern((data$time[1:(n-1)] - t[j])/hv)*(dy[1:(n-1)])^2))   
     }
   }
   else if(mode == 3){
     for(j in 1:tt){
-      sig[j] = sqrt((1/hv)*sum(kern((data$time[1:(n-1)] - t[j])/hv)*(dy[1:(n-1)])^2))
+      sig[j] <- sqrt((1/hv)*sum(kern((data$time[1:(n-1)] - t[j])/hv)*(dy[1:(n-1)])^2))
     }
   }
   else{ # time points not implemented
-    sig[j] = NA
+    sig[j] <- NA
   }
   return(list(time = t, sig = sig))
 }
@@ -325,7 +325,7 @@ est.sigma.next <- function(data, prevsig, hv, t.index, wkern=kern.parzen, lag="a
   }
   
   # --- debug ---
-  {
+  #{
     # husk at j bruges i udregning 1 - husk at kør j<-1 hver gang der tjekkes op mod noget i sig[1]!!!!
     
     #(1/hv)*(sum( (kern( (data$time[1:(n-1)] - t[1])/hv)*dy[1:(n-1)])^2 )+2*wkern(1)*gamma2(1, t[1]))
@@ -336,7 +336,7 @@ est.sigma.next <- function(data, prevsig, hv, t.index, wkern=kern.parzen, lag="a
     #                 kern( (data$time[1:(n-l-1)] - t)/hv )*dy[1:(n-l-1)]   )
     #  return(out)
     #}
-  }
+  #}
   
   #ADD BLOCK TO EXISTING (wow much blockchainy) (if it existed)
   t <- c(prevsig$time, t)
