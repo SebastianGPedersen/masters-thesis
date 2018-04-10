@@ -68,20 +68,17 @@ bursts <- function(settings, burstsetting, plot = F){
 }
 
 require(ggplot2)
-setting <- sim.setup(Npath = 2, Nstep = 23400, omega = 0.0225/23400*10)
-
-#burst<-sim.burstsetting(alpha = 0.5, beta = 0.2 ,c_1 = 0.2, c_2 = 0.03)
-
-#burst<-sim.burstsetting(alpha = 0.55, beta = 0.2 ,c_1 = 0.2, c_2 = 0.015)
+setting <- sim.setup(Npath = 2, Nstep = 23400, omega = 0.0000000225)
 
 burst<-sim.burstsetting(alpha = 0.6, beta = 0.2 ,c_1 = 0.2, c_2 = 0.03, interval_length = 0.1)
 
 set.seed(1234)
 
-bursts(setting, burst, T)
 sim.bursts <- bursts(setting, burst, F)
 
 sims <- sim.bursts$raw#vbdb # choose the one with vbdb
+
+plot(sims$Y, type = "l")
 
 k <- 1*152#1*sqrt(length(sims$time))
 prev <- c(rep(0,k-2),est.PreAverage(sims$Y, k)) # Kim does not divide by k - scaling does not change results
@@ -92,23 +89,28 @@ tind <- seq(from = 1000, to = 23000, by = 10)
 
 # 1*52*7*24*60*60*1000 - YEAR TO MILLISECONDS
 
+#data <- list(time = sims$time*1*52*7*24*60*60*1000, Y = prev)
 data <- list(time = sims$time*1*52*7*24*60*60*1000, Y = prev)
 
-plot(data$Y, type ="l")
+#plot(data$Y, type ="l")
 
 dt <- diff(data$time)[1]
-hd <- 300000#300*dt
-hv <- 1500000#1500*dt
+hd <- 300*dt
+hv <- 1500*dt
+
+#hd <- 300000#300*dt
+#hv <- 1500000#1500*dt
+
 conf = 0.95
 
 # Estimation of mu/sig
-mu<-est.mu(data = data, hd = hd, t.index = tind)
-sig <- est.sigma.raw(data, hv, kern.leftexp, kern.parzen, t.index = tind)
-plot(sig$sig, type="l")
-sig <- est.sigma(data, hv, kern.leftexp, kern.parzen, t.index = tind, lag = 0)
-plot(sig$sig, type="l")
+#mu<-est.mu(data = data, hd = hd, t.index = tind)
+mu<-est.mu.next(data = data, hd = hd, t.index = tind)
+#sig <- est.sigma.raw(data, hv, kern.leftexp, kern.parzen, t.index = tind)
+#sig <- list(time = sig$time, sig = sig$sig^2)
 
-#sig <- list(time = sig$time, sig = sig$sig*hv)
+#sig <- est.sigma(data, hv, kern.leftexp, kern.parzen, t.index = tind, lag = 15)#"auto")
+sig <- est.sigma.next(data, hv=hv, t.index = tind, lag = 15)
 
 # Calculate T
 Tstat<-teststat(mu, sig, hd, hv)
@@ -131,13 +133,15 @@ plot(Tstat$test, type = "l")
 #points(3500, Tstat$test[3500])
 
 # EXPORT TO MATLAB FOR PARALLEL VIEW
-stop()
-exp<-cbind(sims$time*1*52*7*24*60*60*1000,sims$Y)
-tim <- sims$time[tind]*1*52*7*24*60*60*1000
-
-write.csv(x = exp, file = "C:/Users/Frederik/Dropbox/Lspeciale/exp.csv")
-write.csv(x = tim, file = "C:/Users/Frederik/Dropbox/Lspeciale/tim.csv")
-write.csv(x = mu$mu, file = "C:/Users/Frederik/Dropbox/Lspeciale/mu.csv")
-write.csv(x = sig$sig, file = "C:/Users/Frederik/Dropbox/Lspeciale/sig.csv")
-#require(R.matlab)
-#writeMat(con="C:/Users/Frederik/Dropbox/Lspeciale/test.m", x=as.matrix(exp))
+if(0 == 1){
+  exp<-cbind(sims$time*1*52*7*24*60*60*1000,sims$Y)
+  tim <- sims$time[tind]*1*52*7*24*60*60*1000
+  
+  write.csv(x = exp, file = "C:/Users/Frederik/Dropbox/Lspeciale/exp.csv")
+  write.csv(x = tim, file = "C:/Users/Frederik/Dropbox/Lspeciale/tim.csv")
+  write.csv(x = mu$mu, file = "C:/Users/Frederik/Dropbox/Lspeciale/mu.csv")
+  write.csv(x = sig$sig, file = "C:/Users/Frederik/Dropbox/Lspeciale/sig.csv")
+  write.csv(x = Tstat$test, file = "C:/Users/Frederik/Dropbox/Lspeciale/test.csv")
+  #require(R.matlab)
+  #writeMat(con="C:/Users/Frederik/Dropbox/Lspeciale/test.m", x=as.matrix(exp))
+}

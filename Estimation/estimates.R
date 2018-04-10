@@ -2,7 +2,7 @@
 # BANDWIDTH SHOULD BE TRANSLATED FROM SECONDS TO YEARS ( BW / Seconds per year)
 # Consider multiplying time such that our unit is in seconds and not years...!
 
-est.mu <- function(data, hd, kern = kern.leftexp, t.index, t.points, originalEstimator=FALSE){
+est.mu <- function(data, hd, kern = kern.leftexp, t.index, t.points){
   # data list should include a times column and the Y column (log returns)
   # t.index should be index - we use data$time[t]
   
@@ -66,7 +66,7 @@ est.mu <- function(data, hd, kern = kern.leftexp, t.index, t.points, originalEst
   return(list(time = t, mu = mu))
 }
 
-est.sigma <- function(data, hv, kern = kern.leftexp, wkern = kern.parzen, t.index, lag="auto", originalEstimator=FALSE){   # we could do lag = "auto"
+est.sigma <- function(data, hv, kern = kern.leftexp, wkern = kern.parzen, t.index, lag="auto"){   # we could do lag = "auto"
   # data list should include a times column and the Y column (log returns)
   
   lagset <- lag
@@ -96,7 +96,6 @@ est.sigma <- function(data, hv, kern = kern.leftexp, wkern = kern.parzen, t.inde
   }
   # t should now be data$time points
   
-
   n = length(data$time)
   tt = length(t)
   sig = numeric(tt) 
@@ -181,22 +180,22 @@ est.sigma.raw <- function(data, hv, kern, t.index, t.points){
   # Optimization removed
   if(mode == 1){
     for(j in 1:tt){
-      sig[j] = sqrt((1/hd)*sum(kern((data$time[1:(n-1)] - t[j])/hd)*(dy[1:(n-1)])^2))   
+      sig[j] = sqrt((1/hv)*sum(kern((data$time[1:(n-1)] - t[j])/hv)*(dy[1:(n-1)])^2))   
     }
   }
   else if(mode == 3){
     for(j in 1:tt){
-      sig[j] = sqrt((1/hd)*sum(kern((data$time[1:(n-1)] - t[j])/hd)*(dy[1:(n-1)])^2))
+      sig[j] = sqrt((1/hv)*sum(kern((data$time[1:(n-1)] - t[j])/hv)*(dy[1:(n-1)])^2))
     }
   }
   else{ # time points not implemented
     sig[j] = NA
   }
-  return(list(time = t, sig = sig/hv))
+  return(list(time = t, sig = sig))
 }
 
 # faster versions
-est.mu.next <-function(data, prevmu, hd, t.index, originalEstimator = F){
+est.mu.next <-function(data, prevmu, hd, t.index){
   # data should contain time | logreg - prevmu should contain time | mu
   # t.index indicates where we wish to calculate the estimator
   
@@ -206,11 +205,7 @@ est.mu.next <-function(data, prevmu, hd, t.index, originalEstimator = F){
   # prevmu <- est.mu(data, hd, t.index = 1:3, originalEstimator = T)
   # t.index<-c(3,5,9)
   
-  if(is.null(data$dy)){
-    dy <- diff(data$Y)
-  } else {
-    dy <- data$dy
-  }
+  dy <- data$Y
   
   kern <- kern.leftexp$kern
   # latest mu is picked out
@@ -270,23 +265,19 @@ est.sigma.next <- function(data, prevsig, hv, t.index, wkern=kern.parzen, lag="a
   kern <- kern.leftexp$kern
   wkern = kern.parzen$kern
   
-  if(is.null(data$dy)){
-    dy <- diff(data$Y)
-  } else {
-    dy <- data$dy
-  }
+  dy <- data$Y
   
   # --- debug ---
   {
     #data<-list(time = 1:100/100, Y = 1:100)
     #hv = 0.1
-    #prevsig <- est.sigma(data, hv, t.index = 2:4, originalEstimator = T, lag = lag)
-    #t.index<-c(5,9)
+    #prevsig <- est.sigma(data, hv=hv, t.index = 2:4, lag = 1)
+    #t.index<-c(6,9)
   }
   
   if(missing(prevsig)){
     # initial handling is pretty weird because of lag length
-    prevsig <- est.sigma(data, hv, t.index = t.index[1], originalEstimator = T, lag = lag) # change to minus
+    prevsig <- est.sigma(data, hv=hv, t.index = t.index[1],lag = lag) # change to minus
   } 
   startsig<-list(time = prevsig$time[length(prevsig$time)], sig = prevsig$sig[length(prevsig$sig)])
   
@@ -318,17 +309,17 @@ est.sigma.next <- function(data, prevsig, hv, t.index, wkern=kern.parzen, lag="a
   }
   # CALCULATE NEXT 'BLOCK'
   j<-1
-  sig[1] <- startsig$sig*rescale[1] + sum(  (kern(   (data$time[start[1]:end[1]] - t[1])/hv   )*dy[start[1]:end[1]])^2 )  # l = 0
+  sig[1] <- startsig$sig*rescale[1] + (1/hv)*sum(  (kern(   (data$time[start[1]:end[1]] - t[1])/hv   )*dy[start[1]:end[1]])^2 )  # l = 0
   if (lag >=1) {
     for(l in 1:lag){
-      sig[1] <- sig[1] + 2*(wkern(l/(lag+1))*gamma(l) )
+      sig[1] <- sig[1] + 2*(1/hv)*(wkern(l/(lag))*gamma(l) )
     }
   }
   for(j in 2:tt){
-    sig[j] <- sig[j-1]*rescale[j] + sum(  (kern(   (data$time[start[j]:end[j]] - t[j])/hv   )*dy[start[j]:end[j]])^2  )  # l = 0
+    sig[j] <- sig[j-1]*rescale[j] + (1/hv)*sum(  (kern(   (data$time[start[j]:end[j]] - t[j])/hv   )*dy[start[j]:end[j]])^2  )  # l = 0
     if (lag >=1) {
       for(l in 1:lag){
-        sig[j] <- sig[j] + 2*(wkern(l/(lag+1))*gamma(l) )
+        sig[j] <- sig[j] + 2*(1/hv)*(wkern(l/(lag))*gamma(l) )
       }
     }
   }
@@ -337,8 +328,8 @@ est.sigma.next <- function(data, prevsig, hv, t.index, wkern=kern.parzen, lag="a
   {
     # husk at j bruges i udregning 1 - husk at kør j<-1 hver gang der tjekkes op mod noget i sig[1]!!!!
     
-    #sum( (kern( (data$time[1:(n-1)] - t[1])/hv)*dy[1:(n-1)])^2 )+2*wkern(1/2)*gamma2(1, t[1])
-    #startsig$sig<-sum( (kern( (data$time[1:(n-1)] - data$time[4])/hv)*dy[1:(n-1)])^2 )+2*wkern(1/2)*gamma2(1, data$time[4])
+    #(1/hv)*(sum( (kern( (data$time[1:(n-1)] - t[1])/hv)*dy[1:(n-1)])^2 )+2*wkern(1)*gamma2(1, t[1]))
+    #startsig$sig<-(1/hv)*(sum( (kern( (data$time[1:(n-1)] - data$time[4])/hv)*dy[1:(n-1)])^2 )+2*wkern(1)*gamma2(1, data$time[4]))
     
     #gamma2<-function(l, t){
     #  out<- sum(   kern( (data$time[(l+1):(n-1)] - t)/hv )*dy[(l+1):(n-1)]*       
@@ -349,7 +340,7 @@ est.sigma.next <- function(data, prevsig, hv, t.index, wkern=kern.parzen, lag="a
   
   #ADD BLOCK TO EXISTING (wow much blockchainy) (if it existed)
   t <- c(prevsig$time, t)
-  sig <- c(prevsig$sig, sig)
+  sig <- c(prevsig$sig, sig) #we should remember to divide with hv
   
   # return list
   return(list(time = t, sig = sig))
