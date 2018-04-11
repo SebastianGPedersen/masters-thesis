@@ -10,7 +10,7 @@ source("SPY/datafunctions.R")
 
 # IMPORT REAL DATA
 fullData<-readRDS(paste0(Sys.getenv("masters-thesis-data"),"/SPY/2014_SPY_Vol_Avg.rds"))
-firstDay<-selectDays(fullData, as.Date("2014-05-05"), nDays = 1)
+firstDay<-selectDays(fullData, as.Date("2014-06-05"), nDays = 1)
 
 # A QUICK VIEW OF DATA
 plot(firstDay$logPrice, type="l")
@@ -60,16 +60,4 @@ plot(Tstat$test, type = "l")
 mean(Tstat$test)
 var(Tstat$test)
 qqnorm(Tstat$test)
-
-# EXPORT TO MATLAB FOR PARALLEL VIEW
-stop()
-exp<-cbind(sims$time*1*52*7*24*60*60*1000,sims$Y)
-tim <- sims$time[tind]*1*52*7*24*60*60*1000
-
-write.csv(x = exp, file = "C:/Users/Frederik/Dropbox/Lspeciale/exp.csv")
-write.csv(x = tim, file = "C:/Users/Frederik/Dropbox/Lspeciale/tim.csv")
-write.csv(x = mu$mu, file = "C:/Users/Frederik/Dropbox/Lspeciale/mu.csv")
-write.csv(x = sig$sig, file = "C:/Users/Frederik/Dropbox/Lspeciale/sig.csv")
-write.csv(x = Tstat$test, file = "C:/Users/Frederik/Dropbox/Lspeciale/test.csv")
-#require(R.matlab)
-#writeMat(con="C:/Users/Frederik/Dropbox/Lspeciale/test.m", x=as.matrix(exp))
+qqline(Tstat$test)

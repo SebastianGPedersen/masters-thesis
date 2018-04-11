@@ -6,6 +6,7 @@ source("estimation/rho.R")
 source("estimation/teststat.R")
 source("estimation/pre-average.R")
 source("kernels/kernels.R")
+source("simulation/jumps.R")
 
 bursts <- function(settings, burstsetting, plot = F){
   alpha <- burstsetting$alpha
@@ -68,7 +69,17 @@ bursts <- function(settings, burstsetting, plot = F){
 }
 
 require(ggplot2)
-setting <- sim.setup(Npath = 2, Nstep = 23400, omega = 0.0000000225)
+setting <- sim.setup(Npath = 2, Nstep = 23400, omega = 0.0000225)
+
+hest <- sim.heston(setting)
+J <- sim.addjump(hest, alpha = 0.6, c_1 = 0.2, interval_length = 0.1)
+J <- sim.path(path = 1, sim.data = J)
+
+D <- sim.adddb(hest, alpha = 0.6, c_1 = 0.2, interval_length = 0.1)
+D <- sim.path(path = 1, sim.data = D)
+
+plot(J$Y, type = "l", col = "red")
+lines(D$Y)
 
 burst<-sim.burstsetting(alpha = 0.6, beta = 0.2 ,c_1 = 0.2, c_2 = 0.03, interval_length = 0.1)
 
