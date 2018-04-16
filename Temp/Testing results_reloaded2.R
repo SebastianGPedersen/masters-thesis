@@ -8,20 +8,22 @@ source("estimation/pre-average.R")
 
 # Time parameters
 mat <- 1
-t <- 0:50000  # time_points
+t <- 0:10000  # time_points
 dt <- mat/t[length(t)]
 
 # Define sigma
 sig <- 1
 sig2 <- sig^2
-omega <- 0.1
+omega <- 0.001
 omega2 <- omega^2
 ksq <- 0.5 # K2
 hd <- 0.1 #bandwidth in mu
 hv <- 0.1 #bandwidth in sigma
 
 #Set k_n and phi
-k_n <- floor(1/5*1/dt^(1/2))
+theta <- 1/5
+k_n <- floor(theta*1/dt^(1/2))
+phi_1 <- 1 #int(g'(x)^2)
 phi_2 <- 1/12 #int(g^2)
 int_g <- 1/4 #int(g)
 
@@ -40,11 +42,11 @@ pre_x <- est.NewPreAverage(dx,k_n)
 
 #Calculate sigma_hat
 C_hat <- 1/(k_n*phi_2)*sum(pre_x^2) #Scaling som forventet
-C_hat
+C_hat #Works fine w. 10k obs.
 
 
 #Mu
-N <- 100
+N <- 1000
 mu_hat <- vector(length = N)
 
 for (i in 1:N) {
@@ -56,27 +58,34 @@ for (i in 1:N) {
   
   mu_hat[i] <- length(x)/ (length(x)-k_n)*1/(k_n*int_g)*sum(pre_x) #k_n i nævner
 }
-#(n-k_n)/n for small sample + epsilon korrection + edge korrection?
 
 mean(mu_hat)
-var(mu_hat) # Var = 0.73 w. 500 obs. Var = 0.84 w. 5k obs. Var = 1.38 w. 50k obs. Var = 1.06 w. 100k obs.
-#Den stiger m. t. Nok pga. small sample errors
+var(mu_hat) #Works fine w. 10k obs.
+
 
 ############ WITH NOISE ############
 
 #Sigma
-x <- rnorm(n = length(t) , mean = 0, sd = sqrt(sig2*dt))
-eps <- rnorm(length(t), mean = 0, sd = sqrt(omega))
-x <- cumsum(x)
-y <- x + eps
+N <- 100 #Takes 3min with N = 100 and t = 100k
+sigma_hat <- vector(length = N)
 
-dy <- diff(y)
-pre_x <- est.NewPreAverage(dy,k_n) #0.1 sek w. k_n = 100
+for (i in 1:N) {
+  #i <- 1
+  x <- rnorm(n = length(t) , mean = 0, sd = sqrt(sig2*dt))
+  eps <- rnorm(length(t), mean = 0, sd = sqrt(omega^2))
+  x <- cumsum(x) 
+  y <- x + eps
+  dy <- diff(y)
+  
+  pre_x <- est.NewPreAverage(dy,k_n)
+  
+  #Calculate sigma_hat
+  C_hat <- 1/(k_n*phi_2)*sum(pre_x^2) - phi_1*dt/(2*theta^2*phi_2)*sum(dy^2)
+  sigma_hat[i] <- C_hat #Same as Jacod et. al.
+}
 
-#Calculate sigma_hat
-C_hat <- 1/(k_n*phi_2)*sum(pre_x^2) 
-C_hat #1.11 w. 1k
-
+mean(sigma_hat) #Works fine
+var(sigma_hat)
 
 #Mu
 N <- 1000 #Takes 3min with N = 100 and t = 100k
@@ -96,8 +105,7 @@ for (i in 1:N) {
 }
 
 mean(mu_hat)
-mean(mu_hat^2) #0.985 w. 50k after multiplication. k_n = 44
-#If n-k_n/n is multiplied, then it decreases w. t 
+var(mu_hat) #Works fine
 
 
 
