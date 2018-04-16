@@ -19,12 +19,12 @@ bursts <- function(settings, burstsetting, plot = F){
   sims<-sim.heston(setting)
   
   sims.vb<-sim.addvb(sims,    burst_time = burst_time, interval_length = interval_length,
-                                c_2 = c_2, beta  = beta)
+                     c_2 = c_2, beta  = beta)
   
   sims.db<-sim.adddb(sims.vb, burst_time = burst_time, interval_length = interval_length,
-                                c_1 = c_1,  alpha = alpha)
-                    
-
+                     c_1 = c_1,  alpha = alpha)
+  
+  
   #Get a single path
   path = 1
   
@@ -68,19 +68,6 @@ bursts <- function(settings, burstsetting, plot = F){
     theme(plot.title = element_text(hjust = 0.5, size = 20))
 }
 
-require(ggplot2)
-setting <- sim.setup(Npath = 2, Nstep = 23400, omega = 0.0000225)
-
-hest <- sim.heston(setting)
-J <- sim.addjump(hest, alpha = 0.6, c_1 = 0.2, interval_length = 0.1)
-J <- sim.path(path = 1, sim.data = J)
-
-D <- sim.adddb(hest, alpha = 0.6, c_1 = 0.2, interval_length = 0.1)
-D <- sim.path(path = 1, sim.data = D)
-
-plot(J$Y, type = "l", col = "red")
-lines(D$Y)
-
 burst<-sim.burstsetting(alpha = 0.6, beta = 0.2 ,c_1 = 0.2, c_2 = 0.03, interval_length = 0.1)
 
 set.seed(1234)
@@ -91,17 +78,17 @@ sims <- sim.bursts$raw#vbdb # choose the one with vbdb
 
 plot(sims$Y, type = "l")
 
-k <- 1*152#1*sqrt(length(sims$time))
+theta <- 1
+
+k <- theta*152#1*sqrt(length(sims$time))
 prev <- c(rep(0,k-2),est.PreAverage(sims$Y, k)) # Kim does not divide by k - scaling does not change results
-
+  
 tind <- seq(from = 1000, to = 23000, by = 10)
-
-# 6.5/(24*7*52)
 
 # 1*52*7*24*60*60*1000 - YEAR TO MILLISECONDS
 
 #data <- list(time = sims$time*1*52*7*24*60*60*1000, Y = prev)
-data <- list(time = sims$time*1*52*7*24*60*60*1000, Y = prev)
+data <- list(time = sims$time*1*52*7*24*60*60*1000, Y = prev, raw = sims$Y)
 
 #plot(data$Y, type ="l")
 
@@ -109,19 +96,16 @@ dt <- diff(data$time)[1]
 hd <- 300*dt
 hv <- 1500*dt
 
-#hd <- 300000#300*dt
-#hv <- 1500000#1500*dt
-
 conf = 0.95
 
 # Estimation of mu/sig
 #mu<-est.mu(data = data, hd = hd, t.index = tind)
-mu<-est.mu.next(data = data, hd = hd, t.index = tind)
-#sig <- est.sigma.raw(data, hv, kern.leftexp, kern.parzen, t.index = tind)
-#sig <- list(time = sig$time, sig = sig$sig^2)
+mu<-est.mu.new(data = data, hd = hd, t.index = tind, kn = k)
 
-#sig <- est.sigma(data, hv, kern.leftexp, kern.parzen, t.index = tind, lag = 15)#"auto")
-sig <- est.sigma.next(data, hv=hv, t.index = tind, lag = 15)
+sig <- est.sigma.new(data, hv=hv, t.index = tind, arfun = est.ar.iid, theta = theta, kn = k)
+
+#arg <- list(data = data, hv = hv, t.index = tind, kern = kern.leftexp$kern)
+#est.ar.iid(arg, theta)
 
 # Calculate T
 Tstat<-teststat(mu, sig, hd, hv)
@@ -141,7 +125,6 @@ names(a) <- c("T/F", "Tstar", "z")
 print(a)
 
 plot(Tstat$test, type = "l")
-#points(3500, Tstat$test[3500])
 
 # EXPORT TO MATLAB FOR PARALLEL VIEW
 if(0 == 1){

@@ -433,20 +433,81 @@ laglength = function(dx, nmu){
   return(round(gamma*nmu^root))
 }
 
+est.mu.new <- function(data, hd, kern = kern.leftexp, t.index, kn){
+  # data list should include a times column and the Y column (log returns)
+  # t.index should be index - we use data$time[t]
+  # This function is more like a wrapper around original mu but with new coefficient
+  
+  if(is.list(kern)) kern<-kern$kern
+  if(!is.function(kern)) stop("kern should be either function or list containing function")
 
-est.EveryOtherDiffData<-function(data){
-  #data as in other estimates functions
+  #if(kern == kern.leftexp)
+  #{
+    # mu.next only works for left exp kern
+  out<-est.mu.next(data = data, hd = hd, t.index = t.index)
+  #}
+  #else{
+  #  out <- est.mu(data = data, hd = hd, kern = kern, t.index = t.index)
+  #}
+  n <- length(data$Y)
+  psi1 = 0.25
+  coef <- n/(n-kn)*1/(psi1*kn)
   
-  diffY<-diff(data$Y)
-  everySecondSeq<-seq(1L, length(diffY), by=2L)
+  return(list(time = out$time, mu = out$mu*coef))
+}
+
+est.sigma.new <- function(data, hv, kern = kern.leftexp, t.index, kn, arfun, theta){
+  # data list should include a time column , Y column (log returns) and non-preavr obs (raw)
+  # t.index should be index - we use data$time[t]
+  # Returns sigma^2
   
-  dy<-diffY[everySecondSeq]
-  
-  tempTime <- data$time[seq(1L, length(data$time), by = 2L)] 
-  if(length(tempTime)<length(dy)){ #handles uneven vs even number of input
-    tempTime<-c(tempTime, 0) #0 unused, just need the right length
+  if(is.list(kern)) kern<-kern$kern
+  if(!is.function(kern)) stop("kern should be either function or list containing function")
+  {
+    #if(kern = kern.leftexp & lag!= auto)
+    #{
+    #  # mu.next only works for left exp kern
+    #  out<-est.sig.next(data = data, hd = hv, t.index = t.index)
+    #}
   }
   
-  return(list(time = tempTime, dy = dy))
+  out <- est.sigma.raw(data = data, hv = hv, kern = kern, t.index = t.index)
+  n <- length(data$Y)
+  psi2 = 0.25
+  coef <- n/(n-kn)*1/(psi2*kn)
+  
+  #prep args
+  args <- list(data = data, hv = hv, kern = kern, t.index = t.index)
+  
+  ar<-arfun(args, theta)
+  
+  return(list(time = out$time, sig = out$sig^2*coef-ar))
+}
+
+est.ar.iid <- function(args, theta){
+  # calculates omega^2
+  # data needs to include un-preaveraged
+  # args is a list that contains all the info that the ar needs
+  data <- args$data
+  hv <- args$hv
+  kern <- args$kern
+  t.index <- args$t.index
+  
+  psi1 <- 0.25
+  psi2 <- 1/12
+  
+  dy <- diff(data$raw)
+  
+  t<-data$time[t.index]
+  ind = t.index
+
+  tt = length(t)
+  n = length(data$time)
+  omega = numeric(tt)          # We can only have bandwidth to end amount of calcs
+  
+  for(j in 1:tt){
+    omega[j] = (1/hv)*sum(kern((data$time[2:(n-1)] - t[j])/hd)*dy[2:(n-1)]*dy[1:(n-2)])   
+  }
+  return(psi1/(psi2*theta^2)*omega)
 }
 

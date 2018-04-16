@@ -10,7 +10,7 @@ source("SPY/datafunctions.R")
 
 # IMPORT REAL DATA
 fullData<-readRDS(paste0(Sys.getenv("masters-thesis-data"),"/SPY/2014_SPY_Vol_Avg.rds"))
-firstDay<-selectDays(fullData, as.Date("2014-06-05"), nDays = 1)
+firstDay<-selectDays(fullData, as.Date("2014-06-05"), nDays = 2)
 
 # A QUICK VIEW OF DATA
 plot(firstDay$logPrice, type="l")
