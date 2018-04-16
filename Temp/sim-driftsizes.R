@@ -81,7 +81,7 @@ set.seed(1234)
 
 sim.bursts <- bursts(setting, burst, F)
 
-#sims <- sim.bursts$raw # choose the one with vbdb
+sims <- sim.bursts$raw # choose the one with vbdb
 
 #sims <- J # USE JUMP INSTEAD
 
