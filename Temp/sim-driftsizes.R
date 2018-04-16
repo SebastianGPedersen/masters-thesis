@@ -8,6 +8,13 @@ source("estimation/pre-average.R")
 source("kernels/kernels.R")
 source("simulation/jumps.R")
 
+setting <- sim.setup(Npath = 2, Nstep = 23400, omega = 0.0000225)
+
+hest <- sim.heston(setting)
+J <- sim.addjump(hest, alpha = 0.5, c_1 = 0.2, interval_length = 0.1)
+J <- sim.path(path = 1, sim.data = J)
+
+# bigfunction that returns both Raw/VB/VBDB
 bursts <- function(settings, burstsetting, plot = F){
   alpha <- burstsetting$alpha
   beta <- burstsetting$beta
@@ -74,23 +81,22 @@ set.seed(1234)
 
 sim.bursts <- bursts(setting, burst, F)
 
-sims <- sim.bursts$raw#vbdb # choose the one with vbdb
+#sims <- sim.bursts$raw # choose the one with vbdb
 
-plot(sims$Y, type = "l")
+#sims <- J # USE JUMP INSTEAD
+
+
+#plot(sims$Y, type = "l")
 
 theta <- 1
 
 k <- theta*152#1*sqrt(length(sims$time))
-prev <- c(rep(0,k-2),est.PreAverage(sims$Y, k)) # Kim does not divide by k - scaling does not change results
-  
+prev <- c(rep(0,k-2+2),est.NewPreAverage(diff(sims$Y), k)) # Kim does not divide by k - scaling does not change results
+
 tind <- seq(from = 1000, to = 23000, by = 10)
 
 # 1*52*7*24*60*60*1000 - YEAR TO MILLISECONDS
-
-#data <- list(time = sims$time*1*52*7*24*60*60*1000, Y = prev)
 data <- list(time = sims$time*1*52*7*24*60*60*1000, Y = prev, raw = sims$Y)
-
-#plot(data$Y, type ="l")
 
 dt <- diff(data$time)[1]
 hd <- 300*dt
@@ -99,10 +105,10 @@ hv <- 1500*dt
 conf = 0.95
 
 # Estimation of mu/sig
-#mu<-est.mu(data = data, hd = hd, t.index = tind)
+
 mu<-est.mu.new(data = data, hd = hd, t.index = tind, kn = k)
 
-sig <- est.sigma.new(data, hv=hv, t.index = tind, arfun = est.ar.iid, theta = theta, kn = k)
+sig <- est.sigma.new(data, hv=hv, t.index = tind, noisefun = est.noise.iid, theta = theta, kn = k)
 
 #arg <- list(data = data, hv = hv, t.index = tind, kern = kern.leftexp$kern)
 #est.ar.iid(arg, theta)

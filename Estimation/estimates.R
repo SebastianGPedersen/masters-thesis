@@ -456,7 +456,7 @@ est.mu.new <- function(data, hd, kern = kern.leftexp, t.index, kn){
   return(list(time = out$time, mu = out$mu*coef))
 }
 
-est.sigma.new <- function(data, hv, kern = kern.leftexp, t.index, kn, arfun, theta){
+est.sigma.new <- function(data, hv, kern = kern.leftexp, t.index, kn, noisefun, theta){
   # data list should include a time column , Y column (log returns) and non-preavr obs (raw)
   # t.index should be index - we use data$time[t]
   # Returns sigma^2
@@ -479,12 +479,12 @@ est.sigma.new <- function(data, hv, kern = kern.leftexp, t.index, kn, arfun, the
   #prep args
   args <- list(data = data, hv = hv, kern = kern, t.index = t.index)
   
-  ar<-arfun(args, theta)
+  noise<-noisefun(args, theta)
   
-  return(list(time = out$time, sig = out$sig^2*coef-ar))
+  return(list(time = out$time, sig = out$sig^2*coef-noise, noise = noise, sig2 = out$sig^2))
 }
 
-est.ar.iid <- function(args, theta){
+est.noise.iid <- function(args, theta){
   # calculates omega^2
   # data needs to include un-preaveraged
   # args is a list that contains all the info that the ar needs
