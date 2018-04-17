@@ -26,6 +26,19 @@ tstar<-function(data){
   return(list(start = start, end = end, tstar = res))
 }
 
+test.db<-function(data, hd, hv, kern = kern.leftexp, noisefun, theta, kn){
+  # data should include time | Y (log returns) | raw (before preaverage)
+  # Calculates db test stat by computing mu/sig
+  
+  mu<-est.mu.new(data = data, hd = hd, t.index = tind, kn = k)
+  sig <- est.sigma.new(data, hv=hv, t.index = tind, noisefun = est.noise.iid, theta = theta, kn = k)
+  
+  # Calculate T
+  Tstat<-teststat(mu, sig, hd, hv, kern)
+  
+  return(Tstat)
+}
+
 est.z_quantile<-function(mym, myrho, myalpha){
   #Vectorized in mym and myrho (should be same length)
   

@@ -2,80 +2,43 @@
 # BANDWIDTH SHOULD BE TRANSLATED FROM SECONDS TO YEARS ( BW / Seconds per year)
 # Consider multiplying time such that our unit is in seconds and not years...!
 
-est.mu <- function(data, hd, kern = kern.leftexp, t.index, t.points){
+est.mu <- function(data, hd, kern = kern.leftexp, t.index){
   # data list should include a times column and the Y column (log returns)
   # t.index should be index - we use data$time[t]
   
-  # t.points does NOT work yet!
-  
-  #if(is.null(data$dy)){
-  #  dy <- diff(data$Y)
-  #} else {
-  #  dy <- data$dy
-  #}
   dy <- data$Y
   
   # kern handling
   if(is.list(kern)) kern<-kern$kern
   
   # mode-handling
-  mode = NA
-  if(missing(t.index) & missing(t.points)){
-    mode = 1
+  if(missing(t.index)){
     t<-data$time[1:(length(data$time))] # if nothing specified - every point in data
     ind = 1:(length(data$time))
   }
-  else if(missing(t.index) & !missing(t.points)){
-    mode = 2
-    t<-t.points
-    ind = numeric(length(t))
-    #ind[1] = sum(data$time < t[1])
-    #ind[i] = data$time[ind[i-1]+sum(data$time[ind[i-1]:n] < t[i] )] #for 2 to n this may be faster than which.max
-    for(i in 2:length(t)){
-      ind[i] = which.max(data$time[data$time<t[i]])
-    }
-  }
   else{
-    mode = 3
     t<-data$time[t.index]
     ind = t.index
   }
   
   #t should now be data$time points
-  #n = length(t)
   tt = length(t)
   n = length(data$time)
-  mu = numeric(tt)          # We can only have bandwidth to end amount of calcs
+  mu = numeric(tt)
   
-  # Optimization removed
-  if(mode == 1){
-    for(j in 1:tt){
-      mu[j] = (1/hd)*sum(kern((data$time[1:(n-1)] - t[j])/hd)*dy[1:(n-1)])   
-    }
-  }
-  else if(mode == 3){
-    for(j in 1:tt){
-      mu[j] = (1/hd)*sum(kern((data$time[1:(n-1)] - t[j])/hd)*dy[1:(n-1)])
-    }
-  }
-  else{ # time points not implemented
-    mu[j] = NA
+  for(j in 1:tt){
+    mu[j] = (1/hd)*sum(kern((data$time[1:(n-1)] - t[j])/hd)*dy[1:(n-1)])   
   }
   
   # return list
   return(list(time = t, mu = mu))
 }
 
-est.sigma <- function(data, hv, kern = kern.leftexp, wkern = kern.parzen, t.index, lag="auto"){   # we could do lag = "auto"
+est.sigma <- function(data, hv, kern = kern.leftexp, wkern = kern.parzen, t.index, lag="auto"){
   # data list should include a times column and the Y column (log returns)
   
   lagset <- lag
   
-  #if(is.null(data$dy)){
-  #  dy <- diff(data$Y)
-  #} else {
-  #  dy <- data$dy
-  #}
   dy <- data$Y
   
   # kern handling
@@ -102,7 +65,6 @@ est.sigma <- function(data, hv, kern = kern.leftexp, wkern = kern.parzen, t.inde
   
   # Handle lag
   if(lagset=="auto"){
-    # more elegant solution to nmu should be implemented
     nmu <- numeric(tt)
     for(j in 1:tt){
       nmu[j] <- sum(kern((data$time[1:(n-1)] - t[j])/hd))
@@ -122,50 +84,36 @@ est.sigma <- function(data, hv, kern = kern.leftexp, wkern = kern.parzen, t.inde
   for (j in 1:tt) {
     if(lagset =="auto")
     {
-      lag <- laglength(dy, nmu[j])       # NOT EXACTLY LIKE KIM'S / BUT SHOULD NOT MAKE A HUGE ENOUGH IMPACT
-      #print(lag)
+      lag <- laglength(dy, nmu[j])
     }
    sig[j] <- sum(  (kern(   (data$time[1:(end-1)] - t[j])/hv)*dy[1:(end-1)]  )^2  )  # l = 0
    
-   #sig[j] = sum (  dy[2:end]^2  )
    if (lag >=1) {
      for(l in 1:lag){
-       #sig[j] = sig[j] + 2*(wkern(l/n)*gamma(l,t[j], end))
        sig[j] <- sig[j] + 2*(wkern(l/(lag))*gamma(l,t[j], end))
-       #sig[j] = sig[j] + 2*((1-l/(lag+1))*gamma(l,t[j], end))
      }
    }
   }
-  sig <- sig/hv # NEW FROM KIM'S
+  sig <- sig/hv
   
   # return list
   return(list(time = t, sig = sig))
 }
 
-est.sigma.raw <- function(data, hv, kern, t.index, t.points){
+est.sigma.raw <- function(data, hv, kern = kern.leftexp, t.index){
   # data list should include a times column and the Y column (log returns)
   # t.index should be index - we use data$time[t]
+  # Calculates sigma^2
   
   # kern handling
   if(is.list(kern)) kern<-kern$kern
   
   # mode-handling
-  mode <- NA
-  if(missing(t.index) & missing(t.points)){
-    mode <- 1
+  if(missing(t.index)){
     t<-data$time[1:(length(data$time))] # if nothing specified - every point in data
     ind <- 1:(length(data$time))
   }
-  else if(missing(t.index) & !missing(t.points)){
-    mode <- 2
-    t<-t.points
-    ind <- numeric(length(t))
-    for(i in 2:length(t)){
-      ind[i] <- which.max(data$time[data$time<t[i]])
-    }
-  }
   else{
-    mode <- 3
     t<-data$time[t.index]
     ind <- t.index
   }
@@ -173,23 +121,13 @@ est.sigma.raw <- function(data, hv, kern, t.index, t.points){
   
   tt <- length(t)
   n <- length(data$time)
-  sig <- numeric(tt)          # We can only have bandwidth to end amount of calcs
+  sig <- numeric(tt)
   
   dy <- data$Y
   
   # Optimization removed
-  if(mode == 1){
-    for(j in 1:tt){
-      sig[j] <- sqrt((1/hv)*sum(kern((data$time[1:(n-1)] - t[j])/hv)*(dy[1:(n-1)])^2))   
-    }
-  }
-  else if(mode == 3){
-    for(j in 1:tt){
-      sig[j] <- sqrt((1/hv)*sum(kern((data$time[1:(n-1)] - t[j])/hv)*(dy[1:(n-1)])^2))
-    }
-  }
-  else{ # time points not implemented
-    sig[j] <- NA
+  for(j in 1:tt){
+    sig[j] <- (1/hv)*sum(kern((data$time[1:(n-1)] - t[j])/hv)*(dy[1:(n-1)])^2)
   }
   return(list(time = t, sig = sig))
 }
@@ -200,10 +138,12 @@ est.mu.next <-function(data, prevmu, hd, t.index){
   # t.index indicates where we wish to calculate the estimator
   
   # --- debug ---
-  # data<-list(time = 1:10/10, Y = 1:10)
-  # hd = 0.1
-  # prevmu <- est.mu(data, hd, t.index = 1:3, originalEstimator = T)
-  # t.index<-c(3,5,9)
+  {
+    # data<-list(time = 1:10/10, Y = 1:10)
+    # hd = 0.1
+    # prevmu <- est.mu(data, hd, t.index = 1:3, originalEstimator = T)
+    # t.index<-c(3,5,9)
+  }
   
   dy <- data$Y
   
@@ -325,7 +265,7 @@ est.sigma.next <- function(data, prevsig, hv, t.index, wkern=kern.parzen, lag="a
   }
   
   # --- debug ---
-  #{
+  {
     # husk at j bruges i udregning 1 - husk at kør j<-1 hver gang der tjekkes op mod noget i sig[1]!!!!
     
     #(1/hv)*(sum( (kern( (data$time[1:(n-1)] - t[1])/hv)*dy[1:(n-1)])^2 )+2*wkern(1)*gamma2(1, t[1]))
@@ -336,7 +276,7 @@ est.sigma.next <- function(data, prevsig, hv, t.index, wkern=kern.parzen, lag="a
     #                 kern( (data$time[1:(n-l-1)] - t)/hv )*dy[1:(n-l-1)]   )
     #  return(out)
     #}
-  #}
+  }
   
   #ADD BLOCK TO EXISTING (wow much blockchainy) (if it existed)
   t <- c(prevsig$time, t)
@@ -346,7 +286,7 @@ est.sigma.next <- function(data, prevsig, hv, t.index, wkern=kern.parzen, lag="a
   return(list(time = t, sig = sig))
 }
 
-est.mu2 <- function(data, hd, kern = kern.leftexp, t.index, t.points, originalEstimator=FALSE){
+est.mu2 <- function(data, hd, kern = kern.leftexp, t.index, t.points){
   # data list should include a times column and the Y column (log returns)
   # t.index should be index - we use data$time[t]
   
@@ -366,8 +306,6 @@ est.mu2 <- function(data, hd, kern = kern.leftexp, t.index, t.points, originalEs
     mode = 2
     t<-t.points
     ind = numeric(length(t))
-    #ind[1] = sum(data$time < t[1])
-    #ind[i] = data$time[ind[i-1]+sum(data$time[ind[i-1]:n] < t[i] )] #for 2 to n this may be faster than which.max
     for(i in 2:length(t)){
       ind[i] = which.max(data$time[data$time<=t[i]])
     }
@@ -400,7 +338,6 @@ est.mu2 <- function(data, hd, kern = kern.leftexp, t.index, t.points, originalEs
 
 # LAG LENGTH #
 # find Newey-West (1994) -- automatic lag selection with parzen kernel
-
 laglength = function(dx, nmu){
   # dx are NOT preavr
   # only dx from backwards in time should be considered
@@ -441,14 +378,14 @@ est.mu.new <- function(data, hd, kern = kern.leftexp, t.index, kn){
   if(is.list(kern)) kern<-kern$kern
   if(!is.function(kern)) stop("kern should be either function or list containing function")
 
-  #if(kern == kern.leftexp)
-  #{
+  if(identical(kern,kern.leftexp$kern))
+  {
     # mu.next only works for left exp kern
-  out<-est.mu.next(data = data, hd = hd, t.index = t.index)
-  #}
-  #else{
-  #  out <- est.mu(data = data, hd = hd, kern = kern, t.index = t.index)
-  #}
+    out<-est.mu.next(data = data, hd = hd, t.index = t.index)
+  }
+  else{
+    out <- est.mu(data = data, hd = hd, kern = kern, t.index = t.index)
+  }
   n <- length(data$Y)
   psi1 = 0.25
   coef <- n/(n-kn)*1/(psi1*kn)
@@ -471,7 +408,14 @@ est.sigma.new <- function(data, hv, kern = kern.leftexp, t.index, kn, noisefun, 
     #}
   }
   
-  out <- est.sigma.raw(data = data, hv = hv, kern = kern, t.index = t.index)
+  if(identical(kern, kern.leftexp$kern)){
+    #print("using .next")
+    out <- est.sigma.raw.next(data = data, hv = hv, t.index = t.index)
+  }
+  else{
+    out <- est.sigma.raw(data = data, hv = hv, kern = kern, t.index = t.index)
+  }
+  
   n <- length(data$Y)
   psi2 = 0.25
   coef <- n/(n-kn)*1/(psi2*kn)
@@ -481,7 +425,7 @@ est.sigma.new <- function(data, hv, kern = kern.leftexp, t.index, kn, noisefun, 
   
   noise<-noisefun(args, theta)
   
-  return(list(time = out$time, sig = out$sig^2*coef-noise, noise = noise, sig2 = out$sig^2))
+  return(list(time = out$time, sig = out$sig*coef-noise, noise = noise, sig2 = out$sig))
 }
 
 est.noise.iid <- function(args, theta){
@@ -506,8 +450,118 @@ est.noise.iid <- function(args, theta){
   omega = numeric(tt)          # We can only have bandwidth to end amount of calcs
   
   for(j in 1:tt){
-    omega[j] = (1/hv)*sum(kern((data$time[2:(n-1)] - t[j])/hd)*dy[2:(n-1)]*dy[1:(n-2)])   
+    omega[j] = (1/hv)*sum(kern((data$time[2:(n-1)] - t[j])/hv)*dy[2:(n-1)]*dy[1:(n-2)])   
   }
   return(psi1/(psi2*theta^2)*omega)
 }
 
+est.noise.iid.next <- function(args, theta){
+  # calculates omega^2
+  # data needs to include un-preaveraged
+  # args is a list that contains all the info that the ar needs
+  data <- args$data
+  hv <- args$hv
+  kern <- kern.leftexp$kern
+  t.index <- args$t.index
+  
+  #debug
+  {
+    #data<-list(time = 1:100/100, Y = 1:100, raw = 1:100)
+    #hv = 0.1
+    #t.index<-c(6,10,15)
+    #kern <- kern.leftexp$kern
+    #theta <- 1
+  }
+  
+  
+  dy <- diff(data$raw)
+  
+  # calculate previous (takes list as argument)
+  prevarg <- list(data = data, hv = hv, kern = kern, t.index = t.index[1])
+  prev <- est.noise.iid(prevarg, theta)
+  startomega<-list(time = data$time[t.index[1]], omega = prev[length(prev)])
+  
+  if(data$time[t.index][1] < startomega$time) stop("t.index should be higher than previous sig times")
+  if(data$time[t.index][1] == startomega$time) t.index <- t.index[2:length(t.index)]
+  
+  # time and index handling
+  t<-data$time[t.index]
+  end <- t.index
+  start <- c( min(which(data$time > startomega$time)), end[1:(length(end)-1)]+1)
+  
+  # scaling
+  dt1<-t[1]-startomega$time
+  dt<-c(dt1, diff(t))
+  rescale <- exp(-dt/hv)
+  
+  n <- length(data$time)
+  
+  psi1 <- 0.25
+  psi2 <- 1/12
+  coef <- psi1/(psi2*theta^2)
+  # init
+  tt = length(t)
+  omega <- numeric(tt)
+  # CALCULATE NEXT 'BLOCK'
+  omega[1] <- startomega$omega*rescale[1] + coef*1/hv * sum( kern( (data$time[start[1]:end[1]] - t[1])/hv)*dy[start[1]:end[1]]*dy[(start[1]-1):(end[1]-1)] )
+  for(j in 2:(tt)){
+    omega[j] <- omega[j-1]*rescale[j] + coef*1/hv * sum( kern(  (data$time[start[j]:end[j]] - t[j])/hv)*dy[start[j]:end[j]]*dy[(start[j]-1):(end[j]-1)] )
+  }
+  omega <- c(prev, omega)
+  #debug
+  {
+    #coef*(1/hv)*sum(kern((data$time[2:(n-1)] - t[j])/hv)*dy[2:(n-1)]*dy[1:(n-2)])
+  }
+
+  return(omega)
+}
+
+est.sigma.raw.next <- function(data, prevsig, hv, t.index){   #
+  # data list should include a time column , Y column (log returns) and non-preavr obs (raw)
+  # t.index should be index - we use data$time[t]
+  # Returns sigma^2
+  
+  kern <- kern.leftexp$kern
+  
+  dy <- data$Y
+  
+  if(missing(prevsig)){
+    # initial handling is pretty weird because of lag length
+    prevsig <- est.sigma.raw(data = data, hv=hv, t.index = t.index[1]) # change to minus
+  } 
+  startsig<-list(time = prevsig$time[length(prevsig$time)], sig = prevsig$sig[length(prevsig$sig)])
+  
+  if(data$time[t.index][1] < startsig$time) stop("t.index should be higher than previous sig times")
+  if(data$time[t.index][1] == startsig$time) t.index <- t.index[2:length(t.index)]
+  
+  t<-data$time[t.index]
+  end <- t.index
+  start <- c( min(which(data$time > startsig$time)), end[1:(length(end)-1)]+1)
+  
+  # scaling
+  dt1<-t[1]-startsig$time
+  dt<-c(dt1, diff(t))
+  rescale <- exp(-dt/hv)
+  
+  if(anyNA(dy[t.index])) warning("t.index cannot be higher than t_n-1 (this will rightfully give you NAs)")
+  
+  n <- length(data$time)
+  
+  # init
+  tt = length(t)
+  sig <- numeric(tt)
+  
+  # CALCULATE NEXT 'BLOCK'
+  j<-1
+  sig[1] <- startsig$sig*rescale[1] + (1/hv)*sum(  kern(   (data$time[start[1]:end[1]] - t[1])/hv   )*(dy[start[1]:end[1]])^2 )
+  for(j in 2:tt){
+    sig[j] <- sig[j-1]*rescale[j] + (1/hv)*sum(  kern(   (data$time[start[j]:end[j]] - t[j])/hv   )*(dy[start[j]:end[j]])^2  )
+  }
+  
+  #ADD BLOCK TO EXISTING (wow much blockchainy) (if it existed)
+  t <- c(prevsig$time, t)
+  sig <- c(prevsig$sig, sig)
+  
+  # return list
+  return(list(time = t, sig = sig))
+}

@@ -110,9 +110,6 @@ mu<-est.mu.new(data = data, hd = hd, t.index = tind, kn = k)
 
 sig <- est.sigma.new(data, hv=hv, t.index = tind, noisefun = est.noise.iid, theta = theta, kn = k)
 
-#arg <- list(data = data, hv = hv, t.index = tind, kern = kern.leftexp$kern)
-#est.ar.iid(arg, theta)
-
 # Calculate T
 Tstat<-teststat(mu, sig, hd, hv)
 
