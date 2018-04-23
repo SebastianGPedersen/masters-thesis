@@ -28,12 +28,15 @@ upper <- means
 #################### LOOP OVER N ####################
 
 for (my_n in 1:length(n_list)) {
-
-  mat <- 6.5/(24*7*52) #In years
+  #my_n <- 1
+  #my_n <- length(n_list)
+  mat <- 6.5/(24*7*52)*52*7*24*60*60 #In years
   n <- n_list[my_n]
   dt <- mat/n #In years
   k_n <- floor(theta*n^(1/2))
-  hd <- 10^(-3)*dt^(1/4) #In years.
+  hd <- 2*10^3*n^(-1/4) #If miliseconds
+  #hd <- 10^(-3)*dt^(1/4) #If years
+  
   
   ############ Simulation #########
   Npath <- 1000
