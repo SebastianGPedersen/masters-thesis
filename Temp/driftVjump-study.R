@@ -113,9 +113,9 @@ burstset<-sim.burstsetting(alpha = 0.65, beta = 0.1 ,c_1 = 0.1, c_2 = 0.02, inte
 burstset2<-sim.burstsetting(alpha = 0.7, beta = 0.1 ,c_1 = 0.1, c_2 = 0.02, interval_length = 0.1)
 
 for(i in 1:length(N)){
-  try(res[i,] <- dbVjump(N[i], burstset, seed = 12444, index = N[1]/2+100))
+  try(res[i,] <- dbVjump(N[i], burstset, seed = 12444, index = N[1]/2+floor(sqrt(N[1])) ))
   
-  try(res2[i,] <- dbVjump(N[i], burstset2, seed = 12444,index = N[1]/2+100))
+  try(res2[i,] <- dbVjump(N[i], burstset2, seed = 12444,index = N[1]/2+floor(sqrt(N[1])) ))
   print(i)
 }
 
