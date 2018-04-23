@@ -1,4 +1,4 @@
-
+source("Kernels/kernels.R")
 # BANDWIDTH SHOULD BE TRANSLATED FROM SECONDS TO YEARS ( BW / Seconds per year)
 # Consider multiplying time such that our unit is in seconds and not years...!
 
@@ -425,7 +425,7 @@ est.sigma.new <- function(data, hv, kern = kern.leftexp, t.index, kn, noisefun, 
   
   noise<-noisefun(args, theta)
   
-  return(list(time = out$time, sig = out$sig*coef-noise, noise = noise, sig2 = out$sig))
+  return(list(time = out$time, sig = out$sig*coef-noise, noise = noise, sig2 = out$sig*coef))
 }
 
 est.noise.iid <- function(args, theta){
@@ -443,16 +443,19 @@ est.noise.iid <- function(args, theta){
   dy <- diff(data$raw)
   
   t<-data$time[t.index]
-  ind = t.index
+  ind <- t.index
 
-  tt = length(t)
-  n = length(data$time)
-  omega = numeric(tt)          # We can only have bandwidth to end amount of calcs
+  dt <- data$time[2] - data$time[1]
+  
+  tt <- length(t)
+  n <- length(data$time)
+  omega <- numeric(tt)          # We can only have bandwidth to end amount of calcs
   
   for(j in 1:tt){
-    omega[j] = (1/hv)*sum(kern((data$time[2:(n-1)] - t[j])/hv)*dy[2:(n-1)]*dy[1:(n-2)])   
+    omega[j] <- -(dt/hv)*sum(kern((data$time[2:(n-1)] - t[j])/hv)*dy[2:(n-1)]*dy[1:(n-2)])   
   }
   return(psi3/(psi2*theta^2)*omega)
+  #return(omega)
 }
 
 est.noise.iid.next <- function(args, theta){
