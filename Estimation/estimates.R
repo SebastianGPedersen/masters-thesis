@@ -421,7 +421,8 @@ est.sigma.new <- function(data, hv, kern = kern.leftexp, t.index, kn, noisefun, 
   coef <- n/(n-kn)*1/(psi2*kn)
   
   #prep args
-  args <- list(data = data, hv = hv, kern = kern, t.index = t.index)
+  #args <- list(data = data, hv = hv, kern = kern, t.index = t.index)
+  args <- list(data = data, hv = 300000, kern = kern, t.index = t.index)
   
   noise<-noisefun(args, theta)
   
