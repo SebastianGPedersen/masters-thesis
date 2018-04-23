@@ -1,19 +1,55 @@
-#Module takes 13 seconds to run
-
 library(ggplot2)
 source(paste(Sys.getenv("masters-thesis"),"Simulation/Heston.R",sep="/"))
 source(paste(Sys.getenv("masters-thesis"),"Simulation/Bursts.R",sep="/"))
 
+#################### PARAMETERS THAT DON'T CHANGE ####################
+omega <- 0.0000225
+omega2 <- omega^2
+ksq <- 0.5 # K2
+phi_1 <- 1 #int(g'(x)^2)
+phi_2 <- 1/12 #int(g^2)
+int_g <- 1/4 #int(g)
 
-#Set settings for Heston
-settings <- sim.setup(mat=6.5/(24*7*52), Npath = 2, omega = 0.0001) #6.5 hours
 
-#Get results with and without bursts. OBS: I have replaced c_1=3 with c_1 = 0.3
+#################### PARAMETERS CHANGING WITH N ####################
+n <- 1000
+k_n <- floor(1/2*n^(1/2))
+hd <- floor(10*n^(-1/4))
+  
+  
+#################### Simulation ####################
+Npath <- 500
+settings <- sim.setup(mat=6.5/(24*7*52), Npath = Npath, Nsteps = n, omega = 0.0000225) #6.5 hours
 Heston <- sim.heston(settings)
+
+
+#################### Pre-averaging ####################
+
+#We need to transpose Y for dy to work properly
+Y <- t(as.matrix(Heston$Y))
+dy <- diff(Y)
+
+#Pre-avg (can't take vector)
+k_n <- floor(1/2*sqrt(length(Heston$time)))
+pre_y <- matrix(NA, nrow = Npath, ncol = n-k_n)
+
+for (i in 1:Npath){
+  pre_y[i,] <- est.NewPreAverage(dy[,i],k_n)
+}
+  
+#################### T estimator ####################
+
+#Calculate T estimator
+mu_hat <- 1/(h_n*k_n*int_g)*sum(pre_y)
+sigma_hat <- 
+T_hat <- 
+
+#################### PLOT ####################
+
+#Et loop mere senere til at vise konvergens
+
 Heston_vb <- sim.addvb(Heston,burst_time = 0.5, interval_length = 0.05, c_2 = 0.1, beta = 0.1)
 Heston_vbdb <- sim.adddb(Heston_vb, burst_time=0.5,interval_length=0.05,c_1 = 0.03,alpha=0.8)
-
-
 
 #Get a single path
 path <- 2

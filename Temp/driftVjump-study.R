@@ -8,6 +8,7 @@ source("estimation/pre-average.R")
 source("kernels/kernels.R")
 source("simulation/jumps.R")
 
+
 dbVjump <- function(Nstep, burstsetting, index, seed){
   burstsim <- function(settings, burstsetting){
     alpha <- burstsetting$alpha
@@ -65,10 +66,11 @@ dbVjump <- function(Nstep, burstsetting, index, seed){
     tind <- index
   }
   dt <- diff(data.hest$time)[1]
-  hd <- 300*dt
-  hv <- 300*dt
-  #hd<- 3000*sqrt(dt)
-  #hv<- 3000*sqrt(dt)
+  #hd <- 300000#300*dt
+  #hv <- 300000#300*dt
+  hd<- 10*dt^(0.25)
+  hv<- 10*dt^(0.25)
+
   
   # Calc T
   test.hest <- test.db(data = data.hest, hd = hd, hv = hv, t.index = tind, noisefun = est.noise.iid.next, theta = theta, kn = k)
@@ -109,8 +111,8 @@ res2 <- matrix(NA, length(N), 3)
 colnames(res2) <- c("hest", "burst", "jump")
 
 # settings
-burstset<-sim.burstsetting(alpha = 0.65, beta = 0.1 ,c_1 = 0.1, c_2 = 0.02, interval_length = 0.1)
-burstset2<-sim.burstsetting(alpha = 0.7, beta = 0.1 ,c_1 = 0.1, c_2 = 0.02, interval_length = 0.1)
+burstset<-sim.burstsetting(alpha = 0.6, beta = 0.4 ,c_1 = 0.1, c_2 = 0.05, interval_length = 0.1)
+burstset2<-sim.burstsetting(alpha = 0.8, beta = 0.1 ,c_1 = 0.03, c_2 = 0.1, interval_length = 0.1)
 
 for(i in 1:length(N)){
   try(res[i,] <- dbVjump(N[i], burstset, seed = 12444, index = N[1]/2+floor(sqrt(N[1])/2) ))
@@ -151,5 +153,5 @@ if(0 > 1){
   paste0("hd=","alpha=",burstset2$alpha,"beta=",burstset2$alpha,"c1=",burstset2$c_1,"c2=",burstset2$c_2,".Rda")
   
 # Hard notify when done
-#shell.exec("https://www.youtube.com/embed/quxTnEEETbo?autoplay=1")
+# shell.exec("https://www.youtube.com/embed/quxTnEEETbo?autoplay=1")
 
