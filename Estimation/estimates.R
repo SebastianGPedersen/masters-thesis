@@ -378,7 +378,7 @@ est.mu.new <- function(data, hd, kern = kern.leftexp, t.index, kn){
   if(is.list(kern)) kern<-kern$kern
   if(!is.function(kern)) stop("kern should be either function or list containing function")
 
-  if(identical(kern,kern.leftexp$kern))
+  if(identical(kern,kern.leftexp$kern) & length(t.index)>1)
   {
     # mu.next only works for left exp kern
     out<-est.mu.next(data = data, hd = hd, t.index = t.index)
@@ -386,9 +386,8 @@ est.mu.new <- function(data, hd, kern = kern.leftexp, t.index, kn){
   else{
     out <- est.mu(data = data, hd = hd, kern = kern, t.index = t.index)
   }
-  n <- length(data$Y)
   psi1 = 0.25
-  coef <- n/(n-kn)*1/(psi1*kn)
+  coef <- 1/(psi1*kn)
   
   return(list(time = out$time, mu = out$mu*coef))
 }
@@ -408,7 +407,7 @@ est.sigma.new <- function(data, hv, kern = kern.leftexp, t.index, kn, noisefun, 
     #}
   }
   
-  if(identical(kern, kern.leftexp$kern)){
+  if(identical(kern, kern.leftexp$kern) & length(t.index)>1){
     #print("using .next")
     out <- est.sigma.raw.next(data = data, hv = hv, t.index = t.index)
   }
@@ -417,12 +416,12 @@ est.sigma.new <- function(data, hv, kern = kern.leftexp, t.index, kn, noisefun, 
   }
   
   n <- length(data$Y)
-  psi2 = 0.25
-  coef <- n/(n-kn)*1/(psi2*kn)
+  psi2 <- 1/12
+  coef <- 1/(psi2*kn)
   
   #prep args
-  #args <- list(data = data, hv = hv, kern = kern, t.index = t.index)
-  args <- list(data = data, hv = 300000, kern = kern, t.index = t.index)
+  args <- list(data = data, hv = hv, kern = kern, t.index = t.index)
+  #args <- list(data = data, hv = 300000, kern = kern, t.index = t.index)
   
   noise<-noisefun(args, theta)
   
@@ -438,8 +437,8 @@ est.noise.iid <- function(args, theta){
   kern <- args$kern
   t.index <- args$t.index
   
-  psi1 <- 0.25
-  psi2 <- 1/12
+  psi2 <- 1/12 #int(g(u)^2)
+  psi3 <- 1    #int(g'(u)^2)
   
   dy <- diff(data$raw)
   
@@ -453,7 +452,7 @@ est.noise.iid <- function(args, theta){
   for(j in 1:tt){
     omega[j] = (1/hv)*sum(kern((data$time[2:(n-1)] - t[j])/hv)*dy[2:(n-1)]*dy[1:(n-2)])   
   }
-  return(psi1/(psi2*theta^2)*omega)
+  return(psi3/(psi2*theta^2)*omega)
 }
 
 est.noise.iid.next <- function(args, theta){
@@ -497,8 +496,8 @@ est.noise.iid.next <- function(args, theta){
   
   n <- length(data$time)
   
-  psi1 <- 0.25
   psi2 <- 1/12
+  psi3 <- 1
   coef <- psi1/(psi2*theta^2)
   # init
   tt = length(t)

@@ -8,7 +8,7 @@ source("estimation/pre-average.R")
 source("kernels/kernels.R")
 source("simulation/jumps.R")
 
-dbVjump <- function(Nstep, burstsetting, seed, plt = F){
+dbVjump <- function(Nstep, burstsetting, index, seed){
   burstsim <- function(settings, burstsetting){
     alpha <- burstsetting$alpha
     beta <- burstsetting$beta
@@ -58,23 +58,23 @@ dbVjump <- function(Nstep, burstsetting, seed, plt = F){
   data.jump <- list(time = sims$jump$time*1*52*7*24*60*60*1000, Y = prev.jump, raw = sims$jump$Y)
   
   #Estimation
-  tind <- seq(from = 2000, to = Nstep-1, by = 60)
+  if(missing(index)){
+    tind <- seq(from = 2000, to = Nstep-1, by = 60)
+  }
+  else{
+    tind <- index
+  }
   dt <- diff(data.hest$time)[1]
-  #hd <- 300000#300*dt
-  #hv <- 300000#300*dt
-  hd<- 300*dt^(0.25)
-  hv<- 300*dt^(0.25)
+  hd <- 300*dt
+  hv <- 300*dt
+  #hd<- 3000*sqrt(dt)
+  #hv<- 3000*sqrt(dt)
   
   # Calc T
   test.hest <- test.db(data = data.hest, hd = hd, hv = hv, t.index = tind, noisefun = est.noise.iid.next, theta = theta, kn = k)
   test.burst <- test.db(data = data.db, hd = hd, hv = hv, t.index = tind, noisefun = est.noise.iid.next, theta = theta, kn = k)
   test.jump <- test.db(data = data.jump, hd = hd, hv = hv, t.index = tind, noisefun = est.noise.iid.next, theta = theta, kn = k)
   
-  if(plt){
-    plot(test.burst$test, type = "l")
-    lines(test.hest$test, col = "red")
-    lines(test.jump$test, col = "blue")
-  }
   # Calc Tstar
   Tstar.hest<-tstar(test.hest)$tstar
   Tstar.burst<-tstar(test.burst)$tstar
@@ -113,9 +113,9 @@ burstset<-sim.burstsetting(alpha = 0.65, beta = 0.1 ,c_1 = 0.1, c_2 = 0.02, inte
 burstset2<-sim.burstsetting(alpha = 0.7, beta = 0.1 ,c_1 = 0.1, c_2 = 0.02, interval_length = 0.1)
 
 for(i in 1:length(N)){
-  try(res[i,] <- dbVjump(N[i], burstset, seed = 12444))
+  try(res[i,] <- dbVjump(N[i], burstset, seed = 12444, index = N[1]/2+100))
   
-  try(res2[i,] <- dbVjump(N[i], burstset2, seed = 12444))
+  try(res2[i,] <- dbVjump(N[i], burstset2, seed = 12444,index = N[1]/2+100))
   print(i)
 }
 
@@ -142,10 +142,10 @@ ggplot() +
 #test if Nsteps is compatible with sim burst
 #dbVjump(350600, burstset, seed = 12444)
 
-#if(0 > 1){
+if(0 > 1){
   saveRDS(res, file=paste0("temp/","hd=dt^0.25","alpha=",burstset$alpha,"beta=",burstset$alpha,"c1=",burstset$c_1,"c2=",burstset$c_2,".Rda"))
   saveRDS(res2, file=paste0("hd=dt^0.25","alpha=",burstset2$alpha,"beta=",burstset2$alpha,"c1=",burstset2$c_1,"c2=",burstset2$c_2,".Rda"))
-#}
+}
 
   paste0("temp/","hd=","alpha=",burstset$alpha,"beta=",burstset$alpha,"c1=",burstset$c_1,"c2=",burstset$c_2,".Rda")
   paste0("hd=","alpha=",burstset2$alpha,"beta=",burstset2$alpha,"c1=",burstset2$c_1,"c2=",burstset2$c_2,".Rda")
