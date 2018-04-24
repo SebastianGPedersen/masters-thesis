@@ -20,7 +20,7 @@ K2 <- 0.5 #K2
 
 
 #################### PARAMETERS CHANGING WITH N ####################
-n_list <- c(50, 100, 200, 400, 800, 1600, 2000, 3000, 5000, 7500, 10000, 20000, 40000, 60000, 80000)
+n_list <- c(50, 100, 200, 400, 800, 1600, 2000, 3000, 5000, 7500, 10000, 20000)#, 40000, 60000, 80000)
 
 #Initialize list with 5 mean, lower and upper for later plot
 all_plot_data <- vector("list", 5)
@@ -51,15 +51,15 @@ for (my_n in 1:length(n_list)) {
   
   
   ############ Simulation #########
-  Npath <- 500
+  Npath <- 200
   settings <- sim.setup(mat=mat, Npath = Npath, Nsteps = n, omega = omega) #6.5 hours
   
   Heston <- sim.heston(settings)
   
   #alpha < beta + 1/2. Burst + Jump
-  Heston_vb <- sim.addvb(Heston,burst_time = 0.5, interval_length = 0.05, c_2 = 0.075, beta = 0.45)
-  Heston_vbdb_small <- sim.adddb(Heston_vb, burst_time=0.5,interval_length=0.05,c_1 = 0.15,alpha=0.55)
-  Heston_jump_small <- sim.addjump(Heston, burst_time = 0.5, interval_length = 0.05, c_1 = 0.1, alpha = 0.75)
+  Heston_vb <- sim.addvb(Heston,burst_time = 0.5, interval_length = 0.05, c_2 = 0.03, beta = 0.45)
+  Heston_vbdb_small <- sim.adddb(Heston_vb, burst_time=0.5,interval_length=0.05,c_1 = 0.3,alpha=0.55)
+  Heston_jump_small <- sim.addjump(Heston, burst_time = 0.5, interval_length = 0.05, c_1 = 0.3, alpha = 0.55)
   
   #alpha > beta + 1/2. Burst + Jump
   Heston_vb <- sim.addvb(Heston,burst_time = 0.5, interval_length = 0.05, c_2 = 0.1, beta = 0.1)
