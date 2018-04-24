@@ -1,4 +1,4 @@
-source("Kernels/kernels.R")
+source("kernels/kernels.R")
 # BANDWIDTH SHOULD BE TRANSLATED FROM SECONDS TO YEARS ( BW / Seconds per year)
 # Consider multiplying time such that our unit is in seconds and not years...!
 
@@ -494,21 +494,23 @@ est.noise.iid.next <- function(args, theta){
   
   # scaling
   dt1<-t[1]-startomega$time
-  dt<-c(dt1, diff(t))
-  rescale <- exp(-dt/hv)
+  rescale <- exp(-c(dt1, diff(t))/hv)
   
   n <- length(data$time)
   
+  # THIS SHOULD BE FIXED IN NON-EQUIDISTANT
+  dt<-data$time[2]-data$time[1]
+  
   psi2 <- 1/12
   psi3 <- 1
-  coef <- psi1/(psi2*theta^2)
+  coef <- psi3/(psi2*theta^2)
   # init
   tt = length(t)
   omega <- numeric(tt)
   # CALCULATE NEXT 'BLOCK'
-  omega[1] <- startomega$omega*rescale[1] + coef*1/hv * sum( kern( (data$time[start[1]:end[1]] - t[1])/hv)*dy[start[1]:end[1]]*dy[(start[1]-1):(end[1]-1)] )
+  omega[1] <- startomega$omega*rescale[1] - coef*dt/hv * sum( kern( (data$time[start[1]:end[1]] - t[1])/hv)*dy[start[1]:end[1]]*dy[(start[1]-1):(end[1]-1)] )
   for(j in 2:(tt)){
-    omega[j] <- omega[j-1]*rescale[j] + coef*1/hv * sum( kern(  (data$time[start[j]:end[j]] - t[j])/hv)*dy[start[j]:end[j]]*dy[(start[j]-1):(end[j]-1)] )
+    omega[j] <- omega[j-1]*rescale[j] - coef*dt/hv * sum( kern(  (data$time[start[j]:end[j]] - t[j])/hv)*dy[start[j]:end[j]]*dy[(start[j]-1):(end[j]-1)] )
   }
   omega <- c(prev, omega)
   #debug

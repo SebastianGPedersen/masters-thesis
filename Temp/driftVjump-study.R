@@ -1,12 +1,12 @@
 setwd(Sys.getenv("masters-thesis"))
 source("simulation/heston.R")
 source("simulation/bursts.R")
+source("simulation/jumps.R")
 source("estimation/estimates.R")
 source("estimation/rho.R")
 source("estimation/teststat.R")
 source("estimation/pre-average.R")
 source("kernels/kernels.R")
-source("simulation/jumps.R")
 
 
 dbVjump <- function(Nstep, burstsetting, index, seed){
@@ -35,7 +35,6 @@ dbVjump <- function(Nstep, burstsetting, index, seed){
     vb_path = sim.path(path, sims.vb)$Y
     vbdb_path = sim.path(path, sims.db)$Y
     
-    
     return(list(raw = sim.path(path,sims), vb = sim.path(path, sims.vb), vbdb = sim.path(path, sims.db), jump = sim.path(path,sims.jump)))
   }
   
@@ -54,9 +53,9 @@ dbVjump <- function(Nstep, burstsetting, index, seed){
   prev.db <- c(rep(0,k-2+2),est.NewPreAverage(diff(sims$vbdb$Y), k))
   prev.jump <- c(rep(0,k-2+2),est.NewPreAverage(diff(sims$jump$Y), k))
   
-  data.hest <- list(time = sims$raw$time*1*52*7*24*60*60*1000, Y = prev.hest, raw = sims$raw$Y)
-  data.db <- list(time = sims$vbdb$time*1*52*7*24*60*60*1000, Y = prev.db, raw = sims$vbdb$Y)
-  data.jump <- list(time = sims$jump$time*1*52*7*24*60*60*1000, Y = prev.jump, raw = sims$jump$Y)
+  data.hest <- list(time = sims$raw$time, Y = prev.hest, raw = sims$raw$Y)
+  data.db <- list(time = sims$vbdb$time, Y = prev.db, raw = sims$vbdb$Y)
+  data.jump <- list(time = sims$jump$time, Y = prev.jump, raw = sims$jump$Y)
   
   #Estimation
   if(missing(index)){
@@ -65,11 +64,16 @@ dbVjump <- function(Nstep, burstsetting, index, seed){
   else{
     tind <- index
   }
-  dt <- diff(data.hest$time)[1]
-  #hd <- 300000#300*dt
-  #hv <- 300000#300*dt
-  hd<- 10*dt^(0.25)
-  hv<- 10*dt^(0.25)
+  mat <- 6.5/(24*7*52)#*52*7*24*60*60 #In years
+  n <- Nstep
+  dt <- mat/n #In years
+  k_n <- floor(theta*n^(1/2))
+  #hd <- 2*10^3*n^(-1/4) #If miliseconds
+  hd <- 10^(-3)*dt^(1/4) #If years
+  hv <- 10^(-3)*dt^(1/4) #If years
+  
+  #hd<- 1000*dt
+  #hv<- 1000*dt
 
   
   # Calc T
@@ -115,9 +119,9 @@ burstset<-sim.burstsetting(alpha = 0.6, beta = 0.4 ,c_1 = 0.1, c_2 = 0.05, inter
 burstset2<-sim.burstsetting(alpha = 0.8, beta = 0.1 ,c_1 = 0.03, c_2 = 0.1, interval_length = 0.1)
 
 for(i in 1:length(N)){
-  try(res[i,] <- dbVjump(N[i], burstset, seed = 12444, index = N[1]/2+floor(sqrt(N[1])/2) ))
+  try(res[i,] <- dbVjump(N[i], burstset, seed = 2342, index = N[i]/2))
   
-  try(res2[i,] <- dbVjump(N[i], burstset2, seed = 12444,index = N[1]/2+floor(sqrt(N[1])/2) ))
+  try(res2[i,] <- dbVjump(N[i], burstset2, seed = 2342,index = N[i]/2))
   print(i)
 }
 
@@ -154,4 +158,3 @@ if(0 > 1){
   
 # Hard notify when done
 # shell.exec("https://www.youtube.com/embed/quxTnEEETbo?autoplay=1")
-

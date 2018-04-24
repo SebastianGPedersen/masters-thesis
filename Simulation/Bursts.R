@@ -16,15 +16,25 @@ sim.burstsetting <- function(alpha, beta, burst_time = 0.5, interval_length = 0.
               interval_length = interval_length, c_1 = c_1, c_2 = c_2))
 }
 
-sim.adddb <- function(Heston_res, burst_time = 0.5, interval_length = 0.5, c_1 = 3, alpha = 0.75) {
+sim.adddb <- function(Heston_res, burst_time = 0.5, interval_length = 0.5, c_1 = 3, alpha = 0.75, reverse = T) {
   #Intervals
   burst_begin_perc = burst_time-interval_length/2
-  burst_end_perc = burst_time+interval_length/2
+  if(reverse){
+    burst_end_perc = burst_time+interval_length/2
+  }
+  else{
+    burst_end_perc = burst_time
+  }
   
   burst_begin = burst_begin_perc * Heston_res$time[length(Heston_res$time)]
   burst_end = burst_end_perc * Heston_res$time[length(Heston_res$time)]
-  tau = (burst_end+burst_begin)/2
   
+  if(reverse){
+    tau = (burst_end+burst_begin)/2
+  }
+  else{
+    tau = burst_end
+  }
   
   #Define mu-function
   mu <- function(t) {
@@ -38,7 +48,7 @@ sim.adddb <- function(Heston_res, burst_time = 0.5, interval_length = 0.5, c_1 =
   
   #initializations
   steps = length(Heston_res$time)-1
-  dt = Heston_res$time[2] - Heston_res$time[1]
+  dt = Heston_res$time[2] - Heston_res$time[1] # this should be generalized if we do uneven dt
   
   mu_add = vector(length=steps+1)
   mu_add[1] = 0
@@ -52,21 +62,32 @@ sim.adddb <- function(Heston_res, burst_time = 0.5, interval_length = 0.5, c_1 =
   Heston_res$Y = Heston_res$Y+t(replicate(nrow(Heston_res$X),mu_add))
   
   #Check that we end up in same point
-  if ((mu_add[length(mu_add)] > 10^(-6)) | (mu_add[length(mu_add)] < -10^(-6))) {
-    stop("We don't end up in same point - something is wrong with the mu-vector")
+  if(reverse){
+    if ((mu_add[length(mu_add)] > 10^(-6)) | (mu_add[length(mu_add)] < -10^(-6))) {
+      stop("We don't end up in same point - something is wrong with the mu-vector")
+    }
   }
   return(Heston_res)
 }
 
 
-sim.addvb <- function(Heston_res, burst_time = 0.5, interval_length = 0.5, c_2 = 0.15, beta = 0.4) {
+sim.addvb <- function(Heston_res, burst_time = 0.5, interval_length = 0.5, c_2 = 0.15, beta = 0.4, reverse = T) {
   #Intervals
   burst_begin_perc = burst_time-interval_length/2
-  burst_end_perc = burst_time+interval_length/2
-  
+  if(reverse){
+    burst_end_perc = burst_time+interval_length/2
+  }
+  else{
+    burst_end_perc = burst_time
+  }
   burst_begin = burst_begin_perc * Heston_res$time[length(Heston_res$time)]
   burst_end = burst_end_perc * Heston_res$time[length(Heston_res$time)]
-  tau = (burst_end+burst_begin)/2
+  if(reverse){
+    tau = (burst_end+burst_begin)/2
+  }
+  else{
+    tau = burst_end
+  }
   
   #Define sigma-function
   sigma <- function(t) {
@@ -94,32 +115,33 @@ sim.addvb <- function(Heston_res, burst_time = 0.5, interval_length = 0.5, c_2 =
     sigma_add[,i] = sigma_add[,i-1]+sigma(Heston_res$time[i-1])*sqrt(dt)*dW[,i-1]
   }
   
-  #From footnote 11 we need to recenter the sigma_add so it reverts
-
-  index_vector = ((Heston_res$time >=burst_begin) & (Heston_res$time <=burst_end)) #get true-false vector of interval
-  len = sum(index_vector)
-  extract = sigma_add[,ncol(sigma_add)]/len          #this has to be extracted to recenter (different in every path, it is a vector)
-  
-  for (i in 1:(ncol(sigma_add)-1)){                  #if we are in interval, the sigma AFTER has to be altered
-    sigma_add[,i+1] = sigma_add[,i+1] - sum(index_vector[1:i])*extract
-  }
+  if(reverse){
+    #From footnote 11 we need to recenter the sigma_add so it reverts
+    index_vector = ((Heston_res$time >=burst_begin) & (Heston_res$time <=burst_end)) #get true-false vector of interval
+    len = sum(index_vector)
+    extract = sigma_add[,ncol(sigma_add)]/len          #this has to be extracted to recenter (different in every path, it is a vector)
     
-  #Now that sigma is recentered we check that every path is centered correct
-  if ((max(sigma_add[,ncol(sigma_add)]) > 10^(-6)) | (max(sigma_add[,ncol(sigma_add)]) < -10^(-6))) {
-    stop("We don't end up in same point - something is wrong with the sigma-vector")
+    for (i in 1:(ncol(sigma_add)-1)){                  #if we are in interval, the sigma AFTER has to be altered
+      sigma_add[,i+1] = sigma_add[,i+1] - sum(index_vector[1:i])*extract
+    }
+      
+    #Now that sigma is recentered we check that every path is centered correct
+    if ((max(sigma_add[,ncol(sigma_add)]) > 10^(-6)) | (max(sigma_add[,ncol(sigma_add)]) < -10^(-6))) {
+      stop("We don't end up in same point - something is wrong with the sigma-vector")
+    }
   }
   
   #We are changing the vol, so epsilon also changes
-  epsilon_u_vol = (Heston_res$Y-Heston_res$X)/sqrt(Heston_res$vol) #this is gamma/sqrt(n) * rnorm
+  #epsilon_u_vol = (Heston_res$Y-Heston_res$X)/sqrt(Heston_res$vol) #this is gamma/sqrt(n) * rnorm
   
   vol_burst_vector = sapply(Heston_res$time, function(x) sigma(x)^2)
   new_vol = Heston_res$vol + t(replicate(nrow(Heston_res$X),vol_burst_vector))
   
-  new_epsilon = epsilon_u_vol*sqrt(new_vol) #Multiplicates matrixes entrance-wise
+  #new_epsilon = epsilon_u_vol*sqrt(new_vol) #Multiplicates matrixes entrance-wise
   
   #Change X,Y and vol
   Heston_res$X = Heston_res$X+sigma_add
-  Heston_res$Y = Heston_res$X+new_epsilon
+  #Heston_res$Y = Heston_res$X+new_epsilon
   Heston_res$vol = new_vol
   
   #Return

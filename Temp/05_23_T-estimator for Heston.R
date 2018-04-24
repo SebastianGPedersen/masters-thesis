@@ -19,7 +19,10 @@ int_g <- 1/4 #int(g)
 
 
 #################### PARAMETERS CHANGING WITH N ####################
-n_list <- c(50, 100, 200, 400, 800, 1600, 2000, 3000, 5000, 7500, 10000, 20000, 40000, 60000)
+n_list <- c(50, 100, 200, 400, 800, 1600, 2000, 3000, 5000, 7500, 10000,
+            20000, 30000, 40000, 50000, 60000, 70000, 80000, 90000, 100000,
+            110000,120000,130000,140000,150000,160000, 170000, 180000, 190000,
+            200000)
 
 #Initialize list with 5 mean, lower and upper for later plot
 all_plot_data <- vector("list", 5)
@@ -145,3 +148,10 @@ qplot(n, mean, data = plot_data_frame, geom = "line", color = factor)
 qplot(n, mean, data = plot_data_frame, geom = "line", color = factor) +
   geom_ribbon(aes(ymin = lower, ymax = upper, fill = factor), alpha = 0.3)
 
+#if(0 > 1){
+saveRDS(plot_data_frame, file="temp/TdriftVjump3.Rda")
+#}
+#test<-readRDS("temp/TdriftVjump.Rda")
+# NOTIFY WHEN COMPLETE
+print(Sys.time())
+#shell.exec("https://www.youtube.com/embed/rrVDATvUitA?autoplay=1")
