@@ -142,6 +142,7 @@ sim.addvb <- function(Heston_res, burst_time = 0.5, interval_length = 0.5, c_2 =
   #Change X,Y and vol
   Heston_res$X = Heston_res$X+sigma_add
   #Heston_res$Y = Heston_res$X+new_epsilon
+  Heston_res$Y = Heston_res$Y+sigma_add
   Heston_res$vol = new_vol
   
   #Return

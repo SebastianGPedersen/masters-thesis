@@ -149,9 +149,9 @@ qplot(n, mean, data = plot_data_frame, geom = "line", color = factor) +
   geom_ribbon(aes(ymin = lower, ymax = upper, fill = factor), alpha = 0.3)
 
 #if(0 > 1){
-saveRDS(plot_data_frame, file="temp/TdriftVjump3.Rda")
+saveRDS(plot_data_frame, file="temp/TdriftVjump.Rda")
 #}
 #test<-readRDS("temp/TdriftVjump.Rda")
 # NOTIFY WHEN COMPLETE
 print(Sys.time())
-#shell.exec("https://www.youtube.com/embed/rrVDATvUitA?autoplay=1")
+shell.exec("https://www.youtube.com/embed/rrVDATvUitA?autoplay=1")
