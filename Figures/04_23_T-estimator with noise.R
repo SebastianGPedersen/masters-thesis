@@ -7,10 +7,9 @@ source("Estimation/pre-average.R")
 source("Estimation/estimates.R")
 
 #################### PARAMETERS THAT DON'T CHANGE ####################
-omega <- 0.0000225
+omega <- 1.6*10^(-5) #What Mathias wrote
 omega2 <- omega^2
 K2 <- 0.5 #K2
-theta <- 1/2
 
 #Constants regarding pre-avg kernel
 phi_1 <- 1 #int(g'(x)^2)
@@ -19,10 +18,8 @@ int_g <- 1/4 #int(g)
 
 
 #################### PARAMETERS CHANGING WITH N ####################
-n_list <- c(50, 100, 200, 400, 800, 1600, 2000, 3000, 5000, 7500, 10000,
-            20000, 30000, 40000, 50000, 60000, 70000, 80000, 90000, 100000,
-            110000,120000,130000,140000,150000,160000, 170000, 180000, 190000,
-            200000)
+n_list <- c(800, 1600, 2000, 3000, 5000, 7500, 10000,
+            20000, 30000)#, 40000, 50000)
 
 #Initialize list with 5 mean, lower and upper for later plot
 all_plot_data <- vector("list", 5)
@@ -40,29 +37,34 @@ for (my_n in 1:length(n_list)) {
   mat <- 6.5/(24*7*52)#*52*7*24*60*60 #In years
   n <- n_list[my_n]
   dt <- mat/n #In years
-  k_n <- floor(theta*n^(1/2))
+  theta <- 10^(-1)
+  k_n <- ceiling(theta*n^(1/2)) #It shouldn't become zero, therefore 'ceiling'
   #hd <- 2*10^3*n^(-1/4) #If miliseconds
-  hd <- 10^(-3)*dt^(1/4) #If years
+  hd <- 10^(-3)*dt^(1/3) #If years
+  
+  #Check they are reasonable
+  n/k_n #We shouldn't use to many in pre-avg
+  hd/(k_n*dt) #We should have enough pre-avg within bandwidth
   
   #The index where i calculate T
   desired_index <- floor(n/2) + k_n #burst time + k_n
   
   
   ############ Simulation #########
-  Npath <- 200
+  Npath <- 300
   settings <- sim.setup(mat=mat, Npath = Npath, Nsteps = n, omega = omega) #6.5 hours
   
   Heston <- sim.heston(settings)
   
   #alpha < beta + 1/2. Burst + Jump
-  Heston_vb <- sim.addvb(Heston,burst_time = 0.5, interval_length = 0.05, c_2 = 0.05, beta = 0.4)
-  Heston_vbdb_small <- sim.adddb(Heston_vb, burst_time=0.5,interval_length=0.05,c_1 = 0.1,alpha=0.6)
-  Heston_jump_small <- sim.addjump(Heston, burst_time = 0.5, interval_length = 0.05, c_1 = 0.1, alpha = 0.6)
+  Heston_vb <- sim.addvb(Heston,burst_time = 0.5, interval_length = 0.05, c_2 = 0.03, beta = 0.45, reverse = F)
+  Heston_vbdb_small <- sim.adddb(Heston_vb, burst_time=0.5,interval_length=0.05,c_1 = 0.3,alpha=0.55, reverse = F)
+  Heston_jump_small <- sim.addjump(Heston, burst_time = 0.5, interval_length = 0.05, c_1 = 0.3, alpha = 0.55)
   
   #alpha > beta + 1/2. Burst + Jump
-  Heston_vb <- sim.addvb(Heston,burst_time = 0.5, interval_length = 0.05, c_2 = 0.1, beta = 0.1)
-  Heston_vbdb_large <- sim.adddb(Heston_vb, burst_time=0.5,interval_length=0.05,c_1 = 0.03,alpha=0.8)
-  Heston_jump_large <- sim.addjump(Heston, burst_time = 0.5, interval_length = 0.05, c_1 = 0.03, alpha = 0.8)
+  Heston_vb <- sim.addvb(Heston,burst_time = 0.5, interval_length = 0.05, c_2 = 1.5, beta = 0.1, reverse = F)
+  Heston_vbdb_large <- sim.adddb(Heston_vb, burst_time=0.5,interval_length=0.05,c_1 = 0.016,alpha=0.8, reverse = F)
+  Heston_jump_large <- sim.addjump(Heston, burst_time = 0.5, interval_length = 0.05, c_1 = 0.016, alpha = 0.8)
   
   #All paths
   all_paths <- list(Heston, Heston_vbdb_small, Heston_jump_small, Heston_vbdb_large, Heston_jump_large)
@@ -143,15 +145,15 @@ for (i in 2:length(all_plot_data)){
 }
 
 ##### PLOT #####
-qplot(n, mean, data = plot_data_frame, geom = "line", color = factor)
+#qplot(n, mean, data = plot_data_frame, geom = "line", color = factor)
 
 qplot(n, mean, data = plot_data_frame, geom = "line", color = factor) +
   geom_ribbon(aes(ymin = lower, ymax = upper, fill = factor), alpha = 0.3)
 
 #if(0 > 1){
-saveRDS(plot_data_frame, file="temp/TdriftVjump.Rda")
+#saveRDS(plot_data_frame, file="temp/TdriftVjump.Rda")
 #}
 #test<-readRDS("temp/TdriftVjump.Rda")
 # NOTIFY WHEN COMPLETE
-print(Sys.time())
-shell.exec("https://www.youtube.com/embed/rrVDATvUitA?autoplay=1")
+#print(Sys.time())
+#shell.exec("https://www.youtube.com/embed/rrVDATvUitA?autoplay=1")

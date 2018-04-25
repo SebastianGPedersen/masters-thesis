@@ -115,7 +115,7 @@ sim.addvb <- function(Heston_res, burst_time = 0.5, interval_length = 0.5, c_2 =
     sigma_add[,i] = sigma_add[,i-1]+sigma(Heston_res$time[i-1])*sqrt(dt)*dW[,i-1]
   }
   
-  if(reverse){
+  #if(reverse){
     #From footnote 11 we need to recenter the sigma_add so it reverts
     index_vector = ((Heston_res$time >=burst_begin) & (Heston_res$time <=burst_end)) #get true-false vector of interval
     len = sum(index_vector)
@@ -129,7 +129,7 @@ sim.addvb <- function(Heston_res, burst_time = 0.5, interval_length = 0.5, c_2 =
     if ((max(sigma_add[,ncol(sigma_add)]) > 10^(-6)) | (max(sigma_add[,ncol(sigma_add)]) < -10^(-6))) {
       stop("We don't end up in same point - something is wrong with the sigma-vector")
     }
-  }
+  #}
   
   #We are changing the vol, so epsilon also changes
   #epsilon_u_vol = (Heston_res$Y-Heston_res$X)/sqrt(Heston_res$vol) #this is gamma/sqrt(n) * rnorm
