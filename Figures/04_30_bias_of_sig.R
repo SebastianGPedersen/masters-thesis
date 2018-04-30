@@ -34,20 +34,19 @@ for (memory in 1:n_loops) {
   #################### LOOP OVER H_D ####################
   
   #H_d from 1min to 15min
-    
+  
   for (hd in 1:length(hd_list)) {
     
     #hd <- 1
     desired_index <- n-1 #Takes last index, so K uses as many points as possible
-    mu_hat <- numeric(length = temp_paths)
+    sig_hat <- numeric(length = temp_paths)
     
     for (i in 1:temp_paths) {
       #i <- 1
       single_path <- list(Y = diff(BS$Y[i,]), time = BS$time)
-      mu_hat[i] <- sqrt(hd_list[hd])/sqrt(K2*theta^2)*est.mu(data = single_path, hd = hd_list[hd], t.index = desired_index)$mu[1]
-      
+      sig_hat <- 1/theta^2 * est.sigma(single_path, hv = hd_list[hd], t.index = desired_index, lag = 10)$sig
     }
-    var_bias_temp[memory,hd] <- mean(mu_hat^2)
+    var_bias_temp[memory,hd] <- mean(sig_hat)
   }
 }
 
@@ -60,13 +59,12 @@ for (hd in 1:length(hd_list)) {
   noise[hd] <- mean(1/hd_list[hd]*omega^2) / sqrt(K2*theta^2)
 }
 
-data <- data.frame(hd = hd_list, target = (1:length(hd_list)*0)+1, var_bias = var_bias, var_bias_noise = var_bias - noise)
+data <- data.frame(hd = hd_list, target = (1:length(hd_list)*0)+1, var_bias = var_bias)
 
 ggplot() +
-geom_line(data=data, aes(x=hd, y=var_bias, col = "Var_mu"), size = 1) +
-geom_line(data=data, aes(x=hd, y=var_bias_noise, col = "var-noise"), size = 1) +
-geom_line(data=data, aes(x=hd, y=target, col = "target"), size = 1) +
-xlab("Bandwidth, hd") + ylab("Normalized Variance")
+  geom_line(data=data, aes(x=hd, y=var_bias, col = "est.sig/sig"), size = 1) +
+  geom_line(data=data, aes(x=hd, y=target, col = "target"), size = 1) +
+  xlab("Bandwidth, hd") + ylab("Normalized Variance")
 
 
 ##Calculate evt. mean(1/sqrt(h_n)*omega^2)

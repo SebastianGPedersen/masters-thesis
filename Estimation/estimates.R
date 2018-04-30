@@ -34,10 +34,13 @@ est.mu <- function(data, hd, kern = kern.leftexp, t.index){
   
   # return list
   return(list(time = t, mu = mu))
+}
+
+est.sigma <- function(data, hv, t.index, kern = kern.leftexp, wkern=kern.parzen, lag="auto")
+{
   # data list should include a times column and the Y column (log returns)
   
   lagset <- lag
-  
   dy <- data$Y
   
   # kern handling
@@ -70,28 +73,27 @@ est.mu <- function(data, hd, kern = kern.leftexp, t.index){
     }
   }
   
-  gamma<-function(l, t, end){
+  gamma<-function(l, t){
     # end is the highest needed index
-    out<- sum(   kern( (data$time[(l+1):(end-1)] - t)/hv )* 
-                  dy[(1+l):(end-1)]*       
-                 kern( (data$time[1:(end-l-1)] - t)/hv )*
-                    dy[1:(end-1-l)]   )
+    out<- sum(   kern( (data$time[(l+1):ind[j]] - t)/hv )* 
+                   dy[(1+l):(ind[j])]*       
+                   kern( (data$time[1:(ind[j]-l)] - t)/hv )*
+                   dy[1:(ind[j]-l)]   )
     return(out)
   }
-
+  
   end = n
   for (j in 1:tt) {
-    if(lagset =="auto")
-    {
+    if(lagset =="auto"){
       lag <- laglength(dy, nmu[j])
     }
-   sig[j] <- sum(  (kern(   (data$time[1:(end-1)] - t[j])/hv)*dy[1:(end-1)]  )^2  )  # l = 0
-   
-   if (lag >=1) {
-     for(l in 1:lag){
-       sig[j] <- sig[j] + 2*(wkern(l/(lag))*gamma(l,t[j], end))
-     }
-   }
+    
+    sig[j] <- sum(  (kern(   (data$time[1:ind[j]] - t[j])/hv)*dy[1:ind[j]]  )^2  )  # l = 0
+    if (lag >=1) {
+      for(l in 1:lag){
+        sig[j] <- sig[j] + 2*(wkern(l/(lag))*gamma(l,t[j]))
+      }
+    }
   }
   sig <- sig/hv
   
@@ -224,6 +226,9 @@ est.sigma.next <- function(data, prevsig, hv, t.index, wkern=kern.parzen, lag="a
   if(missing(prevsig)){
     # initial handling is pretty weird because of lag length
     prevsig <- est.sigma(data, hv=hv, t.index = t.index[1],lag = lag) # change to minus
+    if(length(t.index) == 1){
+      return(prevsig)
+    }
   } 
   startsig<-list(time = prevsig$time[length(prevsig$time)], sig = prevsig$sig[length(prevsig$sig)])
   
@@ -535,12 +540,12 @@ est.sigma.raw.next <- function(data, prevsig, hv, t.index){   #
   
   if(missing(prevsig)){
     # initial handling is pretty weird because of lag length
-    startsig <- est.sigma.raw(data = data, hv=hv, t.index = t.index[1]) # change to minus
+    prevsig <- est.sigma.raw(data = data, hv=hv, t.index = t.index[1]) # change to minus
     if(length(t.index) == 1){
-      return(startsig)
+      return(prevsig)
     }
   } 
-  startsig<-prevsig
+  startsig<-list(time = prevsig$time[length(prevsig$time)], sig = prevsig$sig[length(prevsig$sig)])
   
   if(data$time[t.index][1] < startsig$time) stop("t.index should be higher than previous sig times")
   if(data$time[t.index][1] == startsig$time) t.index <- t.index[2:length(t.index)]
