@@ -150,3 +150,15 @@ for (i in 2:length(all_plot_data)){
 qplot(n, mean, data = plot_data_frame, geom = "line", color = factor) +
   geom_ribbon(aes(ymin = lower, ymax = upper, fill = factor), alpha = 0.3)
 
+
+### Only Heston ###
+temp_frame <- data.frame(all_plot_data[[1]])
+
+qplot(n, mean, data = temp_frame, geom = "line", color = factor) +
+  geom_ribbon(aes(ymin = lower, ymax = upper, fill = factor), alpha = 0.3)
+
+saveRDS(plot_data_frame, file="temp/dirftVjumpNONOISE.Rda")
+#}
+#test<-readRDS("temp/TdriftVjump.Rda")
+# NOTIFY WHEN COMPLETE
+print(Sys.time())

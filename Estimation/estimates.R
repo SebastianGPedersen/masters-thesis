@@ -6,35 +6,34 @@ est.mu <- function(data, hd, kern = kern.leftexp, t.index){
   # data list should include a times column and the Y column (log returns)
   # t.index should be index - we use data$time[t]
   
-  dy <- data$Y
-  
   # kern handling
   if(is.list(kern)) kern<-kern$kern
   
-  # mode-handling
+  n = length(data$time)
+  
   if(missing(t.index)){
     t<-data$time[1:(length(data$time))] # if nothing specified - every point in data
-    ind = 1:(length(data$time))
+    ind<-1:length(data$time)
   }
   else{
     t<-data$time[t.index]
-    ind = t.index
+    ind<-t.index
   }
+  # t should now be data$time points
   
-  #t should now be data$time points
-  tt = length(t)
+  dy = data$Y
+  
+  #update n accordingly
   n = length(data$time)
+  tt = length(t)
   mu = numeric(tt)
   
-  for(j in 1:tt){
-    mu[j] = (1/hd)*sum(kern((data$time[1:(n-1)] - t[j])/hd)*dy[1:(n-1)])   
+  for(j in 1:(tt)){
+    mu[j] = (1/hd)*sum(kern((data$time[1:(ind[j])] - t[j])/hd)*dy[1:ind[j]])
   }
   
   # return list
   return(list(time = t, mu = mu))
-}
-
-est.sigma <- function(data, hv, kern = kern.leftexp, wkern = kern.parzen, t.index, lag="auto"){
   # data list should include a times column and the Y column (log returns)
   
   lagset <- lag
@@ -127,7 +126,7 @@ est.sigma.raw <- function(data, hv, kern = kern.leftexp, t.index){
   
   # Optimization removed
   for(j in 1:tt){
-    sig[j] <- (1/hv)*sum(kern((data$time[1:(n-1)] - t[j])/hv)*(dy[1:(n-1)])^2)
+    sig[j] <- (1/hv)*sum(kern((data$time[1:ind[j]] - t[j])/hv)*(dy[1:ind[j]])^2)
   }
   return(list(time = t, sig = sig))
 }
@@ -161,7 +160,12 @@ est.mu.next <-function(data, prevmu, hd, t.index){
   
   t<-data$time[t.index]
   end <- t.index
-  start <- c( min(which(data$time > startmu$time)), end[1:(length(end)-1)]+1)
+  if(length(end) > 1){
+    start <- c( min(which(data$time > startmu$time)), end[1:(length(end)-1)]+1)
+  }
+  else{
+    start <- min(which(data$time > startmu$time))
+  }
   
   # scaling
   dt1<-t[1]-startmu$time
@@ -177,18 +181,20 @@ est.mu.next <-function(data, prevmu, hd, t.index){
   mu <- numeric(tt)
   # CALCULATE NEXT 'BLOCK'
   mu[1] <- startmu$mu*rescale[1] + 1/hd * sum( kern( (data$time[start[1]:end[1]] - t[1])/hd)*dy[start[1]:end[1]] )
-  for(j in 2:(tt)){
-    mu[j] <- mu[j-1]*rescale[j] + 1/hd * sum( kern(  (data$time[start[j]:end[j]] - t[j])/hd)*dy[start[j]:end[j]] )
+  if(tt > 1){
+    for(j in 2:(tt)){
+      mu[j] <- mu[j-1]*rescale[j] + 1/hd * sum( kern(  (data$time[start[j]:end[j]] - t[j])/hd)*dy[start[j]:end[j]] )
+    }
   }
   
   # debug checker
   #1/hd * sum( kern( (data$time[1:(n-1)] - data$time[5])/hd)*dy[1:(n-1)] )
   
   #ADD BLOCK TO EXISTING (wow much blockchainy) (if it existed)
-  if(min(prevmu$time) >= 0){
-    t <- c(prevmu$time, t)
-    mu <- c(prevmu$mu, mu)
-  } 
+  #if(min(prevmu$time) >= 0){
+  #  t <- c(prevmu$time, t)
+  #  mu <- c(prevmu$mu, mu)
+  #} 
   
   # return list
   return(list(time = t, mu = mu))
@@ -297,18 +303,10 @@ est.mu2 <- function(data, hd, kern = kern.leftexp, t.index, t.points){
   
   # mode-handling
   mode = 0
-  if(missing(t.index) & missing(t.points)){
+  if(missing(t.index)){
     mode = 1
     t<-data$time[1:(length(data$time))] # if nothing specified - every point in data
     ind<-1:length(data$time)
-  }
-  else if(missing(t.index) & !missing(t.points)){
-    mode = 2
-    t<-t.points
-    ind = numeric(length(t))
-    for(i in 2:length(t)){
-      ind[i] = which.max(data$time[data$time<=t[i]])
-    }
   }
   else{
     mode = 3
@@ -320,7 +318,7 @@ est.mu2 <- function(data, hd, kern = kern.leftexp, t.index, t.points){
   }
   # t should now be data$time points
   
-  dy = diff(data$Y)
+  dy = data$Y
 
   #update n accordingly
   n = length(data$time)
@@ -452,7 +450,7 @@ est.noise.iid <- function(args, theta){
   omega <- numeric(tt)          # We can only have bandwidth to end amount of calcs
   
   for(j in 1:tt){
-    omega[j] <- -(dt/hv)*sum(kern((data$time[2:(n-1)] - t[j])/hv)*dy[2:(n-1)]*dy[1:(n-2)])   
+    omega[j] <- -(dt/hv)*sum(kern((data$time[2:ind[j]] - t[j])/hv)*dy[2:ind[j]]*dy[1:ind[j]-1]) # remove optimization if this goes badly...
   }
   return(psi3/(psi2*theta^2)*omega)
   #return(omega)
@@ -476,7 +474,6 @@ est.noise.iid.next <- function(args, theta){
     #theta <- 1
   }
   
-  
   dy <- diff(data$raw)
   
   # calculate previous (takes list as argument)
@@ -485,12 +482,18 @@ est.noise.iid.next <- function(args, theta){
   startomega<-list(time = data$time[t.index[1]], omega = prev[length(prev)])
   
   if(data$time[t.index][1] < startomega$time) stop("t.index should be higher than previous sig times")
+  if(length(t.index) == 1) return(startomega)
   if(data$time[t.index][1] == startomega$time) t.index <- t.index[2:length(t.index)]
   
   # time and index handling
   t<-data$time[t.index]
   end <- t.index
-  start <- c( min(which(data$time > startomega$time)), end[1:(length(end)-1)]+1)
+  if(length(t.index) > 1){
+    start <- c( min(which(data$time > startomega$time)), end[1:(length(end)-1)]+1)
+  }
+  else{
+    start <- min(which(data$time > startomega$time))
+  }
   
   # scaling
   dt1<-t[1]-startomega$time
@@ -509,8 +512,10 @@ est.noise.iid.next <- function(args, theta){
   omega <- numeric(tt)
   # CALCULATE NEXT 'BLOCK'
   omega[1] <- startomega$omega*rescale[1] - coef*dt/hv * sum( kern( (data$time[start[1]:end[1]] - t[1])/hv)*dy[start[1]:end[1]]*dy[(start[1]-1):(end[1]-1)] )
-  for(j in 2:(tt)){
-    omega[j] <- omega[j-1]*rescale[j] - coef*dt/hv * sum( kern(  (data$time[start[j]:end[j]] - t[j])/hv)*dy[start[j]:end[j]]*dy[(start[j]-1):(end[j]-1)] )
+  if(tt > 1){
+    for(j in 2:(tt)){
+      omega[j] <- omega[j-1]*rescale[j] - coef*dt/hv * sum( kern(  (data$time[start[j]:end[j]] - t[j])/hv)*dy[start[j]:end[j]]*dy[(start[j]-1):(end[j]-1)] )
+    }
   }
   omega <- c(prev, omega)
   #debug
@@ -532,9 +537,12 @@ est.sigma.raw.next <- function(data, prevsig, hv, t.index){   #
   
   if(missing(prevsig)){
     # initial handling is pretty weird because of lag length
-    prevsig <- est.sigma.raw(data = data, hv=hv, t.index = t.index[1]) # change to minus
+    startsig <- est.sigma.raw(data = data, hv=hv, t.index = t.index[1]) # change to minus
+    if(length(t.index) == 1){
+      return(startsig)
+    }
   } 
-  startsig<-list(time = prevsig$time[length(prevsig$time)], sig = prevsig$sig[length(prevsig$sig)])
+  startsig<-prevsig
   
   if(data$time[t.index][1] < startsig$time) stop("t.index should be higher than previous sig times")
   if(data$time[t.index][1] == startsig$time) t.index <- t.index[2:length(t.index)]
@@ -542,7 +550,6 @@ est.sigma.raw.next <- function(data, prevsig, hv, t.index){   #
   t<-data$time[t.index]
   end <- t.index
   start <- c( min(which(data$time > startsig$time)), end[1:(length(end)-1)]+1)
-  
   # scaling
   dt1<-t[1]-startsig$time
   dt<-c(dt1, diff(t))
@@ -559,13 +566,15 @@ est.sigma.raw.next <- function(data, prevsig, hv, t.index){   #
   # CALCULATE NEXT 'BLOCK'
   j<-1
   sig[1] <- startsig$sig*rescale[1] + (1/hv)*sum(  kern(   (data$time[start[1]:end[1]] - t[1])/hv   )*(dy[start[1]:end[1]])^2 )
-  for(j in 2:tt){
-    sig[j] <- sig[j-1]*rescale[j] + (1/hv)*sum(  kern(   (data$time[start[j]:end[j]] - t[j])/hv   )*(dy[start[j]:end[j]])^2  )
+  if(tt > 1){
+    for(j in 2:tt){
+      sig[j] <- sig[j-1]*rescale[j] + (1/hv)*sum(  kern(   (data$time[start[j]:end[j]] - t[j])/hv   )*(dy[start[j]:end[j]])^2  )
+    }
   }
   
-  #ADD BLOCK TO EXISTING (wow much blockchainy) (if it existed)
-  t <- c(prevsig$time, t)
-  sig <- c(prevsig$sig, sig)
+  #ADD BLOCK TO EXISTING (wow much blockchainy) (if it existed) (fuck - we dont want that)
+  #t <- c(prevsig$time, t)
+  #sig <- c(prevsig$sig, sig)
   
   # return list
   return(list(time = t, sig = sig))

@@ -13,7 +13,7 @@ study<-function(setting, hd, hv, t.index, conf, burstsetting){
   heston<-sim.heston(setting)
   
   # pathwise
-  N<-dim(sim$Y)[1]
+  N<-dim(heston$Y)[1]
   Tstar <- numeric(N)
   rhom <- numeric(N)
   rhorho<-numeric(N)
@@ -29,24 +29,38 @@ study<-function(setting, hd, hv, t.index, conf, burstsetting){
   Tstardb <- numeric(N)
   rhomdb <- numeric(N)
   rhorhodb<-numeric(N)
+  
+  TstarJ <- numeric(N)
+  rhomJ <- numeric(N)
+  rhorhoJ <-numeric(N)
+  
   for(mode in 1:3){
     if(mode == 2){
-      sim <- sim.addvb(sim,    burst_time = burst_time, interval_length = interval_length,
+      sim <- sim.addvb(heston,    burst_time = burst_time, interval_length = interval_length,
                        c_2 = c_2, beta  = beta)
     }
     if(mode == 3){
       sim <- sim.adddb(sim, burst_time = burst_time, interval_length = interval_length,
                        c_1 = c_1,  alpha = alpha)
     }
+    if(mode == 4){
+      sim <- sim.addjump(heston, burst_time = burst_time, interval_length = interval_length,
+                         c_1 = c_1, alpha = alpha)
+    }
     for(i in 1:N){
       # Extract
       simpath<-sim.path(i, sim)
       
-      #data<-everyOther(simpath) lav det 
+      # Pre average
+      theta <- 1
+      k <- theta * floor(theta*n^(1/2))
+      prev <- c(rep(0,k_n+1), est.NewPreAverage(simpath$Y,k) )
       
+      data <- list(time = simpath$time, Y = prev, raw = simpath$Y)
       # Estimation of mu/sig
-      mu<-est.mu(simpath, hd, kern.leftexp, t.index = t.index)
-      sig <- est.sigma(simpath, hv, kern.leftexp, kern.parzen, t.index = t.index, lag = "auto")
+      mu<-est.mu.new(data, hd = hd, t.index = t.index, kn = k)
+      sig <- est.sigma.new(data, hv = hv, t.index = t.index, kn = k,
+                           noisefun = est.noise.iid.next,theta = theta)
       
       # Calculate T
       Tstat<-teststat(mu, sig, hd, hv)
