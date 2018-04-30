@@ -334,8 +334,6 @@ est.mu2 <- function(data, hd, kern = kern.leftexp, t.index, t.points){
   return(list(time = t, mu = mu))
 }
 
-# LAG LENGTH #
-# find Newey-West (1994) -- automatic lag selection with parzen kernel
 laglength = function(dx, nmu){
   # dx are NOT preavr
   # only dx from backwards in time should be considered
