@@ -53,7 +53,6 @@ for (my_n in 1:length(n_list)) {
   ############ Simulation #########
   Npath <- 250
   settings <- sim.setup(mat=mat, Npath = Npath, Nsteps = n, omega = omega) #6.5 hours
-  
   Heston <- sim.heston(settings)
   
   #alpha < beta + 1/2. Burst + Jump
