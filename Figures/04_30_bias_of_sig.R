@@ -8,7 +8,7 @@ source("Estimation/pre-average.R")
 source("Estimation/estimates.R")
 
 #################### PARAMETERS THAT DON'T CHANGE ####################
-omega <- 1.6*10^(-5)*(100000/n) #What Mathias wrote
+omega <- 1.6*10^(-5)#*(100000/n) #What Mathias wrote
 omega2 <- omega^2
 K2 <- 0.5 #K2
 n <- 23400

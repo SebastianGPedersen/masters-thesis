@@ -48,14 +48,15 @@ sim.adddb <- function(Heston_res, burst_time = 0.5, interval_length = 0.5, c_1 =
   
   #initializations
   steps = length(Heston_res$time)-1
-  dt = Heston_res$time[2] - Heston_res$time[1] # this should be generalized if we do uneven dt
+  #dt = Heston_res$time[2] - Heston_res$time[1] # this should be generalized if we do uneven dt
+  dt = diff(Heston_res$time)
   
   mu_add = vector(length=steps+1)
   mu_add[1] = 0
   
   #Calculate the mean vector (that has to be added to X and Y)
   for (i in 2:(steps+1)) {
-    mu_add[i] = mu_add[i-1]+mu(Heston_res$time[i-1])*dt
+    mu_add[i] = mu_add[i-1]+mu(Heston_res$time[i-1])*dt[i-1]
   }
   
   Heston_res$X = Heston_res$X+t(replicate(nrow(Heston_res$X),mu_add))
@@ -101,7 +102,8 @@ sim.addvb <- function(Heston_res, burst_time = 0.5, interval_length = 0.5, c_2 =
   
   #initializations
   steps = length(Heston_res$time)-1
-  dt = Heston_res$time[2]-Heston_res$time[1]
+  #dt = Heston_res$time[2]-Heston_res$time[1]
+  dt = diff(Heston_res$time)
   
   sigma_add = matrix(nrow = nrow(Heston_res$X) ,ncol=(steps+1))
   sigma_add[,1] = 0
@@ -110,9 +112,9 @@ sim.addvb <- function(Heston_res, burst_time = 0.5, interval_length = 0.5, c_2 =
   dW = (Heston_res$X[,2:(steps+1)]-Heston_res$X[,1:steps]) / (sqrt(Heston_res$vol[,1:steps])*sqrt(dt)) #Isolate dW in eq. from Heston-function
   
   
-  #Calculate sum(sigma*dW)
+  #Calculate sum(sigma*dW) # KAN sqrt(dt) fjernes? De går ud med hinanden i sigma_add...
   for (i in 2:(steps+1)) {
-    sigma_add[,i] = sigma_add[,i-1]+sigma(Heston_res$time[i-1])*sqrt(dt)*dW[,i-1]
+    sigma_add[,i] = sigma_add[,i-1]+sigma(Heston_res$time[i-1])*sqrt(dt[i-1])*dW[,i-1]
   }
   
   #if(reverse){

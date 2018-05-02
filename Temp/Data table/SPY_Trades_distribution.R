@@ -62,15 +62,16 @@ plot(bpddt$bpd) #number of buckets per day
 
 plot(avgShareIntradayBucket)  # distribution of trades: Average share of trades within each 5 min interval
 plot(dttemp[,mean(Share*DailyCount), by = IntraDayBucket]$V1) # Same as above, but the values rather than the ratio
-     
 
+trades_dist <- dttemp[,mean(Share*DailyCount), by = IntraDayBucket]$V1
 
+# SAVE
+setwd(Sys.getenv("masters-thesis"))
+saveRDS(trades_dist, file = "Simulation/trades_dist.Rda")
 
-
-
-# 
-# 
-# 
+#
+#
+#
 # ## Invesigate stuff
 # require(lubridate)
 # 

@@ -448,7 +448,7 @@ est.noise.iid <- function(args, theta){
 
   dt <- data$time[2] - data$time[1]
   
-  tt <- length(t)
+  tt <- length(t.index)
   n <- length(data$time)
   omega <- numeric(tt)          # We can only have bandwidth to end amount of calcs
   
@@ -539,6 +539,7 @@ est.sigma.raw.next <- function(data, prevsig, hv, t.index){   #
   dy <- data$Y
   
   if(missing(prevsig)){
+    append = T
     # initial handling is pretty weird because of lag length
     prevsig <- est.sigma.raw(data = data, hv=hv, t.index = t.index[1]) # change to minus
     if(length(t.index) == 1){
@@ -576,8 +577,10 @@ est.sigma.raw.next <- function(data, prevsig, hv, t.index){   #
   }
   
   #ADD BLOCK TO EXISTING (wow much blockchainy) (if it existed) (fuck - we dont want that)
-  #t <- c(prevsig$time, t)
-  #sig <- c(prevsig$sig, sig)
+  if(append){
+    t <- c(prevsig$time, t)
+    sig <- c(prevsig$sig, sig)
+  }
   
   # return list
   return(list(time = t, sig = sig))
