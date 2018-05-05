@@ -69,7 +69,7 @@ est.sigma <- function(data, hv, t.index, kern = kern.leftexp, wkern=kern.parzen,
   if(lagset=="auto"){
     nmu <- numeric(tt)
     for(j in 1:tt){
-      nmu[j] <- sum(kern((data$time[1:(n-1)] - t[j])/hd))
+      nmu[j] <- sum(kern((data$time[1:(n-1)] - t[j])/hv))
     }
   }
   
@@ -581,6 +581,117 @@ est.sigma.raw.next <- function(data, prevsig, hv, t.index){   #
     t <- c(prevsig$time, t)
     sig <- c(prevsig$sig, sig)
   }
+  
+  # return list
+  return(list(time = t, sig = sig))
+}
+
+est.mu.mat <- function(data, hd, t.index, kern = kern.leftexp$kern){
+  # data contains TIME and a log-return MATRIX
+  # kern handling
+  if(is.list(kern)) kern<-kern$kern
+  
+  n = length(data$time)
+  
+  if(missing(t.index)){
+    t<-data$time[1:(length(data$time))] # if nothing specified - every point in data
+    ind<-1:length(data$time)
+  }
+  else{
+    t<-data$time[t.index]
+    ind<-t.index
+  }
+  # t should now be data$time points
+  
+  dy <- data$Y #should now be matrixxxzz
+  
+  #update n accordingly
+  n <- length(data$time)
+  path <- dim(data$Y)[1]
+  tt <- length(t)
+  mu <- matrix(NA, nrow = path, ncol = tt)
+  
+  # calc kerns
+  kerns <- matrix(0, nrow = tt, ncol = n)
+  for(j in 1:tt){
+    kerns[j,1:ind[j]] <- kern(   (data$time[1:(ind[j])] - t[j])/hd)
+  }
+  
+  for(j in 1:(tt)){
+    kern_now <- kerns[j,1:ind[j]]
+    for(i in 1:path){
+      mu[i,j] <- (1/hd)*sum(kern_now*dy[i, 1:ind[j]])
+    }
+  }
+  
+  # return list
+  return(list(time = t, mu = mu))
+}
+
+est.sigma.mat <- function(data, hv, t.index, kern = kern.leftexp, wkern=kern.parzen, lag="auto"){
+  # data list should include a times column and the Y column (log returns)
+  
+  lagset <- lag
+  dy <- data$Y
+  
+  # kern handling
+  if(is.list(kern)) kern<-kern$kern
+  if(!is.function(kern)) stop("kern should be either function or list containing function")
+  
+  if(is.list(wkern)) wkern<-wkern$kern
+  if(!is.function(wkern)) stop("wkern should be either function or list containing function")
+  
+  # if missing handling:
+  if(missing(t.index)){
+    start = lag+1
+    t<-data$time[start:(length(data$time))] # if nothing specified - every point in data
+    ind<-start:(length(data$time))
+  }else{
+    t<-data$time[t.index]
+    ind<-t.index
+  }
+  # t should now be data$time points
+  
+  n = length(data$time)
+  tt = length(t)
+  path <- dim(data$Y)[1]
+  sig = matrix(NA, nrow = path, ncol = tt)
+  # Handle lag
+  if(lagset=="auto"){
+    nmu <- numeric(tt)
+    for(j in 1:tt){
+      nmu[j] <- sum(kern((data$time[1:(n-1)] - t[j])/hv))
+    }
+  }
+  
+  # calc kerns
+  kerns <- matrix(0, nrow = tt, ncol = n)
+  for(j in 1:tt){
+    kerns[j,1:ind[j]] <- kern(   (data$time[1:(ind[j])] - t[j])/hv)
+  }
+  
+  gamma<-function(l){
+    # end is the highest needed index
+    out<- sum(   kerns[j,(1+l):ind[j]]  *dy[i,(1+l):(ind[j])]*
+                 kerns[j,1:(ind[j]-l)]  *dy[i,1:(ind[j]-l)]   )
+    return(out)
+  }
+  
+  end = n
+  for (j in 1:tt) {
+    for(i in 1:path){
+      if(lagset =="auto"){
+        lag <- laglength(dy, nmu[j])
+      }
+      sig[i,j] <- sum(  (kerns[j, 1:ind[j] ]*dy[i, 1:ind[j]]  )^2  )  # l = 0
+      if (lag >=1) {
+        for(l in 1:lag){
+          sig[i,j] <- sig[i,j] + 2*(wkern(l/(lag))*gamma(l))
+        }
+      }
+    }
+  }
+  sig <- sig/hv
   
   # return list
   return(list(time = t, sig = sig))

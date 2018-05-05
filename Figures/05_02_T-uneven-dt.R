@@ -25,6 +25,7 @@ Heston_vbdb.dt <- sim.adddb(Heston_vb.dt, burst_time=0.5, interval_length=0.05, 
 hest <- Heston_vbdb
 hest.dt <- Heston_vbdb.dt
 
+plot(density(hest.dt$time))
 
 data<-list(time = hest$time, Y = hest$Y[1,], time2 = hest.dt$time, Y2 = hest.dt$Y[1,])
 
@@ -61,4 +62,3 @@ ggplot() +
   geom_line(data=plot.data, aes(x=time,    y=test, col = "even dt"), size = 1) +
   geom_line(data=plot.data.dt, aes(x=time, y=test, col = "uneven dt"), size = 1) +
   xlab("time") + ylab("T")
-
