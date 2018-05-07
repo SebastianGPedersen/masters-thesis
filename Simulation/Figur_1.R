@@ -11,9 +11,9 @@ settings <- sim.setup(mat=6.5/(24*7*52), Npath = 2, omega = 0) #6.5 hours
 
 #Get results with and without bursts. OBS: I have replaced c_1=3 with c_1 = 0.3
 Heston <- sim.heston(settings)
-Heston_vb <- sim.addvb(Heston,burst_time = 0.5, interval_length = 0.05, c_2 = 0.03, beta = 0.45,reverse = F, recenter = F)
-Heston_vbdb <- sim.adddb(Heston_vb, burst_time=0.5,interval_length=0.05,c_1 = 0.3,alpha=0.55, reverse = F)
-Heston_jump <- sim.addjump(Heston,burst_time=0.5,interval_length=0.05, c_1 = 0.3, alpha = 0.55)
+Heston_vb <- sim.addvb(Heston,burst_time = 0.5, interval_length = 0.05, c_2 = 5.44*10^(-4), beta = 0.45,reverse = F, recenter = F)
+Heston_vbdb <- sim.adddb(Heston_vb, burst_time=0.5,interval_length=0.05,c_1 = 0.299,alpha=0.55, reverse = F)
+Heston_jump <- sim.addjump(Heston,burst_time=0.5,interval_length=0.05, c_1 = 0.299, alpha = 0.55)
 
 
 #Get a single path
@@ -61,3 +61,8 @@ ggplot(tmp, aes(x_akse, y_akse,color = rx)) +
   #      plot.title = element_text(hjust = 0.5, size = 20)) +
   ggtitle("Log-return of asset") +
   theme(plot.title = element_text(hjust = 0.5, size = 20))
+
+
+
+(c2_1 <- sqrt((1-2*0.45)*0.001/(10/(60*24*7*52))^(1-2*0.45)))
+(c2_2 <- sqrt((1-2*0.1)*0.001/(10/(60*24*7*52))^(1-2*0.1)))

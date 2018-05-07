@@ -71,7 +71,6 @@ sim.adddb <- function(Heston_res, burst_time = 0.5, interval_length = 0.5, c_1 =
   return(Heston_res)
 }
 
-
 sim.addvb <- function(Heston_res, burst_time = 0.5, interval_length = 0.5, c_2 = 0.15, beta = 0.4, reverse = T, recenter = T) {
   #Intervals
   burst_begin_perc = burst_time-interval_length/2
@@ -93,7 +92,7 @@ sim.addvb <- function(Heston_res, burst_time = 0.5, interval_length = 0.5, c_2 =
   #Define sigma-function
   sigma <- function(t) {
     if ((t>=burst_begin) & (t <=burst_end) & (t !=tau)){
-        sigma_t = c_2*0.0225/abs(tau-t)^beta
+        sigma_t = c_2/abs(tau-t)^beta
       } else {
         sigma_t = 0
     }
