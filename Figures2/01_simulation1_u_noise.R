@@ -5,15 +5,23 @@ source("Simulation/Heston.R")
 source("Simulation/Bursts.R")
 source("Simulation/Jumps.R")
 
+#seed
 set.seed(100)
-#Set settings for Heston
+
+#Heston settings
 settings <- sim.setup(mat=6.5/(24*7*52), Npath = 2, omega = 0) #6.5 hours
+
+#Burst settings
+alpha <- 0.55
+beta <- 0.45
+c_1 <- (1-alpha)*0.005/(10/(60*24*7*52))^(1-alpha)
+c_2 <- sqrt((1-2*beta)*0.001^2/(10/(60*24*7*52))^(1-2*beta))
 
 #Get results with and without bursts. OBS: I have replaced c_1=3 with c_1 = 0.3
 Heston <- sim.heston(settings)
-Heston_vb <- sim.addvb(Heston,burst_time = 0.5, interval_length = 0.05, c_2 = 5.44*10^(-4), beta = 0.45,reverse = F, recenter = F)
-Heston_vbdb <- sim.adddb(Heston_vb, burst_time=0.5,interval_length=0.05,c_1 = 0.299,alpha=0.55, reverse = F)
-Heston_jump <- sim.addjump(Heston,burst_time=0.5,interval_length=0.05, c_1 = 0.299, alpha = 0.55)
+Heston_vb <- sim.addvb(Heston,burst_time = 0.5, interval_length = 0.05, c_2 = c_2, beta = beta,reverse = F, recenter = F)
+Heston_vbdb <- sim.adddb(Heston_vb, burst_time=0.5,interval_length=0.05,c_1 = c_1,alpha=alpha, reverse = F)
+Heston_jump <- sim.addjump(Heston,burst_time=0.5,interval_length=0.05, c_1 = c_1, alpha = alpha)
 
 
 #Get a single path

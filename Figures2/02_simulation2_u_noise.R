@@ -5,15 +5,23 @@ source("Simulation/Heston.R")
 source("Simulation/Bursts.R")
 source("Simulation/Jumps.R")
 
+#seed
 set.seed(100)
-#Set settings for Heston
+
+#Heston settings
 settings <- sim.setup(mat=6.5/(24*7*52), Npath = 2, omega = 0) #6.5 hours
+
+#Burst settings
+alpha <- 0.8
+beta <- 0.1
+(c_1 <- (1-alpha)*0.005/(10/(60*24*7*52))^(1-alpha))
+(c_2 <- sqrt((1-2*beta)*0.001^2/(10/(60*24*7*52))^(1-2*beta)))
 
 #Get results with and without bursts. OBS: I have replaced c_1=3 with c_1 = 0.3
 Heston <- sim.heston(settings)
-Heston_vb <- sim.addvb(Heston,burst_time = 0.5, interval_length = 0.05, c_2 = 5.44*10^(-4), beta = 0.45,reverse = F, recenter = F)
-Heston_vbdb <- sim.adddb(Heston_vb, burst_time=0.5,interval_length=0.05,c_1 = 0.299,alpha=0.55, reverse = F)
-Heston_jump <- sim.addjump(Heston,burst_time=0.5,interval_length=0.05, c_1 = 0.299, alpha = 0.55)
+Heston_vb <- sim.addvb(Heston,burst_time = 0.5, interval_length = 0.05, c_2 = c_2, beta = beta,reverse = F, recenter = F)
+Heston_vbdb <- sim.adddb(Heston_vb, burst_time=0.5,interval_length=0.05,c_1 = c_1,alpha=alpha, reverse = F)
+Heston_jump <- sim.addjump(Heston,burst_time=0.5,interval_length=0.05, c_1 = c_1, alpha = alpha)
 
 
 #Get a single path
@@ -41,7 +49,7 @@ time_hours <- time_hours[index]
 #----------------------------- NICE PLOT (NIELS' REGRESSION CODE) -----------------------------  
 
 df_y_values <- data.frame(cbind(Heston_path,vb_path, vbdb_path, jump_path))
-names <- c("Heston","+volatility burst", "+drift and volatility burst", "+jump")
+names <- c("Heston","+volatility burst", "+drift & volatility burst", "+jump")
 
 tmp <- list()
 for (i in 1:4) {
@@ -57,8 +65,8 @@ ggplot(tmp, aes(x_akse, y_akse,color = rx)) +
   geom_line() +
   scale_color_manual("", values = c("black", "red", "blue", "purple")) +
   xlab("time in hours") + ylab("log-return")  + 
-  #theme(legend.position = c(1,0),
-  #      legend.justification = c(1,0),
+  #theme(legend.position = c(0.05,0),
+  #      legend.justification = c(0.1,0)) +
   #      plot.title = element_text(hjust = 0.5, size = 20)) +
   ggtitle("Log-return of asset") +
   theme(plot.title = element_text(hjust = 0.5, size = 20))
