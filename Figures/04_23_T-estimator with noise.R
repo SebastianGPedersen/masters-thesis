@@ -37,10 +37,11 @@ for (my_n in 1:length(n_list)) {
   mat <- 6.5/(24*7*52)#*52*7*24*60*60 #In years
   n <- n_list[my_n]
   dt <- mat/n #In years
-  theta <- 10^(-1)
-  k_n <- ceiling(theta*n^(1/2)) #It shouldn't become zero, therefore 'ceiling'
+  theta_1 <- 10^(-1)
+  k_n <- ceiling(theta_1*n^(1/2)) #It shouldn't become zero, therefore 'ceiling'
   #hd <- 2*10^3*n^(-1/4) #If miliseconds
-  hd <- 10^(-3)*dt^(1/3) #If years
+  theta_2 <- 10^(-1)
+  hd <- mat*theta_2*n^(-1/3) #If years
   
   #Check they are reasonable
   n/k_n #We shouldn't use to many in pre-avg

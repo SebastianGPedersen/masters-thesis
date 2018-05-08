@@ -134,6 +134,6 @@ qplot(n, mean, data = plot_data_frame, geom = "line", color = process) +
   xlab("Number of observations") + ylab(TeX('$ T-estimator \\pm sd$'))
 
 #Save dataframe for later
-saveRDS(plot_data_frame, file="Figures2/Saved_data_for_plots/04_T-estimator2_wihtout_noise.Rda")
+saveRDS(plot_data_frame, file="Figures2/Saved_data_for_plots/04_T-estimator2_without_noise.Rda")
 
 print(Sys.time()-p0) #approx 10 min with max(n) = 60k and npaths = 500
