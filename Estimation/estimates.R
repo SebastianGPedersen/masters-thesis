@@ -90,7 +90,7 @@ est.sigma <- function(data, hv, t.index, kern = kern.leftexp, wkern=kern.parzen,
     sig[j] <- sum(  (kern(   (data$time[1:ind[j]] - t[j])/hv)*dy[1:ind[j]]  )^2  )  # l = 0
     if (lag >=1) {
       for(l in 1:lag){
-        sig[j] <- sig[j] + 2*(wkern(l/(lag))*gamma(l,t[j]))
+        sig[j] <- sig[j] + 2*(wkern((l-1)/(lag))*gamma(l,t[j]))
       }
     }
   }

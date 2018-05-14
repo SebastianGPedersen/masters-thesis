@@ -3,9 +3,9 @@
 
 
 # List of needed input that can be sent to simulation function
-sim.setup <- function(kappa=5, theta=0.0225, xi = 0.4, rho = -0.5, omega = 1.6*10^(-5),
+sim.setup <- function(kappa=5.07, theta=0.0457, xi = 0.48, rho = -0.767, c = 1.11,omega = 1.6*10^(-5),
                    mat = 6.5/(24*7*52), Nsteps = 23400, Npath = 1000){
-  list(kappa = kappa, theta = theta, xi = xi, rho = rho, omega = omega, mat = mat, Nsteps = Nsteps, Npath = Npath)
+  list(kappa = kappa, theta = theta, xi = xi, rho = rho, c=c, omega = omega, mat = mat, Nsteps = Nsteps, Npath = Npath)
 }
 
 # Heston simulation (no scheduled bursts)
@@ -15,6 +15,7 @@ sim.heston<-function(settings){
   mat = settings$mat
   steps = settings$Nsteps
   kappa = settings$kappa
+  c = settings$c
   theta = settings$theta
   xi = settings$xi       ##vol of vol
   rho = settings$rho
@@ -40,7 +41,7 @@ sim.heston<-function(settings){
     
     #X[,i] =   X[,i-1] -1/2*vol[,i-1]*dt+ sqrt(vol[,i-1])*sqrt(dt)*NS        # real heston
     #X[,i] =   X[,i-1] + X[,i-1]*sqrt(vol[,i-1])*sqrt(dt)*NS                 # non-log
-    X[,i] =   X[,i-1] + sqrt(vol[,i-1])*sqrt(dt)*NS                          # logs (driftless)
+    X[,i] =   X[,i-1] + c*vol[,i-1]*dt + sqrt(vol[,i-1])*sqrt(dt)*NS                          # logs (driftless)
     
     x = vol[,i-1] + kappa*(theta - vol[,i-1])*dt
     y = sqrt(  log(  (xi^2*vol[,i-1]*dt)/(x^2) + 1  )  )
