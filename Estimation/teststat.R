@@ -26,12 +26,15 @@ tstar<-function(data){
   return(list(start = start, end = end, tstar = res))
 }
 
-test.db<-function(data, hd, hv, kern = kern.leftexp, t.index, noisefun, theta, kn){
+test.db<-function(data, hd, hv, kern = kern.leftexp, t.index){
   # data should include time | Y (log returns) | raw (before preaverage)
   # Calculates db test stat by computing mu/sig
   
-  mu<-est.mu.new(data = data, hd = hd, kern = kern, t.index = t.index, kn = kn)
-  sig <- est.sigma.new(data = data, hv=hv, t.index = t.index, kern = kern, noisefun = est.noise.iid, theta = theta, kn = kn)
+  data$raw <- data$Y
+  data$Y   <- diff(data$Y) 
+  
+  mu<-est.mu.next(data = data, hd = hd, kern = kern, t.index = t.index)
+  sig <- est.sigma.next(data = data, hv=hv, t.index = t.index, kern = kern)
   
   # Calculate T
   Tstat<-teststat(mu, sig, hd, hv, kern)

@@ -19,7 +19,7 @@ source("module/SimStudyFunction.R")
 hset = c(120,300,600)/(3600*24*7*52)
 alphaset = c(0.55, 0.65, 0.75)
 betaset = c(0, 0.1, 0.2 ,0.3 ,0.4)
-setting<-sim.setup(Nsteps = 23400, Npath = 1)
+setting<-sim.setup(Nsteps = 23400, Npath = 10)
 
 # find T points
 tind<-seq(from = 60, to = 23399, by = 60)
@@ -35,10 +35,10 @@ for(beta in betaset){
       i <- i + 1
       # if(i>10){
       timeElapsed <-  (proc.time()[3]- timeElapsed)
-        print(c(i, masterLength, timeElapsed))
-        
-        #create setting
-        burstset <- sim.burstsetting(alpha = alpha, beta = beta,
+      print(c(i, masterLength, timeElapsed))
+      
+      #create setting
+      burstset <- sim.burstsetting(alpha = alpha, beta = beta,
                                      burst_time = burst_time, interval_length = interval_length,
                                      c_1 = 0.1, c_2 = 0.1)
         
@@ -46,9 +46,7 @@ for(beta in betaset){
         master[i] <- study(setting = setting, hd = h, hv = h, t.index = tind,
                         conf = 0.95, burstsetting = burstset)
       # }
-      
     }
   }
 }
-
-
+}

@@ -1,3 +1,4 @@
+require(data.table)
 dt <- data.table(id = c(rep(1,4), rep(3,5)), a = 1:9, b=2*(1:9))
 
 dt[, print(.SD), by = id]
