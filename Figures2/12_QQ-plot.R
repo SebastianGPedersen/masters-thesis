@@ -1,4 +1,7 @@
 library(ggplot2)
+library(grid)
+library(gridExtra)
+
 setwd(Sys.getenv("masters-thesis"))
 source("Simulation/Heston.R")
 source("Simulation/BlackScholes.R")
@@ -10,50 +13,46 @@ source("Estimation/estimates.R")
 p0 <- Sys.time()
 
 #################### PARAMETERS THAT DON'T CHANGE ####################
-omega2 <- 2.64*10^(-10)*25
+omega2 <- 2.64*10^(-10)
 omega <- sqrt(omega2)
 K2 <- 0.5 #K2
-n <- 23400 /7
+n <- 23400 /7 #Cheating again
 mat <- 6.5/(24*7*52) /7
 dt <- mat/n
 Npaths <- 1000
-sigma2 <- 0.0457/25
+sigma2 <- 0.0457
 sigma <- sqrt(sigma2)
-bandwidth_ratio <- 1
 (noise_ratio <- omega/(sqrt(dt)*sigma)) #10.66
 lag <- 100
 
 #Because of lack of memory, it is done in loops
 n_loops <- 10
+desired_index <- n-1
 
 #List to final values
-h_list <- c(2,5,10) / (60*24*7*52) #2min, 5min and 10min
+hd_list <- c(2,5,10) / (60*24*7*52) #2min, 5min and 10min
 T_estimator <- matrix(nrow = Npaths,ncol = length(h_list))
-
 
 for (memory in 1:n_loops) {
   #memory <- 1
-  print(memory)
   temp_paths <- Npaths / n_loops
-  set.seed(1000*memory)
+  set.seed(100*memory)
   
   #Heston simulations
   settings <- sim.setup(mat=mat, Npath = temp_paths, Nsteps = n, omega = omega) #6.5 hours
   Heston <- sim.heston(settings)
   
-  for (h_mu in 1:length(h_list)) {
-    #h_mu <- 1
-    desired_index <- n-1 #Just takes last index so K has as many obs as possible
-    
-    for (i in 1:temp_paths) {
-      #i <- 1
-      #Heston
-      single_path <- list(Y = diff(Heston$Y[i,]), time = Heston$time)
-      sig_hat <- est.sigma(single_path, hv = h_list[h_mu]*bandwidth_ratio, t.index = desired_index, lag = lag)$sig[1]
-      mu_hat <- est.mu(data = single_path, hd = h_list[h_mu], t.index = desired_index)$mu[1]
-      T_estimator[(memory-1)*temp_paths+i,h_mu] <- sqrt(h_list[h_mu])*mu_hat/sqrt(sig_hat) #K2*sigma cancels out and we end with sqrt(h_n)*\hat{\mu} / sqrt(\hat{\Sigma}^2)
-    }
+  #### Calculate dY ####
+  dY <- t(diff(t(Heston$Y))) #Has to be transposed for 'diff' to work as desired
+  data <- list(Y = dY, time = Heston$time)    
+  
+  for (hd in 1:length(hd_list)) {
+    print(paste0("memory = ",memory, ", hd = ",hd,sep = ""))
+    sig_hat <- est.sigma.mat(data, hv = hd_list[hd], t.index = desired_index, lag = lag)$sig
+    mu_hat <- est.mu.mat(data, hd = hd_list[hd], t.index = desired_index)$mu
+    T_estimator[((memory-1)*temp_paths+1):(memory*temp_paths),hd] <- sqrt(hd_list[hd]) * mu_hat / sqrt(sig_hat)    
   }
+
 }
 
 
@@ -70,7 +69,18 @@ colnames(plot_data_frame) <- c("T_estimator", "Bandwidth")
 plot_data_frame$T_estimator <- as.numeric(as.character(plot_data_frame$T_estimator))
 plot_data_frame$Bandwidth <- as.factor(plot_data_frame$Bandwidth)
 
-ggplot(plot_data_frame) + 
+
+g1 <- ggplot(plot_data_frame, aes(x = T_estimator, fill = Bandwidth)) + 
+  xlab("T value") + ylab("Density") + 
+  geom_density(adjust = 1.5, alpha = 0.3)+
+  theme(legend.position="none")
+g1
+g2 <- ggplot(plot_data_frame) + 
   stat_qq(aes(sample = T_estimator, colour = Bandwidth)) +
   geom_abline(intercept = 0, slope = 1) +
-  xlab("Quantile of standard normal") + ylab("Quantile of T")
+  xlab("Quantile of standard normal") + ylab("Quantile of T") +
+  theme(legend.position=c(0.87,0.16))
+g2
+
+grid.arrange(g1,g2,nrow = 1,
+             top = textGrob("Distribution of T-estimator",gp=gpar(fontsize=20)))

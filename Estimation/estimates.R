@@ -339,7 +339,7 @@ est.mu2 <- function(data, hd, kern = kern.leftexp, t.index, t.points){
   return(list(time = t, mu = mu))
 }
 
-laglength = function(dx, nmu){
+laglength <- function(dx, nmu){
   # dx are NOT preavr
   # only dx from backwards in time should be considered
   # Indices may be wrong due to zero index (or is it? Matlab is index 1...)

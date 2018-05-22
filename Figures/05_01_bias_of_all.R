@@ -9,10 +9,10 @@ source("Estimation/estimates.R")
 
 p0 <- Sys.time()
 #################### PARAMETERS THAT DON'T CHANGE ####################
+n <- 23400
 omega <- 1.6*10^(-5)*(100000/n) #What Mathias wrote
 omega2 <- omega^2
 K2 <- 0.5 #K2
-n <- 23400
 mat <- 6.5/(24*7*52)
 dt <- mat/n
 Npaths <- 200

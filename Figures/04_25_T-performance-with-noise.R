@@ -38,7 +38,9 @@ for (my_omega in 1:length(omega_list)) {
   theta <- 10^(-1)
   k_n <- ceiling(theta*n^(1/2)) #It shouldn't become zero, therefore 'ceiling'
   #hd <- 2*10^3*n^(-1/4) #If miliseconds
-  hd <- 10^(-3)*dt^(1/3) #If years
+  hd <- 10^(-3)*dt^(1/3) #If years. It is 1.66 minutter.
+  
+  hd*(60*24*7*52) #1.66 minutter
   
   #Check they are reasonable
   n/k_n #We shouldn't use to many in pre-avg
