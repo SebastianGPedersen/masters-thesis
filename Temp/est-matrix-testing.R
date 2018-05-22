@@ -14,10 +14,22 @@ setting <- sim.setup(Npath = 2, Nstep = 100, omega = 0.0000225)
 hest <- sim.heston(setting)
 
 data <- list(time = hest$time, Y = hest$Y[1,])
+if(F){
+  #mu
+  est.mu.mat(hest, hd = 0.001, t.index = 50:55)
+  est.mu(data, hd = 0.001, t.index = 50:55)
+  est.mu.next(data, hd = 0.001, t.index = 50:55)
+  
+  # sigma
+  est.sigma.mat(hest, hv = 0.001, t.index = 50:55, lag = 10)
+  est.sigma(data, hv = 0.001, t.index = 50:55, lag = 10)
+  est.sigma.next(data, hv = 0.001, t.index = 50:55, lag = 10)
+}
+
 #mu
 est.mu.mat(hest, hd = 0.001, t.index = 50:55)
-est.mu(data, hd = 0.001, t.index = 50:55)
+est.mu.mat.next(hest, hd = 0.001, t.index = 50:55)
 
 # sigma
 est.sigma.mat(hest, hv = 0.001, t.index = 50:55, lag = 10)
-est.sigma(data, hv = 0.001, t.index = 50:55, lag = 10)
+est.sigma.mat.next(hest, hv = 0.001, t.index = 50:55, lag = 10)

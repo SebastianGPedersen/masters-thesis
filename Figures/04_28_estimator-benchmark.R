@@ -34,21 +34,21 @@ for(i in 1:N){
   tind <- 1000*i
   if(i == 1){
     prev.mu <- est.mu.next(sim, hd = hd, t.index = tind)
-    prev.sig <- est.sigma.raw.next(sim, hv = hd, t.index = tind)
+    prev.sig <- est.sigma.next(sim, hv = hd, t.index = tind, lag = 10)
     time[i,] <- c(tind, summary(microbenchmark(est.mu(sim, hd = hd, t.index = tind),
                                        est.mu.next(sim, hd = hd, t.index = tind),
-                                       est.sigma.raw(sim, hv = hd, t.index = tind),
-                                       est.sigma.raw.next(sim, hv = hd, t.index = tind),
+                                       est.sigma(sim, hv = hd, t.index = tind, lag = 10),
+                                       est.sigma.next(sim, hv = hd, t.index = tind, lag = 10),
                                        times = 10000, unit = "ms"))$mean)
   }
   else{
     time[i,] <- c(tind, summary(microbenchmark(est.mu(sim, hd = hd, t.index = tind),
                                        est.mu.next(sim, prevmu = prev.mu, hd = hd, t.index = tind),
-                                       est.sigma.raw(sim, hv = hd, t.index = tind),
-                                       est.sigma.raw.next(sim, prevsig = prev.sig, hv = hd, t.index = tind),
+                                       est.sigma(sim, hv = hd, t.index = tind, lag = 10),
+                                       est.sigma.next(sim, prevsig = prev.sig, hv = hd, t.index = tind, lag = 10),
                                        times = 10000, unit = "ms"))$mean)
     prev.mu <- est.mu.next(sim, hd = hd, t.index = tind)
-    prev.sig <- est.sigma.raw.next(sim, hv = hd, t.index = tind)
+    prev.sig <- est.sigma.next(sim, hv = hd, t.index = tind, lag = 10)
   }
 }
 data<-list(index = time[, 1])
@@ -60,7 +60,11 @@ data<-data.frame(data)
 ggplot() +
   geom_line(data=data, aes(x=index, y=mu, col = "est.mu"), size = 1) +
   geom_line(data=data, aes(x=index, y=mu.optim, col = "est.mu.optim"), size = 1) +
+  xlab("t.index") + ylab("Run time (ms)")  + 
+  ggtitle("Computation time of mu-estimators")
+
+ggplot() +
   geom_line(data=data, aes(x=index, y=sig, col = "est.sigma"), size = 1) +
   geom_line(data=data, aes(x=index, y=sig.optim, col = "est.sigma.optim"), size = 1) +
   xlab("t.index") + ylab("Run time (ms)")  + 
-  ggtitle("Computation time of estimators")
+  ggtitle("Computation time of sigma-estimators")

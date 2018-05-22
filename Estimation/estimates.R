@@ -36,8 +36,7 @@ est.mu <- function(data, hd, kern = kern.leftexp, t.index){
   return(list(time = t, mu = mu))
 }
 
-est.sigma <- function(data, hv, t.index, kern = kern.leftexp, wkern=kern.parzen, lag="auto")
-{
+est.sigma <- function(data, hv, t.index, kern = kern.leftexp, wkern=kern.parzen, lag="auto"){
   # data list should include a times column and the Y column (log returns)
   
   lagset <- lag
@@ -204,7 +203,6 @@ est.mu.next <-function(data, prevmu, hd, t.index){
 
 est.sigma.next <- function(data, prevsig, hv, t.index, wkern=kern.parzen, lag="auto"){   #
   # data list should include a times column and the Y column (log returns)
-  
   # Handle lag
   if(lag=="auto") lag = 15 #temp
   
@@ -237,7 +235,12 @@ est.sigma.next <- function(data, prevsig, hv, t.index, wkern=kern.parzen, lag="a
   
   t<-data$time[t.index]
   end <- t.index
-  start <- c( min(which(data$time > startsig$time)), end[1:(length(end)-1)]+1)
+  if(length(end) > 1){
+    start <- c( min(which(data$time > startsig$time)), end[1:(length(end)-1)]+1)
+  }
+  else{
+    start <- min(which(data$time > startsig$time))
+  }
   
   # scaling
   dt1<-t[1]-startsig$time
@@ -266,11 +269,13 @@ est.sigma.next <- function(data, prevsig, hv, t.index, wkern=kern.parzen, lag="a
       sig[1] <- sig[1] + 2*(1/hv)*(wkern(l/(lag))*gamma(l) )
     }
   }
-  for(j in 2:tt){
-    sig[j] <- sig[j-1]*rescale[j] + (1/hv)*sum(  (kern(   (data$time[start[j]:end[j]] - t[j])/hv   )*dy[start[j]:end[j]])^2  )  # l = 0
-    if (lag >=1) {
-      for(l in 1:lag){
-        sig[j] <- sig[j] + 2*(1/hv)*(wkern(l/(lag))*gamma(l) )
+  if(tt >= 2){
+    for(j in 2:tt){
+      sig[j] <- sig[j-1]*rescale[j] + (1/hv)*sum(  (kern(   (data$time[start[j]:end[j]] - t[j])/hv   )*dy[start[j]:end[j]])^2  )  # l = 0
+      if (lag >=1) {
+        for(l in 1:lag){
+          sig[j] <- sig[j] + 2*(1/hv)*(wkern(l/(lag))*gamma(l) )
+        }
       }
     }
   }
@@ -608,6 +613,7 @@ est.mu.mat <- function(data, hd, t.index, kern = kern.leftexp$kern){
   #update n accordingly
   n <- length(data$time)
   path <- dim(data$Y)[1]
+  if(is.null(path)) stop("Do not use .mat if input is not matrix!")
   tt <- length(t)
   mu <- matrix(NA, nrow = path, ncol = tt)
   
@@ -655,6 +661,7 @@ est.sigma.mat <- function(data, hv, t.index, kern = kern.leftexp, wkern=kern.par
   n = length(data$time)
   tt = length(t)
   path <- dim(data$Y)[1]
+  if(is.null(path)) stop("Do not use .mat if input is not matrix!")
   sig = matrix(NA, nrow = path, ncol = tt)
   # Handle lag
   if(lagset=="auto"){
@@ -665,7 +672,7 @@ est.sigma.mat <- function(data, hv, t.index, kern = kern.leftexp, wkern=kern.par
   }
   
   # calc kerns
-  kerns <- matrix(0, nrow = tt, ncol = n)
+  kerns <- matrix(NA, nrow = tt, ncol = n) #NA in kerns acts like trip-wires. If wrong index is used, NA error is thrown. perf!
   for(j in 1:tt){
     kerns[j,1:ind[j]] <- kern(   (data$time[1:(ind[j])] - t[j])/hv)
   }
@@ -676,6 +683,7 @@ est.sigma.mat <- function(data, hv, t.index, kern = kern.leftexp, wkern=kern.par
                  kerns[j,1:(ind[j]-l)]  *dy[i,1:(ind[j]-l)]   )
     return(out)
   }
+  
   
   end = n
   for (j in 1:tt) {
@@ -693,6 +701,140 @@ est.sigma.mat <- function(data, hv, t.index, kern = kern.leftexp, wkern=kern.par
   }
   sig <- sig/hv
   
+  # return list
+  return(list(time = t, sig = sig))
+}
+
+est.mu.mat.next <-function(data, hd, t.index){
+  # data should contain time | logreg
+  # t.index indicates where we wish to calculate the estimator
+  
+  dy <- data$Y # <- is a ~matrix~
+  kern <- kern.leftexp$kern
+
+  t<-data$time[t.index]
+  end <- t.index
+  
+  if(length(t.index) > 1){
+    start <- c( which.min(data$time), end[1:(length(end)-1)]+1)
+  }
+  else{
+    start <- which.min(data$time)
+  }
+  
+  # scaling
+  dt<-c(0,diff(t))
+  rescale <- exp(-dt/hd)
+  
+  if(anyNA(dy)) warning("NA in dy[, t.index]")
+  
+  n <- length(data$time)
+  path <- dim(data$Y)[1]
+  if(is.null(path)) stop("Do not use .mat if input is not matrix!")
+  tt <- length(t)
+  
+  mu <- matrix(NA, nrow = path, ncol = tt)
+  
+  kerns <- kern( (data$time[start[1]:end[1]] - t[1])/hd)
+  # CALCULATE NEXT 'BLOCK'
+  for(i in 1:path){
+    mu[i,1] <- 1/hd * sum( kerns*dy[i, start[1]:end[1]] ) # mite need loop
+  }
+  if(tt > 1){
+    for(j in 2:(tt)){
+      kerns <- kern(   (data$time[start[j]:end[j]] - t[j])/hd   )
+      for(i in 1:path){
+        mu[i,j] <- mu[i,j-1]*rescale[j] + 1/hd * sum( kerns*dy[i,start[j]:end[j]] )
+      }
+    }
+  }
+  
+  return(list(time = t, mu = mu))
+}
+
+est.sigma.mat.next <- function(data, hv, t.index, wkern=kern.parzen, lag="auto"){   #
+  # data list should include a times column and the Y column (log returns)
+  
+  # Handle lag
+  if(lag=="auto") lag = 15 #temp
+  if(t.index[1] < lag) stop("t.index can and should NOT be lower than lag length!")
+  
+  kern <- kern.leftexp$kern
+  wkern = kern.parzen$kern
+  
+  dy <- data$Y
+  
+  if(length(t.index) == 1){
+    startsig <- est.sigma.mat(data, hv=hv, t.index = t.index[1], lag = lag)
+    return(startsig)
+  }
+   
+  t<-data$time[t.index]
+  end <- t.index
+  start <- c( which.min(data$time), end[1:(length(end)-1)]+1)
+  
+  if(anyNA(dy[,t.index])) warning("NA in dy[,t.index]")
+  # scaling
+  dt<-c(0, diff(t))
+  rescale <- exp(-2*dt/hv)
+  
+  
+  n = length(data$time)
+  tt = length(t)
+  path <- dim(data$Y)[1]
+  if(is.null(path)) stop("Do not use .mat if input is not matrix!")
+  if(path)
+  sig = matrix(NA, nrow = path, ncol = tt)
+  
+  gamma<-function(l){
+    out<- sum(    kerns[(start[j]):end[j]]    *dy[i,(start[j]):end[j]]*
+                  kerns[(start[j]-l):(end[j]-l)]  *dy[i,(start[j]-l):(end[j]-l)]   ) # <-- gamma is wrong!
+    return(out)
+  }
+  {
+    #gamma<-function(l){ # sig.next
+    #  out<-sum(   kern( (data$time[start[j]:end[j]] - t[j])/hv )    *dy[start[j]:end[j]]*       
+    #                kern( (data$time[(start[j]-l):(end[j]-l)] - t[j])/hv )*dy[(start[j]-l):(end[j]-l)]   )
+    #  return(out)
+    #}
+    
+    #gamma<-function(l){ # sig.mat
+    # out<- sum(   kerns[j,(1+l):ind[j]]  *dy[i,(1+l):(ind[j])]*
+    #                kerns[j,1:(ind[j]-l)]  *dy[i,1:(ind[j]-l)]   )
+    # return(out)
+    #}
+  }
+  
+  # CALCULATE FIRST
+  #j<-1 # for gamma(l) which takes j from fct enviroment
+  #kerns <- kern(   (data$time[1:(n-1)] - t[1])/hv)
+  #for(i in 1:path){
+  #  sig[i,1] <- (1/hv)*sum(  (kerns[start[j]:end[j]] *dy[i, start[1]:end[1]])^2 )  # MAKE GAMMAFIRST? ELLER sigma.mat som første??
+  #  if (lag >=1) {
+  #    for(l in 1:lag){
+  #      sig[i,1] <- sig[i,1] + 2*(1/hv)*(wkern(l/(lag))*gamma(l) ) #loop-sum
+  #    }
+  #  }
+  #}
+  
+  # calculate first sigma
+  sig[,1] <- est.sigma.mat(data, hv, t.index[1], lag = lag)$sig
+  
+  # CALCULATE OTHERS
+  if(tt >= 2){
+    for(j in 2:tt){
+      kerns <- kern(   (data$time[1:(n-1)] - t[j])/hv)
+      for(i in 1:path){
+        sig[i,j] <- sig[i,j-1]*rescale[j] + (1/hv)*sum(  ( kerns[start[j]:end[j]]*dy[i,start[j]:end[j]])^2  )  # l = 0
+        if (lag >=1) { # move if outside loop!
+          for(l in 1:lag){
+            sig[i,j] <- sig[i,j] + 2*(1/hv)*(wkern(l/(lag))*gamma(l) ) #loop-sum
+          }
+        }
+      }
+    }
+  }
+
   # return list
   return(list(time = t, sig = sig))
 }
