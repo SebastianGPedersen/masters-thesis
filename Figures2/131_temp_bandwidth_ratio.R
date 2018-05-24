@@ -1,3 +1,4 @@
+set.seed(100)
 library(ggplot2)
 library(latex2exp)
 setwd(Sys.getenv("masters-thesis"))
@@ -14,7 +15,7 @@ p0 <- Sys.time()
 #2) I don't evaluate max(T) in every point but only T at jump and drift time.
 #3) I evaluate it against Gumbel and not AR(1) (simply because this hasn't been coded yet)
 #4) I don't rescale the beginning (simply because this hasn't been coded yet)
-#5) I only have 200 paths instead of 1000
+#5) I only have 100 paths instead of 1000
 
 #With all the cheat above it only takes a minute
 #Without cheating it takes weeks.
@@ -28,7 +29,7 @@ K2 <- 0.5 #K2
 n <- 23400
 mat <- 6.5/(24*7*52)
 dt <- mat/n
-Npaths <- 200 #Temporary. Should be 1000
+Npaths <- 100 #Temporary. Should be 1000
 sigma2 <- 0.0457
 sigma <- sqrt(sigma2)
 lag <- 10 #Temporary. Should be 100
@@ -71,7 +72,6 @@ rejection_list <- list(jump,small_burst,large_burst)
 for (memory in 1:n_loops) {
   #memory <- 1
   temp_paths <- Npaths / n_loops
-  set.seed(100*memory)
 
   #The index where i calculate the T's
   desired_index <- n/2

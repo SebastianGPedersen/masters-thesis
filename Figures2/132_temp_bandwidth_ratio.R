@@ -1,3 +1,4 @@
+set.seed(100)
 library(ggplot2)
 library(latex2exp)
 setwd(Sys.getenv("masters-thesis"))
@@ -28,7 +29,7 @@ K2 <- 0.5 #K2
 n <- 23400
 mat <- 6.5/(24*7*52)
 dt <- mat/n
-Npaths <- 200 #Temporary. Should be 1000
+Npaths <- 100 #Temporary. Should be 1000
 sigma2 <- 0.0457
 sigma <- sqrt(sigma2)
 lag <- 10 #Temporary. Should be 100
@@ -70,8 +71,7 @@ rejection_list <- list(jump,small_burst,large_burst)
 for (memory in 1:n_loops) {
   #memory <- 1
   temp_paths <- Npaths / n_loops
-  set.seed(100*memory)
-
+  
   #The index where i calculate the T's
   desired_index <- n/2
   
