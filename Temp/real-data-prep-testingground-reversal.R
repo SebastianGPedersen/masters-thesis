@@ -216,13 +216,21 @@ perDay <- function(data, index){
 dt <- data[data[["day"]] <= 10]
 
 # THIS TAKES TIME
-dt[, perDay(.SD, .BY), by = dt[["day"]]]
+test<-dt[, perDay(.SD, .BY), by = dt[["day"]]]
 
 # CLEAN UP #
 # Ideally, we return something like a matrix or clean data table
 # Issue is that we want the number of x and ys to be dynamic,
-# it is therefore tricky to get table tag as columns from byBurst
+# it is therefore tricky to get table tag as columns from byBurst ( JUST USE PASTE0 ? )
 
-# CLEANUP WILL BE TOMORROW
-# For each burst, take out all x, y and center and flatten info from each burst into a single row
+# CLEANUP FUNCTION STARTS HERE
+
+temp<-test[day == 1,]
+temp[burst == 3,]
+
+# FLATTEN
+
+# LOGPRICE | TVAL (for all X) - LOGPRICE | TVAL (center) - LOGPRICE (for all Y)
+# Let user do diff on logprice themselves
+
 

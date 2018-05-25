@@ -56,3 +56,7 @@ est.mu.next(data, hd = 1, t.index = tind)
 est.mu.legacy(data, 1, kern = kern.leftexp$kern, t.index = tind)$mu # WITH APPEND
 est.mu(data2, hd = 1, t.index = tind)$mu
 est.mu.next(data2, hd = 1, t.index = tind)$mu
+
+# SIGMA
+est.sigma(data, hv = 1, t.index = tind)
+est.sigma.next(data, hv = 1, t.index = tind)

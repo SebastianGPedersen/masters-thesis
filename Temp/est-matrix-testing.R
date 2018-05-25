@@ -21,9 +21,9 @@ if(F){
   est.mu.next(data, hd = 0.001, t.index = 50:55)
   
   # sigma
-  est.sigma.mat(hest, hv = 0.001, t.index = 50:55, lag = 10)
-  est.sigma(data, hv = 0.001, t.index = 50:55, lag = 10)
-  est.sigma.next(data, hv = 0.001, t.index = 50:55, lag = 10)
+  est.sigma.mat(hest, hv = 0.001, t.index = 50:55, lag = 10)$sig
+  est.sigma(data, hv = 0.001, t.index = 50:55, lag = 10)$sig
+  est.sigma.next(data, hv = 0.001, t.index = 50:55, lag = 10)$sig
 }
 
 #mu
