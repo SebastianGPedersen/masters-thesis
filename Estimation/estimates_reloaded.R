@@ -5,7 +5,6 @@ if(length(new.packages)) install.packages(new.packages)
 
 #Load packages
 invisible(sapply(packages, require, character.only = TRUE))
-library(foreach)
 
 #Load sources
 setwd(Sys.getenv("masters-thesis"))
