@@ -8,23 +8,21 @@ source("Estimation/pre-average.R")
 source("Estimation/estimates.R")
 
 #################### PARAMETERS THAT DON'T CHANGE ####################
-omega2 <- 2.64*10^(-10) #What Mathias wrote
+omega2 <- 2.64*10^(-10)*25 #Then sd is 5 times as high
 omega <- sqrt(omega2)
 K2 <- 0.5 #K2
 n <- 23400
 mat <- 6.5/(24*7*52)
 dt <- mat/n
 Npaths <- 1000
-sigma2 <- 0.0457
-sigma <- sqrt(sigma2)
-#theta <- 0.0225
-
+sigma2 <- 0.0457/25 #Then sd is 5 times as low
+sigma <- sqrt(sigma2) 
 
 #Because of lack of memory, it is done in 10 loops
 n_loops <- 10
 
 #List to final values
-hd_list <- seq(1,20,by = 1)/ (60*24*7*52)
+hd_list <- seq(1,20,by = 1)/ (2*60*24*7*52)
 var_bias_temp <- matrix(nrow = n_loops,ncol = length(hd_list))
 
 for (memory in 1:n_loops) {
@@ -48,7 +46,6 @@ for (memory in 1:n_loops) {
       #i <- 1
       single_path <- list(Y = diff(BS$Y[i,]), time = BS$time)
       mu_hat[i] <- sqrt(hd_list[hd])/sqrt(K2*sigma^2)*est.mu(data = single_path, hd = hd_list[hd], t.index = desired_index)$mu[1]
-      
     }
     var_bias_temp[memory,hd] <- mean(mu_hat^2) #We know it has mean zero, so E(mu^2) is more precise than Var(mu)
   }
@@ -61,14 +58,16 @@ for (hd in 1:length(hd_list)) {
 }
 
 #Compute the the bias from the last noise term
-noise <- 1/hd_list*omega^2 / sqrt(K2*sigma^2) + 1
+noise <- 1+omega^2 / (hd_list*K2*sigma^2)
+
 
 #################### PLOT ####################
-data <- data.frame(hd = hd_list, target = (1:length(hd_list)*0)+1, var_bias = var_bias, var_bias_noise = var_bias - noise)
+hd_minutes <- hd_list*(60*24*7*52)
+data <- data.frame(hd = hd_minutes, target = (1:length(hd_minutes)*0)+1, var_bias = var_bias, var_bias_noise = noise)
 
 ggplot() +
-  geom_line(data=data, aes(x=hd, y=var_bias, col = "Var_mu"), size = 1) +
-  geom_line(data=data, aes(x=hd, y=noise, col = "var-noise"), size = 1) +
+  geom_line(data=data, aes(x=hd, y=var_bias, col = "T_sigma"), size = 1) +
+  geom_line(data=data, aes(x=hd, y=var_bias_noise, col = "R_bias"), size = 1) +
   geom_line(data=data, aes(x=hd, y=target, col = "target"), size = 1) +
   xlab("Bandwidth, hd") + ylab("Normalized Variance")
 

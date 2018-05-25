@@ -14,14 +14,16 @@ laglength = function(dx, nmu){
   # pre-estimate autocovariance of noise increment
   E_deij <- numeric(n+1)
   for(i in 1:(n+1)){
-    E_deij <- mean(dx[(i+1):(n+1)]*dx[1:(n+1-1)])
+    #i <- 2
+    E_deij[i] <- mean(dx[(i+1):length(dx)]*dx[1:(length(dx)-i)])
   }
   
-  v0 <-  -sum(   (1:(n+1))*E_deji[(i+1):(n+1)]   )
+  v0 <-  -sum((1:(n+1))*E_deij)
   
   ac<- numeric(n)
+  
   for(i in 1:n){
-    ac <- -sum(   (1:(n+1-i))*E_deij[(i+1):(n+1)]   )
+    ac[i] <- -sum(   (1:(n+1-i))*E_deij[(i+1):(n+1)]   )
   }
   
   # determine lag length

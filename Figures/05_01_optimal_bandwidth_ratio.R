@@ -44,7 +44,7 @@ for (memory in 1:n_loops) {
   #memory <- 1
   print(memory)
   temp_paths <- Npaths / n_loops
-  set.seed(1000*memory)
+  set.seed(100*memory)
   
   #Heston simulations
   settings <- sim.setup(mat=mat, Npath = temp_paths, Nsteps = n, omega = omega) #6.5 hours
