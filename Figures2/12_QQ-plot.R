@@ -1,3 +1,4 @@
+set.seed(100)
 library(ggplot2)
 library(grid)
 library(gridExtra)
@@ -26,17 +27,16 @@ sigma <- sqrt(sigma2)
 lag <- 100
 
 #Because of lack of memory, it is done in loops
-n_loops <- 10
+n_loops <- 1
 desired_index <- n-1
 
 #List to final values
 hd_list <- c(2,5,10) / (60*24*7*52) #2min, 5min and 10min
-T_estimator <- matrix(nrow = Npaths,ncol = length(h_list))
+T_estimator <- matrix(nrow = Npaths,ncol = length(hd_list))
 
 for (memory in 1:n_loops) {
   #memory <- 1
   temp_paths <- Npaths / n_loops
-  set.seed(100*memory)
   
   #Heston simulations
   settings <- sim.setup(mat=mat, Npath = temp_paths, Nsteps = n, omega = omega) #6.5 hours
