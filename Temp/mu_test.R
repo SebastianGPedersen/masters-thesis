@@ -18,7 +18,7 @@ K2 <- 0.5 #K2
 n <- 23400
 mat <- 6.5/(24*7*52)
 dt <- mat/n
-Npaths <- 2 #Temporary. Should be 1000
+Npaths <- 100 #Temporary. Should be 1000
 sigma2 <- 0.0457
 sigma <- sqrt(sigma2)
 lag <- 10 #Temporary. Should be 100
@@ -44,15 +44,18 @@ path$vol <- NULL
 desired_indices <- floor(T_interval/dt)*(1:(m-1))[-(1:2)]
 
 
-
 ### Compare calculations
 path_single <- path
 path_single$Y <- path_single$Y[1,]
 
-test0 <- est.mu(data = path_single, hd = h_mu, t.index = desired_indices[2])$mu
-test1 <- est.mu.next(data = path_single, hd = h_mu, t.index = desired_indices)$mu[2]
-test2 <- est.mu.mat(data = path, hd = h_mu, t.index = desired_indices[2])$mu[1]
-test3 <- est.mu.mat.next(data = path, hd = h_mu, t.index = desired_indices)$mu[1,2]
 
-temp <- est.mu.mat.2.0(data = path, hd = h_mu)
-test4 <- temp[1,desired_indices[2]]
+p0 <- Sys.time()
+mu1 <- est.mu.mat.next(data = path, hd = h_mu, t.index = desired_indices)$mu
+time1 <- as.numeric(difftime(Sys.time(),p0,units = "secs"))
+
+p0 <- Sys.time()
+mu2 <- est.mu.mat.2.0(data = path, hd = h_mu)$mu[,desired_indices]
+time2 <- as.numeric(difftime(Sys.time(),p0,units = "secs"))
+
+paste("Maximum relative difference across all estimators:",max(abs(mu2/mu1-1))) #Max difference between the two
+paste("Relative speed-up:",round(as.numeric(time1/time2),0))

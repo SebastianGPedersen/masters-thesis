@@ -43,20 +43,17 @@ path$vol <- NULL
 ### Indexes from sigma-estimator
 desired_indices <- floor(T_interval/dt)*(1:(m-1))[-(1:2)]
 
-### Calculate sigmas
-sigma_1 <- est.sigma.mat.next(data = path, hv = h_mu,t.index = desired_indices,lag = lag)$sig
-
-sigma_2 <- est.sigma.mat.2.0(data = path, hv = h_mu,lag = lag)$sig
-sigma_2 <- sigma_2[,desired_indices]
-
-### Check results
+### Compare calculations
 path_single <- path
 path_single$Y <- path_single$Y[1,]
 
-test0 <- est.sigma(data = path_single, hv = h_mu, t.index = desired_indices[2], lag = lag)$sig
-test1 <- est.sigma.next(data = path_single, hv = h_mu, t.index = desired_indices, lag = lag)$sig[2]
-test2 <- est.sigma.mat(data = path, hv = h_mu, t.index = desired_indices[2], lag = lag)$sig[1]
-test3 <- est.sigma.mat.next(data = path, hv = h_mu, t.index = desired_indices, lag = lag)$sig[1,2]
+p0 <- Sys.time()
+sigma_1 <- est.sigma.mat.next(data = path, hv = h_mu, t.index = desired_indices, lag = lag)$sig
+time1 <- as.numeric(difftime(Sys.time(),p0,units = "secs"))
 
-temp <- est.sigma.mat.2.0(data = path, hv = h_mu, lag = lag)
-test4 <- temp$sig[1,desired_indices[2]]
+p0 <- Sys.time()
+sigma_2 <- est.sigma.mat.2.0(data = path, hv = h_mu, lag = lag)$sig[,desired_indices]
+time2 <- as.numeric(difftime(Sys.time(),p0,units = "secs"))
+
+paste("Maximum difference across all estimators:",max(abs(sigma_2/sigma_1-1))) #Max difference between the two
+paste("Relative speed-up:",round(as.numeric(time1/time2),0))
