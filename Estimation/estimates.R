@@ -90,7 +90,7 @@ est.sigma <- function(data, hv, t.index, kern = kern.leftexp, wkern=kern.parzen,
     sig[j] <- sum(  (kern(   (data$time[1:ind[j]] - t[j])/hv)*dy[1:ind[j]]  )^2  )  # l = 0
     if (lag >=1) {
       for(l in 1:lag){
-        sig[j] <- sig[j] + 2*(wkern((l-1)/(lag))*gamma(l,t[j]))
+        sig[j] <- sig[j] + 2*(wkern(l,lag)*gamma(l,t[j]))
       }
     }
   }
@@ -266,7 +266,7 @@ est.sigma.next <- function(data, prevsig, hv, t.index, wkern=kern.parzen, lag="a
   sig[1] <- startsig$sig*rescale[1] + (1/hv)*sum(  (kern(   (data$time[start[1]:end[1]] - t[1])/hv   )*dy[start[1]:end[1]])^2 )  # l = 0
   if (lag >=1) {
     for(l in 1:lag){
-      sig[1] <- sig[1] + 2*(1/hv)*(wkern(l/(lag))*gamma(l) )
+      sig[1] <- sig[1] + 2*(1/hv)*(wkern(l,lag)*gamma(l) )
     }
   }
   if(tt >= 2){
@@ -274,7 +274,7 @@ est.sigma.next <- function(data, prevsig, hv, t.index, wkern=kern.parzen, lag="a
       sig[j] <- sig[j-1]*rescale[j] + (1/hv)*sum(  (kern(   (data$time[start[j]:end[j]] - t[j])/hv   )*dy[start[j]:end[j]])^2  )  # l = 0
       if (lag >=1) {
         for(l in 1:lag){
-          sig[j] <- sig[j] + 2*(1/hv)*(wkern(l/(lag))*gamma(l) )
+          sig[j] <- sig[j] + 2*(1/hv)*(wkern(l,lag)*gamma(l) )
         }
       }
     }
@@ -694,7 +694,7 @@ est.sigma.mat <- function(data, hv, t.index, kern = kern.leftexp, wkern=kern.par
       sig[i,j] <- sum(  (kerns[j, 1:ind[j] ]*dy[i, 1:ind[j]]  )^2  )  # l = 0
       if (lag >=1) {
         for(l in 1:lag){
-          sig[i,j] <- sig[i,j] + 2*(wkern(l/(lag))*gamma(l))
+          sig[i,j] <- sig[i,j] + 2*(wkern(l,lag)*gamma(l))
         }
       }
     }
@@ -828,7 +828,7 @@ est.sigma.mat.next <- function(data, hv, t.index, wkern=kern.parzen, lag="auto")
         sig[i,j] <- sig[i,j-1]*rescale[j] + (1/hv)*sum(  ( kerns[start[j]:end[j]]*dy[i,start[j]:end[j]])^2  )  # l = 0
         if (lag >=1) { # move if outside loop!
           for(l in 1:lag){
-            sig[i,j] <- sig[i,j] + 2*(1/hv)*(wkern(l/(lag))*gamma(l) ) #loop-sum
+            sig[i,j] <- sig[i,j] + 2*(1/hv)*(wkern(l,lag)*gamma(l) ) #loop-sum
           }
         }
       }

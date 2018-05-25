@@ -21,8 +21,9 @@ leftexpkernfunction<-function(x){
 
 kern.leftexp<-list(kern = leftexpkernfunction, ksq = 0.5)
 
-parzenkernfunction<-function(x){
+parzenkernfunction<-function(x, lag){
   # Input has to be nicely 'sorted' such that lowest nr comes first
+  x <- x/(lag+1)
   xn <- abs(x[x<0])
   # handles negatives
   part1n <- 1-6*xn[xn<=0.5]^2+6*xn[xn<=0.5]^3
