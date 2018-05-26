@@ -35,8 +35,6 @@ alpha <- 0.8
 beta <- 0.1
 burst_time = 0.5; interval_length = 0.05
 
-
-
 # CREATE BURST SETTING
 burstset <- sim.burstsetting(alpha = alpha, beta = beta,
                              burst_time = burst_time, interval_length = interval_length,
@@ -77,7 +75,6 @@ Table1_simulation <- function(hest_setup, fun, args){
   return(sim)
 }
 
-
 # T ESTIMATION PART
 Table1_estimation <- function(sim_list, h_list, ratio, t.index, lag, conf = 0.95){
   # HERE WE GO
@@ -102,8 +99,8 @@ Table1_estimation <- function(sim_list, h_list, ratio, t.index, lag, conf = 0.95
       p0 <- Sys.time()
       #print(paste0("memory = ",memory, ", path = ",j, ", ratio_index = ", ratio_index, sep = ""))
       
-      mu_hat <- est.mu.mat(data = path, hd = h_list[h_index],t.index = t.index)$mu
-      sigma_hat2 <- est.sigma.mat(data = path, hv = ratio*h_list[h_index],t.index = t.index,lag = lag)$sig
+      mu_hat <- est.mu.mat.next(data = path, hd = h_list[h_index],t.index = t.index)$mu
+      sigma_hat2 <- est.sigma.mat.next(data = path, hv = ratio*h_list[h_index],t.index = t.index,lag = lag)$sig
       Tstat <- abs(sqrt(h_list[h_index])*mu_hat/sqrt(sigma_hat2))
       
       # Calculate T* for each subpath

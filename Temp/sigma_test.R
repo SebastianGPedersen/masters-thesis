@@ -57,3 +57,5 @@ time2 <- as.numeric(difftime(Sys.time(),p0,units = "secs"))
 
 paste("Maximum difference across all estimators:",max(abs(sigma_2/sigma_1-1))) #Max difference between the two
 paste("Relative speed-up:",round(as.numeric(time1/time2),0))
+
+plot(sigma_1[1,] - sigma_2[1,], type="l")
