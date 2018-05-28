@@ -5,6 +5,7 @@ source("simulation/jumps.R")
 source("estimation/estimates.R")
 source("estimation/teststat.R")
 source("estimation/rho.R")
+source("estimation/rescaling.R")
 source("kernels/kernels.R")
 
 # HELPER FUNCTIONS
@@ -95,13 +96,18 @@ Table1_estimation <- function(sim_list, h_list, ratio, t.index, lag, conf = 0.95
     
     mu_hat <- est.mu.mat.2.0(data = path, hd = h_list[h_index])$mu[,t.index]#,t.index = t.index)$mu
     sigma_hat2 <- est.sigma.mat.2.0(data = path, hv = ratio*h_list[h_index])$sig[,t.index]#,t.index = t.index,lag = lag)$sig
-    Tstat <- abs(sqrt(h_list[h_index])*mu_hat/sqrt(sigma_hat2))
+    
+    # RESCALE
+    mu <- est.rescale.mu(mu_vector = mu_hat, time_points =path$time[t.index], t_beginning = path$time[1], bandwidth = h_list[h_index])
+    sigma2 <- est.rescale.sigma(sigma2_vector = sigma_hat2, time_points =path$time[t.index], t_beginning = path$time[1], bandwidth = ratio*h_list[h_index])
+    
+    Tstat <- sqrt(h_list[h_index])*mu/sqrt(sigma2)
     
     # Calculate T* for each subpath
     for(subpath in 1:N){
       Tstar[subpath] <- max(abs(Tstat[subpath,]))
       # fit rho
-      rho[subpath] <- est.rho.MLE(Tstat[subpath,])
+      rho[subpath] <- est.rho.MLE(Tstat[subpath,]) # RHO IS NEGATIVE?
       m[subpath] <- length(Tstat[subpath,])
     }
     

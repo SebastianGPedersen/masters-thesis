@@ -956,7 +956,5 @@ est.mu.mat.2.0 <- function(data, hd, kern = kern.leftexp){
     mus[path,] <- mu_non_scaled/kernels
   }
   
-  print(Sys.time()-p0)
-  
   return(list(time = data$time[-1],mu = mus)) #Don't include time zero, because dy doesn't include
 }

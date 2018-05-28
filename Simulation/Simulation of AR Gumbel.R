@@ -1,9 +1,9 @@
 # SIMULATION OF QUANTILE (AR GUMBEL)
 setwd(Sys.getenv("masters-thesis-data"))
 
-rhoset <- 1:9/10
-mset <- seq(1600, 5000, 100)
-n <- 15000
+rhoset <- 0:9/10
+mset <- seq(5, 100, 10)
+n <- 10000
 Npath = 1*10^6
 q<- 0.95
 
@@ -28,12 +28,12 @@ for(r in 1:length(rhoset)){
   for(j in 1:length(mset)){
     out[r,j]<-as.numeric(quantile(inner[,j], probs = q))
   }
-  save(out, file = "quant.RData")
+  save(out, file = "smallm.RData")
 }
 
 
 if(F){
-  ja <- load("quant.RData")
+  ja <- load("smallm.RData")
   
   assign("interpolList", readRDS("interpolList.rds"), envir = .GlobalEnv)
   
