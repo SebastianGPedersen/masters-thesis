@@ -15,7 +15,7 @@ source("kernels/kernels.R")
 ######### FUNCTIONS ######### 
 
 ### SIGMA ###
-#With parallel 
+#With parallel
 est.sigma.mat.2.0 <- function(data, hv, kern = kern.leftexp, wkern=kern.parzen, lag=10){
   #data <- path
   #hv <- 5 / (60*24*7*52)
@@ -33,6 +33,9 @@ est.sigma.mat.2.0 <- function(data, hv, kern = kern.leftexp, wkern=kern.parzen, 
   
   #kernels
   kernels <- kern((data$time[1:(length(data$time)-1)]-t_now)/hv)
+  
+  #For sigma3.0
+  #kernels <- kern((data$time[1:(length(data$time)-1)]-data$time[2:length(data$time)])/hv)
   
   #Initialize for loop
   paths <- dim(data$Y)[1]

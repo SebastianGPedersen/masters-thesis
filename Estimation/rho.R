@@ -11,7 +11,7 @@ est.rho.MLE <-function(T_vector, error = 0.0001){ #With newest observation at in
   
   #Polynomium
   third_order_pol <- function(p) {
-    value <- (1-p^2)*N*p - (1-p^2)*sum(X_t_1 * (X_t - p*X_t_1)) - p * sum((X_t - p*X_t_1)^2)
+    value <- (1-p^2)*N*p + (1-p^2)*sum(X_t_1 * (X_t - p*X_t_1)) - p * sum((X_t - p*X_t_1)^2)
     return(value)
   }
   
