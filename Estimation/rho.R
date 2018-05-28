@@ -35,7 +35,7 @@ est.rho.kim <- function(T_vector,plot = F, arMle=F) {
   #Input: T_vector (as vector or list)
   #Output: rho and m (in a list)
   
-  
+  T_vector <- X
   #Check input type
   if (typeof(T_vector) == "list") {
     T_vector = unlist(T_vector)
@@ -44,15 +44,11 @@ est.rho.kim <- function(T_vector,plot = F, arMle=F) {
     stop("The input of T's has to be either in list or vector")
   }
   
-  if(arMle){
-    #Estimate rho (Kim's method - standard AR)
-    model <- ar.mle(T_vector,aic = F,order.max = 1) #if AIC = F it fits with p = order.max
-    
-    rho <- model$ar[1]
-  } else {
-    rho <- optimize(f = est.rhoLoglik, maximum = T,  x = T_vector, lower = -0.99, upper = 0.99)$maximum 
-  }
+  #Estimate rho (Kim's method - standard AR)
+  model <- ar.mle(T_vector,aic = F,order.max = 1) #if AIC = F it fits with p = order.max
   
+  rho <- model$ar[1]
+  sigma <- model$var.pred
   m <- length(T_vector)
   
   #Mangler at add'e den fra AR
@@ -60,6 +56,6 @@ est.rho.kim <- function(T_vector,plot = F, arMle=F) {
     acf(T_vector,lag.max = max(100,length(T_vector/3)),type = "correlation",plot = T)
   }
   
-  return(list(rho = rho,m = m))
+  return(list(rho = rho,sigma = sigma))
   
 }
