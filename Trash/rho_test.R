@@ -13,7 +13,7 @@ simAR<-function(n, rho, sd){
 
 
 
-X <- simAR(10000, 0.7, sqrt(1-0.7^2)) #var = 0.09
+X <- simAR(100, 0.7, sqrt(1-0.7^2)) #var = 0.09
 
 
 

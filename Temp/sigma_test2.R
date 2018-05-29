@@ -1,6 +1,7 @@
 set.seed(100)
 library(ggplot2)
 library(latex2exp)
+library(microbenchmark)
 setwd(Sys.getenv("masters-thesis"))
 source("Simulation/Heston.R")
 source("Simulation/Bursts.R")
@@ -10,6 +11,7 @@ source("Estimation/estimates.R")
 source("Estimation/estimates_reloaded.R")
 source("Estimation/estimates_revolution.R")
 source("Estimation/gumbel.R")
+source("Kernels/kernels.R")
 
 #################### PARAMETERS ####################
 omega2 <- 2.64*10^(-10)
@@ -44,24 +46,12 @@ path$vol <- NULL
 ### Indexes from sigma-estimator
 desired_indices <- floor(T_interval/dt)*(1:(m-1))[-(1:2)]
 
-### Compare calculations
-path_single <- path
-path_single$Y <- path_single$Y[1,]
+sigma_2 <- est.sigma.mat.2.0(data = path, hv = h_mu, lag = lag)$sig[,(lag+1):n]
+sigma_3 <- est.sigma.mat.3.0(data = path, hv = h_mu, lag = lag)$sig[,(lag+1):n]
 
+times <- microbenchmark(est.sigma.mat.2.0(data = path, hv = h_mu, lag = lag),
+                        est.sigma.mat.3.0(data = path, hv = h_mu, lag = lag),
+                        times = 1)
 
-p0 <- Sys.time()
-sigma_2 <- est.sigma.mat.2.0(data = path, hv = h_mu, lag = lag)$sig[1,]
-(time1 <- as.numeric(difftime(Sys.time(),p0,units = "secs")))
-
-source("Estimation/estimates_revolution.R")
-p0 <- Sys.time()
-sigma_3 <- est.sigma.mat.3.0(data = path, hv = h_mu, lag = lag)$sig
-(time2 <- as.numeric(difftime(Sys.time(),p0,units = "secs")))
-
-
-paste("Maximum difference across all estimators:",max(abs(sigma_2/sigma_1-1))) #Max difference between the two
-paste("Relative speed-up:",round(as.numeric(time1/time2),0))
-
-
-### The first 8 weights as they should be
-
+paste("Maximum difference across all estimators:",max(abs(sigma_2/sigma_3-1))) #Max difference between the two
+paste("Relative speed-up:",round(max(times$time)/min(times$time),0))

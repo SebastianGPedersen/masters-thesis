@@ -1,5 +1,5 @@
 #Install required packages if not already installed
-packages <- c('foreach', 'Rcpp')
+packages <- c('foreach', 'Rcpp', 'doParallel')
 new.packages <- packages[!(packages %in% installed.packages()[,"Package"])]
 if(length(new.packages)) install.packages(new.packages)
 
@@ -10,7 +10,8 @@ invisible(sapply(packages, require, character.only = TRUE))
 setwd(Sys.getenv("masters-thesis"))
 source("kernels/kernels.R")
 sourceCpp('Estimation/sigma.cpp')
-
+source("simulation/parameters.R") #gets number of logic units
+registerDoParallel(n_logic_units)
 
 ######### FUNCTIONS ######### 
 
@@ -31,21 +32,25 @@ est.sigma.mat.3.0 <- function(data, hv, kern = kern.leftexp, wkern=kern.parzen, 
   
   
   #For sigma3.0
-  kernels <- kern((data$time[1:(length(data$time)-1)]-data$time[2:length(data$time)])/hv)
+  t_now <- data$time[length(data$time)]
+  kernels <- kern((data$time[1:(length(data$time)-1)]-t_now)/hv)
+  #kernels <- kern((data$time[1:(length(data$time)-1)]-data$time[2:length(data$time)])/hv)
   
   #Initialize for loop
   paths <- dim(data$Y)[1]
-
   n <- length(data$time)-1 #time includes time 0 and time t, wheras dy has one less
   
-  #sigmas <- matrix(nrow = paths, ncol = n)
+  lags <- lag
   
   #temp_func
   sigma_func <- function(path) {
     
     #path <- 1
     dy <- data$Y[path,]
-    return(sigmas_cpp(dY = dy,kernels = kernels,lags = lag, bandwidth = hv))
+    products <- kernels*dy
+    sigmas_non_scaled <- sigmas_cpp(KdY = products,lags = lags)
+    sigmas <- 1/hv * sigmas_non_scaled/kernels^2 #rescaling
+    return(sigmas)
   }
   
   sigmas <- foreach(path=1:paths, .combine = 'rbind')  %do% {sigma_func(path)}

@@ -22,21 +22,32 @@ leftexpkernfunction<-function(x){
 kern.leftexp<-list(kern = leftexpkernfunction, ksq = 0.5)
 
 parzenkernfunction<-function(x, lag){
-  # Input has to be nicely 'sorted' such that lowest nr comes first
+  #Changed the function. It's extremely annoying that the function changes the order... /Sebastian
+  
   x <- x/(lag+1)
-  xn <- abs(x[x<0])
-  # handles negatives
-  part1n <- 1-6*xn[xn<=0.5]^2+6*xn[xn<=0.5]^3
-  part2n <- 2*(1-xn[xn>0.5 & xn<=1])^3
-  part3n <- xn[xn > 1]*0
   
-  # handles positives
-  xp <- abs(x[x>=0])
-  part1p <- 1-6*xp[xp<=0.5]^2+6*xp[xp<=0.5]^3
-  part2p <- 2*(1-xp[xp>0.5 & xp<=1])^3
-  part3p <- xp[xp > 1]*0
+  x_output <- numeric(length(x))
   
-  return(c(part3n,part2n,part1n,part1p,part2p,part3p))
+  x_output[x <= 1/2] <- 1-6*x[x <= 1/2]^2+6*x[x <= 1/2]^3
+  x_output[x > 1/2] <- 2*(1-x[x > 1/2])^3
+
+  return(x_output)
+  
+  # # Input has to be nicely 'sorted' such that lowest nr comes first
+  # x <- x/(lag+1)
+  # xn <- abs(x[x<0])
+  # # handles negatives
+  # part1n <- 1-6*xn[xn<=0.5]^2+6*xn[xn<=0.5]^3
+  # part2n <- 2*(1-xn[xn>0.5 & xn<=1])^3
+  # part3n <- xn[xn > 1]*0
+  # 
+  # # handles positives
+  # xp <- abs(x[x>=0])
+  # part1p <- 1-6*xp[xp<=0.5]^2+6*xp[xp<=0.5]^3
+  # part2p <- 2*(1-xp[xp>0.5 & xp<=1])^3
+  # part3p <- xp[xp > 1]*0
+  # 
+  # return(c(part3n,part2n,part1n,part1p,part2p,part3p))
 }
 
 kern.parzen<-list(kern = parzenkernfunction, ksq = NA)

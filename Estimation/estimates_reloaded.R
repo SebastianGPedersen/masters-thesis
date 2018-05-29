@@ -1,5 +1,5 @@
 #Install required packages if not already installed
-packages <- c('foreach')
+packages <- c('foreach', 'doParallel')
 new.packages <- packages[!(packages %in% installed.packages()[,"Package"])]
 if(length(new.packages)) install.packages(new.packages)
 
@@ -9,7 +9,8 @@ invisible(sapply(packages, require, character.only = TRUE))
 #Load sources
 setwd(Sys.getenv("masters-thesis"))
 source("kernels/kernels.R")
-
+source("simulation/parameters.R") #gets number of logic units
+registerDoParallel(n_logic_units)
 
 
 ######### FUNCTIONS ######### 
@@ -49,6 +50,13 @@ est.sigma.mat.2.0 <- function(data, hv, kern = kern.leftexp, wkern=kern.parzen, 
     #path <- 1
     dy <- data$Y[path,]
     products <- kernels*dy
+    
+    # if (path == 1) {
+    # print(dy[1:(lags+1)])
+    # print(kernels[1:(lags+1)])
+    # print(dy[1:(lags+1)]*kernels[1:(lags+1)])
+    # print(sum((dy[1:(lags+1)]*kernels[1:(lags+1)])^2))
+    # }
     
     #zero lag
     sum_terms <- products^2
@@ -125,5 +133,6 @@ est.mu.mat.2.0 <- function(data, hd, kern = kern.leftexp, wkern=kern.parzen){
   
   return(list(time = data$time[-1],mu = mus)) #Don't include time zero, because dy doesn't include
 }
+
 
 
