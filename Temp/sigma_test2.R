@@ -23,7 +23,7 @@ dt <- mat/n
 Npaths <- 100 #One year of S&P-500
 sigma2 <- 0.0457
 sigma <- sqrt(sigma2)
-lag <- 100 #Temporary. Should be 100
+lag <- 10 #Temporary. Should be 100
 (noise_ratio <- omega/(sqrt(dt)*sigma)) #10.66
 h_mu <- 5 / (60*24*7*52) #5min bandwidth of drift-estimator
 T_interval <- 5 / (60*60*24*7*52) #5sec between T_calculations

@@ -53,7 +53,7 @@ est.sigma.mat.3.0 <- function(data, hv, kern = kern.leftexp, wkern=kern.parzen, 
     return(sigmas)
   }
   
-  sigmas <- foreach(path=1:paths, .combine = 'rbind')  %do% {sigma_func(path)}
+  sigmas <- foreach(path=1:paths, .combine = 'rbind')  %dopar% {sigma_func(path)}
   
   #for(path in 1:paths) {sigmas[path,] <- sigma_func(path)}
   
