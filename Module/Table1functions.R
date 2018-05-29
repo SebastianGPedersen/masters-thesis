@@ -89,6 +89,7 @@ Table1_estimation <- function(sim_list, h_list, ratio, t.index, lag, conf = 0.95
   #Transform Y to dY in path$Y
   path$Y <- t(diff(t(as.matrix(path$Y))))
   
+  output <- numeric(length(h_list))
   ######## CALCULATE T estimator ##########
   for (h_index in 1:length(h_list)) {
     #p0 <- Sys.time()
@@ -116,7 +117,7 @@ Table1_estimation <- function(sim_list, h_list, ratio, t.index, lag, conf = 0.95
   
     #output <- list(output, mean(Tstar>=z))
     
-    output <- mean(Tstar>=z)
+    output[h_index] <- mean(Tstar>=z)
     #output <- mean(Tstar)
       
     #print((Sys.time()-p0)*length(ratio_list)*length(all_paths)*n_loops)
