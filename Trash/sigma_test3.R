@@ -31,10 +31,19 @@ m <- mat/T_interval
 threshold <- q95(m)
 #threshold <- qnorm(0.975)
 
+#Burst params
+alpha <- 0.55
+beta <- 0.45
+c_1 <- (1-alpha)*0.005/(10/(60*24*7*52))^(1-alpha)
+c_2 <- sqrt((1-2*beta)*0.001^2/(10/(60*24*7*52))^(1-2*beta))
 
 ### SIMULATE
 settings <- sim.setup(mat=mat, Npath = Npaths, Nsteps = n, omega = omega) #6.5 hours
-path <- sim.heston(settings)
+Heston <- sim.heston(settings)
+Heston_vb <- sim.addvb(Heston, c_2 = c_2, beta = c_2)
+path <- sim.adddb(Heston_vb,c_1 = c_1,alpha=alpha)
+path <- sim.addjump(Heston, c_1 = c_1, alpha = alpha)
+
 
 #Transform Y to dY in path$Y
 path$Y <- t(diff(t(as.matrix(path$Y))))
@@ -55,17 +64,17 @@ sigma_1 <- est.sigma.mat(data = path, t.index = lag+1, hv = h_mu, lag = lag)$sig
 
 source("Estimation/estimates_reloaded.R")
 p0 <- Sys.time()
-sigma_2 <- est.sigma.mat.2.0(data = path, hv = h_mu, lag = lag)$sig[1,]
+sigma_2 <- est.sigma.mat.2.0(data = path, hv = h_mu, lag = lag)$sig[,(lag+1):n]
 (time1 <- as.numeric(difftime(Sys.time(),p0,units = "secs")))
 
 source("Estimation/estimates_revolution.R")
 p0 <- Sys.time()
-sigma_3 <- est.sigma.mat.3.0(data = path, hv = h_mu, lag = lag)$sig[1,]
+sigma_3 <- est.sigma.mat.3.0(data = path, hv = h_mu, lag = lag)$sig[,(lag+1):n]
 #sigma_3 <- est.sigma.mat.3.0(data = path, hv = h_mu, lag = lag)$sig[1:6,]
 (time2 <- as.numeric(difftime(Sys.time(),p0,units = "secs")))
 
 
-paste("Maximum difference across all estimators:",max(abs(sigma_2/sigma_1-1))) #Max difference between the two
+paste("Maximum difference across all estimators:",max(abs(sigma_3/sigma_2-1))) #Max difference between the two
 paste("Relative speed-up:",round(as.numeric(time1/time2),0))
 
 
@@ -104,7 +113,6 @@ w_2 <- Kdy[2:(lag+2)]*2*kern.parzen$kern(lag:0,lag)
 sum(w_2)
 sum(sigma_3[2,])
 
-
 #### THE FIRST FOUR WEIGHTS ARE CORRECT - NOW FOR THE WEIGHT ADDITITION (save the full for first i - both before and after)
 #Weights for fifth
 w_5 <- Kdy[5:(lag+5)]*2*kern.parzen$kern(lag:0,lag)
@@ -118,7 +126,5 @@ n <- length(sigma_2)
 
 hej <- sigma_2[(lag+1):n]/sigma_3[(lag+1):n]-1
 max(abs(hej))
-plot(hej)
+plot(abs(hej))
 
-hej2 <- sigma_2[sigma_2-sigma_3 ==(max(abs(sigma_2-sigma_3)))]
-hej3 <- sigma_3[sigma_2-sigma_3 ==(max(abs(sigma_2-sigma_3)))]

@@ -18,7 +18,7 @@ K2 <- 0.5 #K2
 n <- 23400
 mat <- 6.5/(24*7*52)
 dt <- mat/n
-Npaths <- 365 #One year of S&P-500
+Npaths <- 10 #One year of S&P-500
 sigma2 <- 0.0457
 sigma <- sqrt(sigma2)
 lag <- 10 #Temporary. Should be 100
@@ -46,6 +46,7 @@ desired_indices <- floor(T_interval/dt)*(1:(m-1))[-(1:2)]
 ### Compare calculations
 path_single <- path
 path_single$Y <- path_single$Y[1,]
+
 
 p0 <- Sys.time()
 sigma_1 <- est.sigma.mat.next(data = path, hv = h_mu, t.index = desired_indices, lag = lag)$sig

@@ -136,6 +136,7 @@ Rcpp::NumericVector sigmas_cpp(Rcpp::NumericVector KdY, int lags) {
   
   //For third degree polynomial: f(x) = 4*f(x-k)-6*f(x-2k)+4*f(x-3k)-f(x-4k)
   //Using the equation above and then corrects the endpoints and middle (where the polynomium in parzen kernel changes)
+  
   for (int i = lags+4; i < n; i++) {
     weights[i] = (4*weights[i-1]-6*weights[i-2]+4*weights[i-3]-weights[i-4]) + 
       first_weights[0]*KdY[i-lags-4]+first_weights[1]*KdY[i-lags-3] + first_weights[2]*KdY[i-lags-2] + first_weights[3]*KdY[i-lags-1] +

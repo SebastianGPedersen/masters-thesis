@@ -34,6 +34,7 @@ est.sigma.mat.2.0 <- function(data, hv, kern = kern.leftexp, wkern=kern.parzen, 
   
   #kernels
   kernels <- kern((data$time[1:(length(data$time)-1)]-t_now)/hv)
+  rescaling <- kern((data$time[2:(length(data$time))]-t_now)/hv)
   
   #For sigma3.0
   #kernels <- kern((data$time[1:(length(data$time)-1)]-data$time[2:length(data$time)])/hv)
@@ -72,7 +73,7 @@ est.sigma.mat.2.0 <- function(data, hv, kern = kern.leftexp, wkern=kern.parzen, 
       
       sigmas <- sigmas + 2*wkern(lag,lags)*gamma_ls[(lags+1-lag):length(gamma_ls)]
     }
-    sigmas <- 1/hv * sigmas/kernels[(1+lags):n]^2 #rescaling
+    sigmas <- 1/hv * sigmas/rescaling[(1+lags):n]^2 #rescaling
     
     return(sigmas)
   }
@@ -108,6 +109,7 @@ est.mu.mat.2.0 <- function(data, hd, kern = kern.leftexp, wkern=kern.parzen){
   
   #kernels
   kernels <- kern((data$time[1:(length(data$time)-1)]-t_now)/hd)
+  rescaling <- kern((data$time[2:length(data$time)]-t_now)/hd)
   
   #Initialize for loop
   paths <- dim(data$Y)[1]
@@ -126,7 +128,7 @@ est.mu.mat.2.0 <- function(data, hd, kern = kern.leftexp, wkern=kern.parzen){
     #zero lag
     sum_terms <- products
     mu_non_scaled <- 1/hd * cumsum(sum_terms)
-    mus[path,] <- mu_non_scaled/kernels
+    mus[path,] <- mu_non_scaled/rescaling
   }
 
   print(Sys.time()-p0)

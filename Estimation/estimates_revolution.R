@@ -34,7 +34,7 @@ est.sigma.mat.3.0 <- function(data, hv, kern = kern.leftexp, wkern=kern.parzen, 
   #For sigma3.0
   t_now <- data$time[length(data$time)]
   kernels <- kern((data$time[1:(length(data$time)-1)]-t_now)/hv)
-  #kernels <- kern((data$time[1:(length(data$time)-1)]-data$time[2:length(data$time)])/hv)
+  rescaling <- kern((data$time[2:length(data$time)]-t_now)/hv)
   
   #Initialize for loop
   paths <- dim(data$Y)[1]
@@ -49,7 +49,8 @@ est.sigma.mat.3.0 <- function(data, hv, kern = kern.leftexp, wkern=kern.parzen, 
     dy <- data$Y[path,]
     products <- kernels*dy
     sigmas_non_scaled <- sigmas_cpp(KdY = products,lags = lags)
-    sigmas <- 1/hv * sigmas_non_scaled/kernels^2 #rescaling
+    #return(sigmas_non_scaled)
+    sigmas <- 1/hv * sigmas_non_scaled/rescaling^2 #rescaling
     return(sigmas)
   }
   
