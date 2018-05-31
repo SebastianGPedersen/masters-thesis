@@ -41,8 +41,10 @@ sim.addjump <- function(Heston_res, size, burst_time = 0.5, interval_length = 0.
   mu_add[] <- 0
   mu_add[ind:length(mu_add)] <- size
   
-  Heston_res$X = Heston_res$X+t(replicate(nrow(Heston_res$X), mu_add))
-  Heston_res$Y = Heston_res$Y+t(replicate(nrow(Heston_res$X), mu_add))
+  if ("X" %in% names(Heston_res)) {
+    Heston_res$X = Heston_res$X+t(replicate(nrow(Heston_res$X), mu_add))
+  }
+  Heston_res$Y = Heston_res$Y+t(replicate(nrow(Heston_res$Y), mu_add))
   
   return(Heston_res)
 }

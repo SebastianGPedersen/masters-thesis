@@ -22,9 +22,9 @@ registerDoParallel(n_logic_units)
 
 #OBS: burst_time og interval_length skal være i % and intervallængde.
 
-sim.burstsetting <- function(alpha, beta, burst_time = 0.5, interval_length = 0.05,
-                         c_1 = 3, c_2= 0.15, reverse = T, recenter = T){
-  return(list(alpha = alpha, beta = beta, burst_time = burst_time,
+sim.burstsetting <- function(alpha, beta, jump = F, burst_time = 0.5, interval_length = 0.05,
+                         c_1 = 3, c_2= 0.15, reverse = F, recenter = F){
+  return(list(jump = jump, alpha = alpha, beta = beta, burst_time = burst_time,
               interval_length = interval_length, c_1 = c_1, c_2 = c_2, reverse = reverse, recenter = recenter))
 }
 
@@ -71,8 +71,11 @@ sim.adddb <- function(Heston_res, burst_time = 0.5, interval_length = 0.5, c_1 =
     mu_add[i] = mu_add[i-1]+mu(Heston_res$time[i-1])*dt[i-1]
   }
   
-  Heston_res$X = Heston_res$X+t(replicate(nrow(Heston_res$X),mu_add))
-  Heston_res$Y = Heston_res$Y+t(replicate(nrow(Heston_res$X),mu_add))
+  if ("X" %in% names(Heston_res)){
+    Heston_res$X <- Heston_res$X+t(replicate(nrow(Heston_res$X),mu_add))
+    
+  }
+  Heston_res$Y = Heston_res$Y+t(replicate(nrow(Heston_res$Y),mu_add))
   
   #Check that we end up in same point
   if(reverse){
@@ -245,7 +248,9 @@ sim.addvb.2.0 <- function(Heston_res, burst_time = 0.5, interval_length = 0.5, c
   #new_epsilon = epsilon_u_vol*sqrt(new_vol) #Multiplicates matrixes entrance-wise
   
   #Change X,Y and vol
-  Heston_res$X <- Heston_res$X+sigma_add
+  if ("X" %in% names(Heston_res)) {
+    Heston_res$X <- Heston_res$X+sigma_add
+  }
   #Heston_res$Y = Heston_res$X+new_epsilon
   Heston_res$Y <- Heston_res$Y+sigma_add
   Heston_res$vol <- new_vol

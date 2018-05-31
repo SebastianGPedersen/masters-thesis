@@ -97,7 +97,6 @@ est.mu.mat.2.0 <- function(data, hd, kern = kern.leftexp, wkern=kern.parzen){
   
   #hd <- 5 / (60*24*7*52)
   
-  p0 <- Sys.time()
   #kern handling
   if(is.list(kern)) kern<-kern$kern
   if(!is.function(kern)) stop("kern should be either function or list containing function")
@@ -131,8 +130,6 @@ est.mu.mat.2.0 <- function(data, hd, kern = kern.leftexp, wkern=kern.parzen){
     mus[path,] <- mu_non_scaled/rescaling
   }
 
-  print(Sys.time()-p0)
-  
   return(list(time = data$time[-1],mu = mus)) #Don't include time zero, because dy doesn't include
 }
 
