@@ -31,8 +31,8 @@ for (beta_index in 1:length(betas)) {
 }
 
 #### LOOP BECAUSE OF LACK OF MEMORY
-Npaths <- 40 #Takes approx. a second per path (because it has to estimate T for 35 processes w. 3 different bandwidths)
-n_loops <- ceiling(Npaths/10) #After 50 it just scales linearly if not slower
+Npaths <- 300 #Takes approx. a second per path (because it has to estimate T for 35 processes w. 3 different bandwidths)
+n_loops <- ceiling(Npaths/50) #After 50 it just scales linearly if not slower
 output_list <- list()
 
 for (memory in 1:n_loops) {
@@ -60,11 +60,10 @@ Table1_results[,3+1:length(h_list)] <- Table1_results[,3+1:length(h_list)] /n_lo
 
 
 ###Re-structure Table as in Christensen et. al.:
-restructured_table <- restructure_table1(Table1_results,h_list)
+Table1 <- restructure_table1(Table1_results,h_list)
 
 ### Save and view
-#save(resheaped_data, file = "Module/Tableuno.Rdata")
-#load("Module/Tableuno.Rdata")
-View(restructured_table)
+#save(Table1, file = "Module/Tableuno.Rdata")
+View(Table1)
 
 

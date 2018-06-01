@@ -6,7 +6,10 @@ source("Simulation/Bursts.R")
 source("Simulation/Jumps.R")
 source("Estimation/pre-average.R")
 source("Estimation/estimates.R")
+source("Estimation/estimates_reloaded.R")
+source("Estimation/estimates_revolution.R")
 source("Estimation/gumbel.R")
+source("estimation/rescaling.R")
 p0 <- Sys.time()
 
 
@@ -17,7 +20,7 @@ K2 <- 0.5 #K2
 n <- 23400
 mat <- 6.5/(24*7*52)
 dt <- mat/n
-Npaths <- 80
+Npaths <- 100
 sigma2 <- 0.0457
 sigma <- sqrt(sigma2)
 lag <- 10
@@ -42,8 +45,7 @@ c_1_func <- function(alpha) {(1-alpha)*0.005/(10/(60*24*7*52))^(1-alpha)}
 c_2_func <- function(beta) {sqrt((1-2*beta)*0.001^2/(10/(60*24*7*52))^(1-2*beta))}
 
 #Because of lack of memory, it is done in loops
-#n_loops <- floor(Npaths/100) #100 paths in every loop
-n_loops <- floor(Npaths/8) #10 loops with 8 in every
+n_loops <- floor(Npaths/100) #100 paths in every loop
 
 #Initialize lists to hold final values
 heston <- matrix(nrow = n_loops, ncol = length(ratio_list))
@@ -62,7 +64,7 @@ for (memory in 1:n_loops) {
 
   #The index where i calculate the T's
   desired_indices <- floor(T_interval/dt)*(1:(mat/T_interval-1))
-  desired_indices <- desired_indices[desired_indices >  max(ratio_list)*h_mu/dt] #Burn max(sigma_bandwidth) in
+  desired_indices <- desired_indices[desired_indices >  h_mu/dt] #Burn max(sigma_bandwidth) in
 
   ### Simulations
   settings <- sim.setup(mat=mat, Npath = Npaths, Nsteps = n, omega = omega) #6.5 hours
@@ -96,12 +98,15 @@ for (memory in 1:n_loops) {
     ######## CALCULATE T estimator ##########
     for (ratio_index in 1:length(ratio_list)) {
       #ratio_index <- 1
-      p0 <- Sys.time()
       print(paste0("memory = ",memory, ", path = ",j, ", ratio_index = ", ratio_index, sep = ""))
       
-      mu_hat <- est.mu.mat.next(data = path, h_mu,t.index = desired_indices)$mu
-      sigma_hat2 <- est.sigma.mat.next(data = path, h_mu*ratio_list[ratio_index],t.index = desired_indices)$sig
-      T_hat <- max(abs(sqrt(h_mu)*mu_hat/sqrt(sigma_hat2)))
+      mu_hat <- sqrt(h_mu)*est.mu.mat.2.0(data = path, h_mu)$mu[,desired_indices]
+      mu_scaled <- est.rescale.mu(mu_vector = mu_hat, time_points =path$time[desired_indices], t_beginning = path$time[1], bandwidth = h_mu)
+      
+      sigma_hat2 <- est.sigma.mat.3.0(data = path, h_mu*ratio_list[ratio_index],t.index = desired_indices)$sig
+      sigma_scaled <- 
+        
+      T_star <- max(abs(mu_scaled/sqrt(sigma_scaled)))
       
       rejection_list[[j]][memory,ratio_index] <- sum((T_hat > threshold)) / length(T_hat) #Save rejection percentage
       print((Sys.time()-p0)*length(ratio_list)*length(all_paths)*n_loops) #20 timer med kun lag = 10 og Npaths = 80

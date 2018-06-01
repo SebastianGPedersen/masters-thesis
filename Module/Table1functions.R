@@ -155,7 +155,7 @@ restructure_table1 <-function(table1, h_list) {
            #h_index <- 1
            to_row <- (h_index-1)*length(betas)+b_index
            to_col <- 2+a_index
-           output_table[to_row,to_col] <- temp[1,3+h_index]
+           output_table[to_row,to_col] <- round(temp[1,3+h_index],1)
          }
        }  
      }
