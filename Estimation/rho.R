@@ -35,7 +35,6 @@ est.rho.kim <- function(T_vector,plot = F, arMle=F) {
   #Input: T_vector (as vector or list)
   #Output: rho and m (in a list)
   
-  T_vector <- X
   #Check input type
   if (typeof(T_vector) == "list") {
     T_vector = unlist(T_vector)
@@ -56,6 +55,6 @@ est.rho.kim <- function(T_vector,plot = F, arMle=F) {
     acf(T_vector,lag.max = max(100,length(T_vector/3)),type = "correlation",plot = T)
   }
   
-  return(list(rho = rho,sigma = sigma))
+  return(rho)
   
 }

@@ -28,7 +28,7 @@ sim.burstsetting <- function(alpha, beta, jump = F, burst_time = 0.5, interval_l
               interval_length = interval_length, c_1 = c_1, c_2 = c_2, reverse = reverse, recenter = recenter))
 }
 
-sim.adddb <- function(Heston_res, burst_time = 0.5, interval_length = 0.5, c_1 = 3, alpha = 0.75, reverse = F) {
+sim.adddb <- function(Heston_res, burst_time = 0.5, interval_length = 0.05, c_1 = 3, alpha = 0.75, reverse = F) {
   #Intervals
   burst_begin_perc = burst_time-interval_length/2
   if(reverse){
@@ -86,7 +86,7 @@ sim.adddb <- function(Heston_res, burst_time = 0.5, interval_length = 0.5, c_1 =
   return(Heston_res)
 }
 
-sim.addvb <- function(Heston_res, burst_time = 0.5, interval_length = 0.5, c_2 = 0.15, beta = 0.4, reverse = F, recenter = F) {
+sim.addvb <- function(Heston_res, burst_time = 0.5, interval_length = 0.05, c_2 = 0.15, beta = 0.4, reverse = F, recenter = F) {
   #Intervals
   burst_begin_perc = burst_time-interval_length/2
   if(reverse){
@@ -165,7 +165,7 @@ sim.addvb <- function(Heston_res, burst_time = 0.5, interval_length = 0.5, c_2 =
   #Return
   return(Heston_res)
 }
-sim.addvb.2.0 <- function(Heston_res, burst_time = 0.5, interval_length = 0.5, c_2 = 0.15, beta = 0.4, reverse = F, recenter = F) {
+sim.addvb.2.0 <- function(Heston_res, burst_time = 0.5, interval_length = 0.05, c_2 = 0.15, beta = 0.4, reverse = F, recenter = F) {
   
   #Intervals
   burst_begin_perc = burst_time-interval_length/2

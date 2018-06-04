@@ -1,4 +1,4 @@
-sim.addjump <- function(Heston_res, size, burst_time = 0.5, interval_length = 0.5, c_1 = 3, alpha = 0.75) {
+sim.addjump <- function(Heston_res, size, burst_time = 0.5, interval_length = 0.05, c_1 = 3, alpha = 0.75) {
   # Adds a jump corresponding to the given burst settings
   # OR simply jump of size: "size" at burst_time"
   

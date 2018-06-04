@@ -90,7 +90,8 @@ est.z_quantile<-function(mym, myrho, myalpha){
   
   am <- sqrt(2*log(mym));   
   bm <- am-0.5*log(pi*log(mym))/am;
-  qZm <- q/am+bm;  
+  qZm <- q/am+bm; 
+  
   #qZm
   
   if(OnedimFlag){

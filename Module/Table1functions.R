@@ -11,8 +11,61 @@ source("estimation/rescaling.R")
 source("kernels/kernels.R")
 library(mgcv) #Used to extract unique rows from matrix
 
+# T ESTIMATION PART
+Table1_estimation <- function(sim_list, h_list, ratio, t.index, lag, conf = 0.95){
+  #sim_list <- all_sims[[1]]
+  # HERE WE GO
+  path <- sim_list
+  # HIGHWAY
+  # CLEAN SLATE
+  N<-dim(path$Y)[1]
+  Tstar <- numeric(N);  rho<-numeric(N); m <- numeric(N)
+  
+  #Transform Y to dY in path$Y
+  path$Y <- t(diff(t(as.matrix(path$Y))))
+  
+  output <- numeric(length(h_list))
+  ######## CALCULATE T estimator ##########
+  for (h_index in 1:length(h_list)) {
+    #h_index <- 1
+    #p0 <- Sys.time()
+    #print(paste0("memory = ",memory, ", path = ",j, ", ratio_index = ", ratio_index, sep = ""))
+    
+    mu_hat <- sqrt(h_list[h_index])*est.mu.mat.2.0(data = path, hd = h_list[h_index])$mu[,t.index]#,t.index = t.index)$mu
+    sigma_hat2 <- est.sigma.mat.3.0(data = path, hv = ratio*h_list[h_index], lag = lag)$sig[,t.index]#,t.index = t.index,lag = lag)$sig
+    
+    # RESCALE
+    #mu <- est.rescale.mu(mu_matrix = mu_hat, time_points = path$time[t.index], t_beginning = path$time[1], h_mu = h_list[h_index])
+    #sigma2 <- est.rescale.sigma(sigma2_matrix = sigma_hat2, time_points =path$time[t.index], t_beginning = path$time[1], h_sigma = ratio*h_list[h_index])
+    mu <- mu_hat
+    sigma2 <- sigma_hat2
+    
+    Tstat <- mu/sqrt(sigma2)
+    
+    #Calculate T* for each subpath
+    for(subpath in 1:N){
+      Tstar[subpath] <- max(abs(Tstat[subpath,]))
+      # fit rho
+      rho[subpath] <- est.rho.MLE(Tstat[subpath,])
+    }
+    
+    m <- rep(dim(Tstat)[2],N)
+    
+    # QUANTILES for all paths
+    z<-est.z_quantile(m, rho, conf)$qZm
+    
+    #output <- list(output, mean(Tstar>=z))
+    
+    output[h_index] <- mean(Tstar>=z)
+    #output <- mean(Tstar)
+    
+    #print((Sys.time()-p0)*length(ratio_list)*length(all_paths)*n_loops)
+  }
+  return(output)
+}
+
 #This creates the structure of the table
-Table1 <- function(all_sims, h_list, ratio, t.index, lag, conf = 0.95){
+Table1_func <- function(all_sims, h_list, ratio, t.index, lag, conf = 0.95){
   
   #all_sims <- all_simulations
   #Initialization
@@ -40,57 +93,6 @@ Table1 <- function(all_sims, h_list, ratio, t.index, lag, conf = 0.95){
   }
   
   return(out)
-}
-
-# T ESTIMATION PART
-Table1_estimation <- function(sim_list, h_list, ratio, t.index, lag, conf = 0.95){
-  #sim_list <- all_sims[[1]]
-  # HERE WE GO
-  path <- sim_list
-  # HIGHWAY
-  # CLEAN SLATE
-  N<-dim(path$Y)[1]
-  Tstar <- numeric(N);  rho<-numeric(N); m <- numeric(N)
-  
-  #Transform Y to dY in path$Y
-  path$Y <- t(diff(t(as.matrix(path$Y))))
-  
-  output <- numeric(length(h_list))
-  ######## CALCULATE T estimator ##########
-  for (h_index in 1:length(h_list)) {
-    #h_index <- 1
-    #p0 <- Sys.time()
-    #print(paste0("memory = ",memory, ", path = ",j, ", ratio_index = ", ratio_index, sep = ""))
-    
-    mu_hat <- sqrt(h_list[h_index])*est.mu.mat.2.0(data = path, hd = h_list[h_index])$mu[,t.index]#,t.index = t.index)$mu
-    sigma_hat2 <- est.sigma.mat.3.0(data = path, hv = ratio*h_list[h_index])$sig[,t.index]#,t.index = t.index,lag = lag)$sig
-    
-    # RESCALE
-    mu <- est.rescale.mu(mu_vector = mu_hat, time_points =path$time[t.index], t_beginning = path$time[1], bandwidth = h_list[h_index])
-    sigma2 <- est.rescale.sigma(sigma2_vector = sigma_hat2, time_points =path$time[t.index], t_beginning = path$time[1], bandwidth = ratio*h_list[h_index])
-    
-    Tstat <- mu/sqrt(sigma2)
-    
-    #Calculate T* for each subpath
-    for(subpath in 1:N){
-      Tstar[subpath] <- max(abs(Tstat[subpath,]))
-      # fit rho
-      rho[subpath] <- est.rho.MLE(Tstat[subpath,])
-    }
-    
-    m <- rep(dim(Tstat)[2],N)
-    
-    # QUANTILES for all paths
-    z<-est.z_quantile(m, rho, conf)$qZm
-  
-    #output <- list(output, mean(Tstar>=z))
-    
-    output[h_index] <- mean(Tstar>=z)
-    #output <- mean(Tstar)
-      
-    #print((Sys.time()-p0)*length(ratio_list)*length(all_paths)*n_loops)
-  }
-  return(output)
 }
 
 #Table restructuring

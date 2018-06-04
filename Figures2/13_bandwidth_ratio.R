@@ -101,10 +101,10 @@ for (memory in 1:n_loops) {
       print(paste0("memory = ",memory, ", path = ",j, ", ratio_index = ", ratio_index, sep = ""))
       
       mu_hat <- sqrt(h_mu)*est.mu.mat.2.0(data = path, h_mu)$mu[,desired_indices]
-      mu_scaled <- est.rescale.mu(mu_vector = mu_hat, time_points =path$time[desired_indices], t_beginning = path$time[1], bandwidth = h_mu)
+      mu_scaled <- est.rescale.mu(mu_vector = mu_hat, time_points = path$time[desired_indices], t_beginning = path$time[1], bandwidth = h_mu)
       
       sigma_hat2 <- est.sigma.mat.3.0(data = path, h_mu*ratio_list[ratio_index],t.index = desired_indices)$sig
-      sigma_scaled <- 
+      sigma_scaled <- est.rescale.sigma(sigma2_vector = sigma_hat2, time_points = path$time[desired_indices], t_beginning = path$time[1], bandwidth = h_mu*ratio_list[ratio_index])
         
       T_star <- max(abs(mu_scaled/sqrt(sigma_scaled)))
       
