@@ -21,7 +21,7 @@ est.mu <- function(data, hd, kern = kern.leftexp, t.index){
   }
   # t should now be data$time points
   
-  dy = data$Y
+  dy = c(0,data$Y)
   
   #update n accordingly
   n = length(data$time)
@@ -29,7 +29,7 @@ est.mu <- function(data, hd, kern = kern.leftexp, t.index){
   mu = numeric(tt)
   
   for(j in 1:(tt)){
-    mu[j] = (1/hd)*sum(kern((data$time[1:(ind[j])] - t[j])/hd)*dy[1:ind[j]])
+    mu[j] = (1/hd)*sum(kern((data$time[1:(ind[j])] - t[j])/hd)*dy[2:(ind[j]+1)])
   }
   
   # return list
@@ -221,9 +221,11 @@ est.sigma.next <- function(data, prevsig, hv, t.index, wkern=kern.parzen, lag="a
     #t.index<-c(6,9)
   }
   
+  miss = FALSE
   if(missing(prevsig)){
     # initial handling is pretty weird because of lag length
     prevsig <- est.sigma(data, hv=hv, t.index = t.index[1],lag = lag) # change to minus
+    miss = TRUE
     if(length(t.index) == 1){
       return(prevsig)
     }
@@ -295,8 +297,10 @@ est.sigma.next <- function(data, prevsig, hv, t.index, wkern=kern.parzen, lag="a
   }
   
   #ADD BLOCK TO EXISTING (wow much blockchainy) (if it existed)
-  t <- c(prevsig$time, t)
-  sig <- c(prevsig$sig, sig) #we should remember to divide with hv
+  if(miss){
+    t <- c(prevsig$time, t)
+    sig <- c(prevsig$sig, sig)
+  }
   
   # return list
   return(list(time = t, sig = sig))
@@ -835,6 +839,96 @@ est.sigma.mat.next <- function(data, hv, t.index, wkern=kern.parzen, lag="auto")
     }
   }
 
+  # return list
+  return(list(time = t, sig = sig))
+}
+
+require(Rcpp)
+
+sourceCpp("estimation/next.cpp")
+
+est.mu.next.cpp <-function(data, prevmu, hd, t.index){
+  
+  dy <- c(0,data$Y)
+  
+  kern <- kern.leftexp$kern
+  # latest mu is picked out
+  if(missing(prevmu)){
+    prevmu <- list(time = -1, mu = 0)
+  } 
+  startmu<-list(time = prevmu$time[length(prevmu$time)], mu = prevmu$mu[length(prevmu$mu)])
+  
+  if(data$time[t.index][1] < startmu$time) stop("t.index should be higher than previous mu times")
+  if(data$time[t.index][1] == startmu$time) t.index <- t.index[2:length(t.index)]
+  
+  t<-data$time[t.index]
+  end <- t.index
+  if(length(end) > 1){
+    start <- c( min(which(data$time > startmu$time)), end[1:(length(end)-1)]+1)
+  }
+  else{
+    start <- min(which(data$time > startmu$time))
+  }
+  
+  # scaling
+  dt1<-t[1]-startmu$time
+  dt<-c(dt1, diff(t))
+  rescale <- exp(-dt/hd)
+  
+  
+  mu <- mu_internal_cpp(time = data$time, dy = dy, t = t, rescale = rescale,
+                        start = start, end = end, hd = hd, startmu = startmu$mu)
+  
+  
+  return(list(time = t, mu = mu))
+}
+est.sigma.next.cpp <- function(data, prevsig, hv, t.index, wkern=kern.parzen, lag="auto"){   #
+  # data list should include a times column and the Y column (log returns)
+  # Handle lag
+  if(lag=="auto") lag = 15 #temp
+  
+  if(t.index[1] < lag) stop("t.index can and should NOT be lower than lag length!")
+  
+  kern <- kern.leftexp$kern
+  wkern = kern.parzen$kern
+  
+  dy <- c(0,data$Y)
+  
+  miss = FALSE
+  if(missing(prevsig)){
+    # initial handling is pretty weird because of lag length
+    prevsig <- est.sigma(data, hv=hv, t.index = t.index[1],lag = lag) # change to minus
+    miss = TRUE
+    if(length(t.index) == 1){
+      return(prevsig)
+    }
+  } 
+  startsig<-list(time = prevsig$time[length(prevsig$time)], sig = prevsig$sig[length(prevsig$sig)])
+  
+  if(data$time[t.index][1] < startsig$time) stop("t.index should be higher than previous mu times")
+  if(data$time[t.index][1] == startsig$time) t.index <- t.index[2:length(t.index)]
+  
+  t<-data$time[t.index]
+  end <- t.index
+  if(length(end) > 1){
+    start <- c( min(which(data$time > startsig$time)), end[1:(length(end)-1)]+1)
+  }
+  else{
+    start <- min(which(data$time > startsig$time))
+  }
+  
+  # scaling
+  dt1<-t[1]-startsig$time
+  dt<-c(dt1, diff(t))
+  rescale <- exp(-2*dt/hv)
+  
+  sig = sig_internal_cpp(data$time, dy, t, rescale, start, end, hv, lag, startsig$sig)
+  
+  if(miss){
+    t <- c(prevsig$time, t)
+    sig <- c(prevsig$sig, sig)
+  }
+  
   # return list
   return(list(time = t, sig = sig))
 }
