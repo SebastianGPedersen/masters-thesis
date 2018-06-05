@@ -1,2 +1,7 @@
 load("/Users/SebastianGPedersen/Dropbox/KU/5. aar/Speciale/masters-thesis/Module/Tableuno.Rdata")
-load("/Users/SebastianGPedersen/Dropbox/KU/5. aar/Speciale/masters-thesis/Module/Tableuno.Rdata")
+load("/Users/SebastianGPedersen/Dropbox/KU/5. aar/Speciale/masters-thesis/Module/Table1.Rdata")
+load("/Users/SebastianGPedersen/Dropbox/KU/5. aar/Speciale/masters-thesis/Module/Table2_ratio15_lag10.Rdata")
+load("/Users/SebastianGPedersen/Dropbox/KU/5. aar/Speciale/masters-thesis/Module/Table3_ratio15_lag10.Rdata")
+Table3
+load("/Users/SebastianGPedersen/Dropbox/KU/5. aar/Speciale/masters-thesis/Module/Table2_ratio10_lag10.Rdata")
+Table2

@@ -22,7 +22,7 @@ K2 <- 0.5 #K2
 n <- 23400 /7 #Cheating again
 mat <- 6.5/(24*7*52) /7
 dt <- mat/n
-Npaths <- 10000
+Npaths <- 5000
 sigma2 <- 0.0457
 sigma <- sqrt(sigma2)
 (noise_ratio <- omega/(sqrt(dt)*sigma)) #10.66
@@ -75,8 +75,8 @@ plot_data_frame$Bandwidth <- as.factor(plot_data_frame$Bandwidth)
 g2 <- ggplot(plot_data_frame) + 
   stat_qq(aes(sample = T_estimator, colour = Bandwidth)) +
   geom_abline(intercept = 0, slope = 1) +
-  ylim(-5,5) +
-  xlim(-5,5) +
+  #ylim(-5,5) +
+  xlim(-4,4) +
   xlab("Quantile of standard normal") + ylab("Quantile of T") +
   theme(legend.position=c(0.87,0.16))
 g2

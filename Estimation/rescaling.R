@@ -9,10 +9,13 @@ est.rescale.mu <- function(mu_matrix, time_points, t_beginning, h_mu) {
   scaling_integral <- 0.5 * (1-exp(2*x))
   
   new_mu_matrix <- mu_matrix
+  
+  #This is the fastest wa
   for (col in 1:ncol(mu_matrix)) {
-    new_mu_matrix[,col] <- sqrt(K2) / sqrt(scaling_integral[col]) * mu_matrix[,col]
+    new_mu_matrix[,col] <- mu_matrix[,col] / sqrt(scaling_integral[col])
   }
   
+  new_mu_matrix <- sqrt(K2) * new_mu_matrix
   return(new_mu_matrix)
 }
 

@@ -17,7 +17,7 @@ registerDoParallel(n_logic_units)
 
 ### SIGMA ###
 #With parallel
-est.sigma.mat.2.0 <- function(data, hv, kern = kern.leftexp, wkern=kern.parzen, lag=10){
+est.sigma.mat.2.0 <- function(data, hv, kern = kern.leftexp, wkern=kern.parzen, lag=10, bandwidth_rescale = F){
   #data <- path
   #hv <- 5 / (60*24*7*52)
   #lag <- 10
@@ -36,8 +36,14 @@ est.sigma.mat.2.0 <- function(data, hv, kern = kern.leftexp, wkern=kern.parzen, 
   kernels <- kern((data$time[1:(length(data$time)-1)]-t_now)/hv)
   rescaling <- kern((data$time[2:(length(data$time))]-t_now)/hv)
   
-  #For sigma3.0
-  #kernels <- kern((data$time[1:(length(data$time)-1)]-data$time[2:length(data$time)])/hv)
+  #Extra rescaling
+  if (rescaling) {
+    K2 <- 0.5
+    x <- (Heston$time[1]-Heston$time[2:length(Heston$time)])/hv
+    scaling_integral <- 0.5 * (1-exp(2*x))
+    
+    rescaling <- rescaling / sqrt(0.5/scaling_integral) #sqrt because rescaling is squared later
+  }
   
   #Initialize for loop
   paths <- dim(data$Y)[1]
@@ -93,9 +99,9 @@ est.sigma.mat.2.0 <- function(data, hv, kern = kern.leftexp, wkern=kern.parzen, 
 }
 
 #Without parallel - faster that with parallel
-est.mu.mat.2.0 <- function(data, hd, kern = kern.leftexp, wkern=kern.parzen){
-  
-  #hd <- 5 / (60*24*7*52)
+est.mu.mat.2.0 <- function(data, hd, kern = kern.leftexp, wkern=kern.parzen, bandwidth_rescale = F){
+  #data <- Heston
+  #hd <- h_mu
   
   #kern handling
   if(is.list(kern)) kern<-kern$kern
@@ -110,6 +116,15 @@ est.mu.mat.2.0 <- function(data, hd, kern = kern.leftexp, wkern=kern.parzen){
   kernels <- kern((data$time[1:(length(data$time)-1)]-t_now)/hd)
   rescaling <- kern((data$time[2:length(data$time)]-t_now)/hd)
   
+  #Extra rescaling
+  if (bandwidth_rescale) {
+    K2 <- 0.5
+    x <- (Heston$time[1]-Heston$time[2:length(Heston$time)])/hd
+    scaling_integral <- 0.5 * (1-exp(2*x))
+    
+    rescaling <- rescaling / sqrt(0.5/scaling_integral)
+  }
+
   #Initialize for loop
   paths <- dim(data$Y)[1]
   

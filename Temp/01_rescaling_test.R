@@ -22,7 +22,7 @@ desired_indices <- seq(from = n_burn, to = 23400, by = 5) #Burn a mu in
 
 #### LOOP BECAUSE OF LACK OF MEMORY, SAVE BOTH T WITHOUT AND WITH SCALING
 
-Npaths <- 1000
+Npaths <- 600
 n_loops <- ceiling(Npaths/200)
 output_list_T <- matrix(nrow = n_loops, ncol = length(desired_indices))
 output_list_T_rescaled <- output_list_T
@@ -46,8 +46,8 @@ for (memory in 1:n_loops) {
     T_hat <- mu_hat/sqrt(sigma_hat2)
 
     #Rescaling
-    mu <- est.rescale.mu(mu_matrix = mu_hat, time_points = Heston$time[desired_indices], t_beginning = Heston$time[1], h_mu = h_mu)
-    sigma2 <- est.rescale.sigma(sigma2_matrix = sigma_hat2, time_points = Heston$time[desired_indices], t_beginning = Heston$time[1], h_sigma = ratio*h_mu)
+    mu <- sqrt(h_mu)*est.mu.mat.2.0(data = Heston, hd = h_mu, bandwidth_rescale = T)$mu[,desired_indices]
+    sigma2 <- est.sigma.mat.3.0(data = Heston, hv = ratio*h_mu, lag = lag, bandwidth_rescale = T)$sig[,desired_indices]#,t.index = t.index,lag = lag)$sigest.rescale.sigma(sigma2_matrix = sigma_hat2, time_points = Heston$time[desired_indices], t_beginning = Heston$time[1], h_sigma = ratio*h_mu, rescaling = T)
     T_hat_rescaled <- mu/sqrt(sigma2)
     
     #Calculate threshold (for every index)

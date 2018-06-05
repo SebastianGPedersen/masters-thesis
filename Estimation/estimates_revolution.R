@@ -17,10 +17,10 @@ registerDoParallel(n_logic_units)
 
 ### SIGMA ###
 #With parallel
-est.sigma.mat.3.0 <- function(data, hv, kern = kern.leftexp, wkern=kern.parzen, lag=100){
+est.sigma.mat.3.0 <- function(data, hv, kern = kern.leftexp, wkern=kern.parzen, lag=10, bandwidth_rescale = F){
   #data <- path
   #hv <- 5 / (60*24*7*52)
-  #lag <- 100
+  #lag <- 10
   
   #p0 <- Sys.time()
   #kern handling
@@ -35,6 +35,15 @@ est.sigma.mat.3.0 <- function(data, hv, kern = kern.leftexp, wkern=kern.parzen, 
   t_now <- data$time[length(data$time)]
   kernels <- kern((data$time[1:(length(data$time)-1)]-t_now)/hv)
   rescaling <- kern((data$time[2:length(data$time)]-t_now)/hv)
+  
+  #Extra rescaling
+  if (bandwidth_rescale) {
+    K2 <- 0.5
+    x <- (Heston$time[1]-Heston$time[2:length(Heston$time)])/hv
+    scaling_integral <- 0.5 * (1-exp(2*x))
+    
+    rescaling <- rescaling / sqrt(0.5/scaling_integral) #sqrt because it is squared later
+  }
   
   #Initialize for loop
   paths <- dim(data$Y)[1]

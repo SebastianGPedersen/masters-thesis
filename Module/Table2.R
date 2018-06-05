@@ -6,7 +6,7 @@ source("Simulation/add_all.R")
 ####### ESTIMATION PARAMETERS
 heston_params <- sim.setup()
 h_list <- c(120, 300, 600)/(52*7*24*60*60)
-ratio <- 5
+ratio <- 10
 lag <- 10
 
 #Burn a single mu in:
@@ -100,11 +100,11 @@ Table1_results[,3+1:length(h_list)] <- Table1_results[,3+1:length(h_list)] /n_lo
 
 
 ###Re-structure Table as in Christensen et. al.:
-Table1 <- restructure_table1(Table1_results,h_list)
+Table2 <- restructure_table1(Table1_results,h_list)
 
 ### Save and view
-save(Table1, file = "Module/Table1_ratio5_lag10.Rdata")
+save(Table2, file = "Module/Table2_ratio10_lag10.Rdata")
 
-View(Table1)
+View(Table2)
 
 

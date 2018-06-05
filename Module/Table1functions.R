@@ -31,14 +31,9 @@ Table1_estimation <- function(sim_list, h_list, ratio, t.index, lag, conf = 0.95
     #p0 <- Sys.time()
     #print(paste0("memory = ",memory, ", path = ",j, ", ratio_index = ", ratio_index, sep = ""))
     
-    mu_hat <- sqrt(h_list[h_index])*est.mu.mat.2.0(data = path, hd = h_list[h_index])$mu[,t.index]#,t.index = t.index)$mu
-    sigma_hat2 <- est.sigma.mat.3.0(data = path, hv = ratio*h_list[h_index], lag = lag)$sig[,t.index]#,t.index = t.index,lag = lag)$sig
-    
-    # RESCALE
-    #mu <- est.rescale.mu(mu_matrix = mu_hat, time_points = path$time[t.index], t_beginning = path$time[1], h_mu = h_list[h_index])
-    #sigma2 <- est.rescale.sigma(sigma2_matrix = sigma_hat2, time_points =path$time[t.index], t_beginning = path$time[1], h_sigma = ratio*h_list[h_index])
-    mu <- mu_hat
-    sigma2 <- sigma_hat2
+    #2.0 and 3.0 can now also rescale bandwidth (almost twice as fast as seperate functions)
+    mu <- sqrt(h_list[h_index])*est.mu.mat.2.0(data = path, hd = h_list[h_index], bandwidth_rescale = T)$mu[,t.index]#,t.index = t.index)$mu
+    sigma2 <- est.sigma.mat.3.0(data = path, hv = ratio*h_list[h_index], lag = lag, bandwidth_rescale = T)$sig[,t.index]#,t.index = t.index,lag = lag)$sig
     
     Tstat <- mu/sqrt(sigma2)
     

@@ -34,16 +34,16 @@ c_1_func <- function(alpha) {
 c_2_func <- function(beta) {
   c_2 <- 0 #if beta = 0
   if (beta == 0.1) {
-    c_2 <- sqrt((1-2*beta)*(0.00093*0.25)^2/(10/(60*24*7*52))^(1-2*beta))
+    c_2 <- sqrt((1-2*beta)*(0.00093*0.25*8)^2/(10/(60*24*7*52))^(1-2*beta))
   }
   else if (beta == 0.2) {
-    c_2 <- sqrt((1-2*beta)*(0.00093*0.5)^2/(10/(60*24*7*52))^(1-2*beta))
+    c_2 <- sqrt((1-2*beta)*(0.00093*0.5*8)^2/(10/(60*24*7*52))^(1-2*beta))
   }
   else if (beta == 0.3) {
-    c_2 <- sqrt((1-2*beta)*(0.00093*0.75)^2/(10/(60*24*7*52))^(1-2*beta))
+    c_2 <- sqrt((1-2*beta)*(0.00093*0.75*8)^2/(10/(60*24*7*52))^(1-2*beta))
   }
   else if (beta == 0.4) {
-    c_2 <- sqrt((1-2*beta)*(0.00093*1)^2/(10/(60*24*7*52))^(1-2*beta))
+    c_2 <- sqrt((1-2*beta)*(0.00093*1*8)^2/(10/(60*24*7*52))^(1-2*beta))
   }
   return(c_2)
 }
@@ -100,11 +100,11 @@ Table1_results[,3+1:length(h_list)] <- Table1_results[,3+1:length(h_list)] /n_lo
 
 
 ###Re-structure Table as in Christensen et. al.:
-Table1 <- restructure_table1(Table1_results,h_list)
+Table1_8x <- restructure_table1(Table1_results,h_list)
 
 ### Save and view
-save(Table1, file = "Module/Table1_ratio5_lag10.Rdata")
+save(Table1_8x, file = "Module/Table1_8xvol_ratio5_lag10.Rdata")
 
-View(Table1)
+View(Table1_8x)
 
 
