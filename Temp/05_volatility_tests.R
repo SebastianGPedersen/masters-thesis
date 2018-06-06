@@ -37,6 +37,11 @@ vb_path <- Heston_vb$Y[1,] #a = 0, b = 0.4, J = 0
 vbdb_path <- Heston_vbdb$Y[1,] #a = 0.75, b = 0.4, J = 0
 jump_path <- Heston_jump$Y[1,] #a = 0.75, b = 0.4, J = 1
 
+Heston_path <- Heston$Y[1,] #a = 0, b = 0, J = 0
+vb_path <- all_simulations[[1]]$Y[1,] #a = 0, b = 0.4, J = 0
+vbdb_path <- all_simulations[[2]]$Y[1,] #a = 0.75, b = 0.4, J = 0
+jump_path <- all_simulations[[3]]$Y[1,] #a = 0.75, b = 0.4, J = 1
+
 #Set time index for plot
 time_hours <- Heston$time*(52*7*24)
 time_index <- Heston$time/settings$mat

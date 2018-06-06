@@ -26,14 +26,16 @@ sim.add_all <- function(Heston, burst_args) {
   
   #Get unique combinations of c(beta,c2)
   betas_c2s_unique <- uniquecombs(betas_c2s)
-  betas_c2s_u_zero <- betas_c2s_unique[betas_c2s_unique[,1] != 0,] #Remove the zero
-
-  #Add all combinations of c(beta,c_2) to Heston
-  for (row in 1:nrow(betas_c2s_u_zero)) {
-    Heston_vb <- sim.addvb.2.0(Heston_res = Heston, beta = betas_c2s_u_zero[row,1], c_2 = betas_c2s_u_zero[row,2],recenter = betas_c2s_u_zero[row,3],reverse = betas_c2s_u_zero[row,4])
-    for (replace in 1:nrow(betas_c2s)) {
-      if ((betas_c2s[replace,1] ==  betas_c2s_u_zero[row,1]) & (betas_c2s[replace,2] ==  betas_c2s_u_zero[row,2])) {
-        all_sims[[replace]]$Y <- Heston_vb$Y
+  if (!is.null(nrow(betas_c2s_unique))) {
+    betas_c2s_u_zero <- betas_c2s_unique[betas_c2s_unique[,1] != 0,] #Remove the zero
+    #Add all combinations of c(beta,c_2) to Heston
+  
+    for (row in 1:nrow(betas_c2s_u_zero)) {
+      Heston_vb <- sim.addvb.2.0(Heston_res = Heston, beta = betas_c2s_u_zero[row,1], c_2 = betas_c2s_u_zero[row,2],recenter = betas_c2s_u_zero[row,3],reverse = betas_c2s_u_zero[row,4])
+      for (replace in 1:nrow(betas_c2s)) {
+        if ((betas_c2s[replace,1] ==  betas_c2s_u_zero[row,1]) & (betas_c2s[replace,2] ==  betas_c2s_u_zero[row,2])) {
+          all_sims[[replace]]$Y <- Heston_vb$Y
+        }
       }
     }
   }
@@ -47,8 +49,7 @@ sim.add_all <- function(Heston, burst_args) {
     
     if (alpha > 0 & jump) { #add 
       all_sims[[i]]$Y <- sim.addjump(Heston_res = all_sims[[i]],alpha = alpha, c_1 = c_1)$Y
-    }
-    else if (alpha > 0) { #add drift burst
+    } else if (alpha > 0) { #add drift burst
       all_sims[[i]]$Y <- sim.adddb(Heston_res = all_sims[[i]],alpha = alpha, c_1 = c_1, reverse = burst_args[[i]]$reverse)$Y    
     }
   }
