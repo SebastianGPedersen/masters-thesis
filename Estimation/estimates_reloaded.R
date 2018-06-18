@@ -37,7 +37,7 @@ est.sigma.mat.2.0 <- function(data, hv, kern = kern.leftexp, wkern=kern.parzen, 
   rescaling <- kern((data$time[2:(length(data$time))]-t_now)/hv)
   
   #Extra rescaling
-  if (rescaling) {
+  if (bandwidth_rescale) {
     K2 <- 0.5
     x <- (Heston$time[1]-Heston$time[2:length(Heston$time)])/hv
     scaling_integral <- 0.5 * (1-exp(2*x))
@@ -100,7 +100,7 @@ est.sigma.mat.2.0 <- function(data, hv, kern = kern.leftexp, wkern=kern.parzen, 
 
 #Without parallel - faster that with parallel
 est.mu.mat.2.0 <- function(data, hd, kern = kern.leftexp, wkern=kern.parzen, bandwidth_rescale = F){
-  #data <- Heston
+  Heston <- data
   #hd <- h_mu
   
   #kern handling

@@ -845,6 +845,7 @@ est.sigma.mat.next <- function(data, hv, t.index, wkern=kern.parzen, lag="auto")
 
 require(Rcpp)
 
+# maybe source inside?
 sourceCpp("estimation/next.cpp")
 
 est.mu.next.cpp <-function(data, prevmu, hd, t.index){
@@ -885,7 +886,7 @@ est.mu.next.cpp <-function(data, prevmu, hd, t.index){
 est.sigma.next.cpp <- function(data, prevsig, hv, t.index, wkern=kern.parzen, lag="auto"){   #
   # data list should include a times column and the Y column (log returns)
   # Handle lag
-  if(lag=="auto") lag = 15 #temp
+  if(lag=="auto") lag = 10 #temp
   
   if(t.index[1] < lag) stop("t.index can and should NOT be lower than lag length!")
   

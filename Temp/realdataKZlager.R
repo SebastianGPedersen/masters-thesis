@@ -26,16 +26,17 @@ lag = 10
 t.freq = 5 # every 5 seconds
 offset = 12 # skips the first minute (5*12seconds)
 
-#
-Tdata <- data.TforId(data, "day", hd = hd, hv = hv, t.freq = t.freq, lag = lag, offset = offset, offset_perId = T)
+# Run T
+require(microbenchmark)
 
-Tstar_daily <- data.TtoStar(Tdata, "day", 0.95)
+#time <- microbenchmark(data.TforId(data, "day", hd = hd, hv = hv, t.freq = t.freq, lag = lag, offset = offset, offset_perId = T), times = 1)
 
-# choose bursts = T
-bursts <- Tstar_daily[db_0.95 == T,]
+out <- data.TforId(data, "day", hd = hd, hv = hv, t.freq = t.freq, lag = lag, offset = offset, offset_perId = T)
 
-# PICK ONE OUT
+outstar <- data.TtoStar(out, "day", 0.95)
+
+bursts <- outstar[db_0.95 == T,]
+
 burst <- bursts[1,]
 
-# PLOTTERIA
 data.plot_db(data, burst$DateTime, hd = hd, hv = hv, lag = 10)

@@ -43,7 +43,6 @@ data.xsecID <- function(datatable, bucketLengthInSeconds, id = "id"){
   return(dt)
 }
 
-# < MANGLER RENT FAKTISKE ESTIMATION >
 data.TforId <- function(data, id_name, id_number, hd, hv, t.freq, lag, offset, offset_perId = T){
   # Estimates T test for every t.freq (unit: seconds) within a certain id
   # hd and lag are parameters for estimation
@@ -60,10 +59,10 @@ data.TforId <- function(data, id_name, id_number, hd, hv, t.freq, lag, offset, o
     stop("id_name not found in data")
   }
   
-  if(id_number == "all"){
+  if(missing(id_number)){
     id_number <- unique(data[[id_index]])
   }
-  if(missing(id_number)){
+  if(id_number == "all"){
     id_number <- unique(data[[id_index]])
   }
   # PREVENT USER FROM FKNG UP THE DUMB LOGIC OF OFFSETS
@@ -123,18 +122,24 @@ data.TforId <- function(data, id_name, id_number, hd, hv, t.freq, lag, offset, o
     dates<-seq(data.floor_date(Date[1]), Date[length(Date)], by = t.freq)
     t.index<-data.date_To_tindex(dates, t_dates = Date)
     
+    # ENSURE ONLY UNIQUE
+    t.index <- unique(t.index)
+    
     # OFFSET
     t.index <- t.index[(1+offset):length(t.index)]
     
     # <ESTIMATION>
-    #mu<-est.mu.next(input, hd = hd, t.index = t.index)$mu
-    #sig<-est.sigma.next(input, hv = hv, t.index = t.index, lag = lag)$sig # t.index does not work because last is included - THINK ABOUT THIS
-    #Ttest<-sqrt(hd/kern.leftexp$ksq)*mu/sqrt(sig)
-    # </ESTIMATION>
+    mu<-est.mu.next.cpp(input, hd = hd, t.index = t.index)
+    sig<-est.sigma.next.cpp(input, hv = hv, t.index = t.index, lag = lag)
     
-    mu <- 1:length(t.index)
-    sig <- 1:length(t.index)*2        # testeria
-    Ttest <- 1:length(t.index)*10
+    # RESCALING
+    mu_re <- est.rescale.mu.vec(mu$mu, mu$time, t_beginning = time[1], h_mu = hd)
+    sig_re <- est.rescale.sigma.vec(sig$sig, sig$time, t_beginning = time[1], h_sigma = hv)
+    
+    Ttest <- sqrt(hd)*mu_re/sqrt(sig_re)
+    mu <- mu_re
+    sig <- sig_re 
+    # </ESTIMATION>
     
     # FORMULATE OUTPUT
     Nout<-length(t.index)
@@ -148,9 +153,7 @@ data.TforId <- function(data, id_name, id_number, hd, hv, t.freq, lag, offset, o
   
   return(out)
 }
-# </ MANGLER RENT FAKTISKE ESTIMATION >
 
-# NEEDS TO BE UPDATED ESTIMATION AND RESCALE
 data.TstarforId <- function(data, id_name, id_number, hd, hv, t.freq, lag, offset, offset_perId = T, conf){
   # WRAPPER AROUND data.TforId THAT RETURNS THE TSTAR VALUE INSTEAD
   if(missing(id_number)){
@@ -168,7 +171,7 @@ data.TstarforId <- function(data, id_name, id_number, hd, hv, t.freq, lag, offse
     dates <- info$DateTime; Ts <- info$Tval; time <- info$Time
     #GET OUT
     Tstar <- as.numeric(max(abs(Ts)))
-    t.point <- match(Tstar, Ts)
+    t.point <- match(Tstar, abs(Ts))
     # FIND ID
     out <- data.table(DateTime = dates[t.point], Time = time[t.point], Tstar = Tstar)
     out[, paste0(id_name):= index]
@@ -225,7 +228,6 @@ data.TstarforId <- function(data, id_name, id_number, hd, hv, t.freq, lag, offse
   return(out)
 }
 
-# NEEDS TO BE UPDATED ESTIMATION AND RESCALE
 data.TtoStar <- function(Tdata, id_name, conf){
   # ALLOWS USER TO GET data.TstarforId WITHOUT RECALCULATING
   # id_name EQUIVALENT TO THAT OF THE FUNCTION THAT CALC'D TDATA
@@ -238,7 +240,7 @@ data.TtoStar <- function(Tdata, id_name, conf){
     dates <- info$DateTime; Ts <- info$Tval; time <- info$Time
     #GET OUT
     Tstar <- as.numeric(max(abs(Ts)))
-    t.point <- match(Tstar, Ts)
+    t.point <- match(Tstar, abs(Ts))
     # FIND ID
     out <- data.table(DateTime = dates[t.point], Time = time[t.point], Tstar = Tstar)
     out[, paste0(id_name):= index]
@@ -295,6 +297,54 @@ data.TtoStar <- function(Tdata, id_name, conf){
   return(out)
 }
 
+# PLOT
+data.plot_db<-function(data, burst_time, window = 20*60, hd, hv, lag = 10){
+  # NEEDS SCALE/OFFSET PARAMETERS FOR AESTETICS
+  dt <- data
+  # FIND WINDOW
+  start<- burst_time-window
+  end <- burst_time+window
+  start_index <- data.date_To_tindex(start, dt$DateTime)
+  end_index <- data.date_To_tindex(end, dt$DateTime)
+  
+  # EXTRACT DATA
+  focus <- dt[start_index:end_index, ]
+  
+  price <- exp(focus$logPrice)
+  Y <- diff(dt$logPrice) # we need all data for estimation
+  time <- dt$Time
+  DateTime <- focus$DateTime
+  
+  # ESTIMATE T
+  input <- list(time = time, Y = Y)
+  t.index <- start_index:end_index       # check this
+  
+  t.index <- unique(t.index)
+  
+  # <ESTIMATION>
+  mu<-est.mu.next.cpp(input, hd = hd, t.index = t.index)
+  sig<-est.sigma.next.cpp(input, hv = hv, t.index = t.index, lag = lag)
+  
+  # RESCALING
+  mu_re <- est.rescale.mu.vec(mu$mu, mu$time, t_beginning = time[1], h_mu = hd)
+  sig_re <- est.rescale.sigma.vec(sig$sig, sig$time, t_beginning = time[1], h_sigma = hv)
+  
+  Ttest <- sqrt(hd)*mu_re/sqrt(sig_re)
+  
+  # PLOTTERIA
+  require(ggplot2)
+  plotdata <- data.frame(Date = DateTime, Price = price, T.statistic = Ttest) # mange punkter uden ændring
+  
+  offset <- mean(price)
+  scale <- (max(Ttest)-min(Ttest))/(max(price)-min(price)) # check this later
+  p <- ggplot(data = plotdata, aes(x = Date)) +
+    geom_area(aes(y = T.statistic)) + #rescale this
+    geom_line(aes(y = (Price-offset)*scale, colour = "Price"), size = 1) + # size might change
+    scale_y_continuous(sec.axis = sec_axis(trans = ~./scale+offset, name = "Price"))
+  p
+  return(p)
+}
+
 data.floor_date <- function(time, unit = "sec"){
   # floors the date time
   # unit can be one of the time units
@@ -302,16 +352,17 @@ data.floor_date <- function(time, unit = "sec"){
   return(time-decimals)
 }
 
-# This one can and should be implemented faster
-# Think about narrowing it down to a certain region first
-# dates[target-5min, target+5min] zone vielleicht - literally no reason to calc on thousands of obs
+# Knaldhamrende fast - 4200x faster than naive implementation
 data.date_To_tindex<-function(dates, t_dates){
-  # dates are the dates you wish to find the t.index for
-  # t_dates are the dates that the t.index will match
-  return(sapply(dates, function(x) which.min(abs(x-t_dates))))
+  # ASSUMES SORTED
+  date <- t_dates
+  sorter <- data.table(date, val = date)
+  setattr(sorter, "sorted", "date")
+  table <- sorter[J(dates), roll = "nearest"]
+  out <- match( table$val, t_dates)
+  return(out)
 }
 
-# dt[, "DateTime", roll = "nearest"] ?
 
 # REVERSE (only tested daily)
 reverse_ID <- function(data, T_grid_data, T_star_data, T_star_TF_col,
@@ -372,9 +423,9 @@ reverse_ID <- function(data, T_grid_data, T_star_data, T_star_TF_col,
       estdata <- list(time = estsub$Time, Y = diff(estsub$logPrice))
       
       #estimation
-      mu <- est.mu.next(estdata, prevmu, hd, estdata_index)
-      sig <- est.sigma.next(estdata, prevsig, hv, estdata_index, lag = lag) # DEN SKAL IKKE RETURNE PREVSIG
-      testT <- teststat(mu, sig, hd, hv)$test
+      mu <- est.mu.next.cpp(estdata, prevmu, hd, estdata_index)
+      sig <- est.sigma.next.cpp(estdata, prevsig, hv, estdata_index, lag = lag) # DEN SKAL IKKE RETURNE PREVSIG
+      testT <- sqrt(hd)*mu$mu/sig$sig
       
       prev_data[, Tval := testT]
       center_data[, Tval := center$Tstar]
@@ -447,10 +498,3 @@ reverse_matrix<-function(reverse_data){
   }
   return(list(x = x, y = y, xt = xt, ct = ct, time = time))
 }
-
-# TO DO
-
-# RCPP date_to_tindex
-# RCPP .NEXT for fast non-matrix calc
-# UPDATE WITH ACTUAL ESTIMATION
-# SETUP MODEL AFTER REVERSE MATRIX

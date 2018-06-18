@@ -65,9 +65,18 @@ plot(dttemp[,mean(Share*DailyCount), by = IntraDayBucket]$V1) # Same as above, b
 
 trades_dist <- dttemp[,mean(Share*DailyCount), by = IntraDayBucket]$V1
 
+plot(trades_dist)
+
+
 # SAVE
 setwd(Sys.getenv("masters-thesis"))
-saveRDS(trades_dist, file = "Simulation/trades_dist.Rda")
+# PREP FOR EXPORT
+time <- buckets[1:length(trades_dist)]
+
+trades <- data.frame(time = time ,trades = trades_dist)
+save(trades, file = "Simulation/trades.RDa")
+
+
 
 #
 #

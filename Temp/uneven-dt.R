@@ -9,18 +9,18 @@ source("estimation/pre-average.R")
 source("kernels/kernels.R")
 
 # SIMULATE
-setting <- sim.setup(Npath = 2, Nsteps = 50000, omega = 0)
+setting <- sim.setup(Npath = 2, Nsteps = 50000, omega = 1.6*10^-5)
 seed<-2342
 set.seed(seed)
 hest    <- sim.heston(setting)
 hest.dt <- sim.heston.uneven(setting, seed = seed)
 
 # ADD burst
-Heston_vb   <- sim.addvb(hest, burst_time = 0.5, interval_length = 0.05, c_2 = 1.5, beta = 0.1, reverse = F)
-Heston_vbdb <- sim.adddb(Heston_vb, burst_time=0.5, interval_length=0.05, c_1 = 0.016, alpha=0.8, reverse = F)
+Heston_vb   <- sim.addvb(hest, burst_time = 0.5, interval_length = 0.05, c_2 = , beta = 0.1, reverse = F)
+Heston_vbdb <- sim.adddb(Heston_vb, burst_time=0.5, interval_length=0.05, c_1 = , alpha=0.65, reverse = F)
 
-Heston_vb.dt   <- sim.addvb(hest.dt, burst_time = 0.5, interval_length = 0.05, c_2 = 1.5, beta = 0.1, reverse = F)
-Heston_vbdb.dt <- sim.adddb(Heston_vb.dt, burst_time=0.5, interval_length=0.05, c_1 = 0.016, alpha=0.8, reverse = F)
+Heston_vb.dt   <- sim.addvb(hest.dt, burst_time = 0.5, interval_length = 0.05, c_2 = , beta = 0.1, reverse = F)
+Heston_vbdb.dt <- sim.adddb(Heston_vb.dt, burst_time=0.5, interval_length=0.05, c_1 = , alpha=0.8, reverse = F)
 
 hest <- Heston_vbdb
 hest.dt <- Heston_vbdb.dt
@@ -57,8 +57,9 @@ plot.data<-data.frame(test)
 plot.data.dt<-data.frame(test.dt)
 
 require(ggplot2)
-ggplot() +
-  geom_line(data=plot.data, aes(x=time,    y=test, col = "even dt"), size = 1) +
-  geom_line(data=plot.data.dt, aes(x=time, y=test, col = "uneven dt"), size = 1) +
-  xlab("time") + ylab("T")
-
+if(F){
+  ggplot(plot_data_frame) + 
+    stat_qq(aes(sample = T_estimator, colour = Bandwidth)) +
+    geom_abline(intercept = 0, slope = 1) +
+    xlab("Quantile of standard normal") + ylab("Quantile of T")
+}

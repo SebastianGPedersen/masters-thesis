@@ -39,21 +39,38 @@ hest <- sim.heston(sim.setup(Npath = 1))
 
 data <- list(time = hest$time, Y = diff(hest$Y[1,]))
 data2 <- list(time = hest$time, Y = diff(c(0,hest$Y[1,]))) # TO APPEND ZERO OR NOT TO
-tind <- 23400
-
+tind <- seq(1000, 23400, by = 5)
 # TESTING GROUNDS #
 
-data <- list(time = 1:100*0.01, Y = 1:99)
-data2 <- list(time = 1:100*0.01, Y = 0:99)
+#data <- list(time = 1:100*0.01, Y = 1:99)
+#tind <- 99
 
-tind <- 99
+mu1<-est.mu.legacy(data, 1, kern = kern.leftexp$kern, t.index = tind)$mu
+mu2<-est.mu(data, hd = 1, t.index = tind)$mu
+mu3<-est.mu.next(data, hd = 1, t.index = tind)$mu
+mu4<-est.mu.next.cpp(data, hd = 1, t.index = tind)$mu
 
-est.mu.legacy(data, 1, kern = kern.leftexp$kern, t.index = tind) # NO APPEND
-est.mu(data, hd = 1, t.index = tind)
-est.mu.next(data, hd = 1, t.index = tind)
+max(abs(mu1-mu2))
+max(abs(mu2-mu3))
+max(abs(mu3-mu4))
 
+require(microbenchmark)
 
+microbenchmark(est.mu.legacy(data, 1, kern = kern.leftexp$kern, t.index = tind),
+               est.mu(data, hd = 1, t.index = tind),
+               est.mu.next(data, hd = 1, t.index = tind),
+               est.mu.next.cpp(data, hd = 1, t.index = tind),
+               times = 1)
 
 # SIGMA
-est.sigma(data, hv = 1, t.index = tind)
-est.sigma.next(data, hv = 1, t.index = tind)
+sig1<-est.sigma(data, hv = 1, t.index = tind, lag = 10)$sig
+sig2<-est.sigma.next(data, hv = 1, t.index = tind, lag = 10)$sig
+sig3<-est.sigma.next.cpp(data, hv = 1, t.index = tind, lag = 10)$sig
+
+max(abs(sig1-sig2))
+max(abs(sig2-sig3))
+
+microbenchmark(est.sigma(data, hv = 1, t.index = tind, lag = 10),
+               est.sigma.next(data, hv = 1, t.index = tind, lag = 10),
+               est.sigma.next.cpp(data, hv = 1, t.index = tind, lag = 10),
+               times = 1)
