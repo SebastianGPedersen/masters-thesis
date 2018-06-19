@@ -29,8 +29,6 @@ offset = 12 # skips the first minute (5*12seconds)
 # Run T
 require(microbenchmark)
 
-#time <- microbenchmark(data.TforId(data, "day", hd = hd, hv = hv, t.freq = t.freq, lag = lag, offset = offset, offset_perId = T), times = 1)
-
 out <- data.TforId(data, "day", hd = hd, hv = hv, t.freq = t.freq, lag = lag, offset = offset, offset_perId = T)
 
 outstar <- data.TtoStar(out, "day", 0.95)

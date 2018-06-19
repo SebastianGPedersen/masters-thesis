@@ -15,6 +15,21 @@ data.getFull <- function(){
   return(fullData)
 }
 
+data.getbitdata <- function(name){
+  options(digits = 14, digits.secs = 5)
+  
+  cd <- getwd()
+  #### source and get data - slow
+  setwd(paste0(Sys.getenv("masters-thesis"),"/SPY"))
+  source("dataFunctions.R")
+  
+  setwd(paste0(Sys.getenv("masters-thesis-data"),"/Bitcoin"))
+  fullData<-readRDS(paste0(name,".rds"))
+  setwd(cd)
+  rm(cd)
+  return(fullData)
+}
+
 data.dayID <- function(datatable, id = "day"){
   # datatable should be a data.table.
   # id denotes the name of the id column
