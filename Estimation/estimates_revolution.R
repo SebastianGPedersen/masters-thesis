@@ -34,12 +34,13 @@ est.sigma.mat.3.0 <- function(data, hv, kern = kern.leftexp, wkern=kern.parzen, 
   #For sigma3.0
   t_now <- data$time[length(data$time)]
   kernels <- kern((data$time[1:(length(data$time)-1)]-t_now)/hv)
-  rescaling <- kern((data$time[2:length(data$time)]-t_now)/hv)
+  #rescaling <- kern((data$time[2:length(data$time)]-t_now)/hv)
+  rescaling <- kernels
   
   #Extra rescaling
   if (bandwidth_rescale) {
     K2 <- 0.5
-    x <- (Heston$time[1]-Heston$time[2:length(Heston$time)])/hv
+    x <- (data$time[1]-data$time[2:length(data$time)])/hv
     scaling_integral <- 0.5 * (1-exp(2*x))
     
     rescaling <- rescaling / sqrt(0.5/scaling_integral) #sqrt because it is squared later

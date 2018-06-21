@@ -15,12 +15,18 @@ library(mgcv) #Used to extract unique rows from matrix
 Table1_estimation <- function(sim_list, h_list, ratio, t.index, lag, conf = 0.95){
   #sim_list <- all_sims[[1]]
   # HERE WE GO
+  
+  #restructure to vector if not
+  if(length(ratio) != length(h_list)) {
+    ratio <- rep(ratio[1],length(h_list))
+  }
+  
   path <- sim_list
   # HIGHWAY
   # CLEAN SLATE
   N<-dim(path$Y)[1]
   Tstar <- numeric(N);  rho<-numeric(N); m <- numeric(N)
-  
+  test <- 1
   #Transform Y to dY in path$Y
   path$Y <- t(diff(t(as.matrix(path$Y))))
   
@@ -33,7 +39,7 @@ Table1_estimation <- function(sim_list, h_list, ratio, t.index, lag, conf = 0.95
     
     #2.0 and 3.0 can now also rescale bandwidth (almost twice as fast as seperate functions)
     mu <- sqrt(h_list[h_index])*est.mu.mat.2.0(data = path, hd = h_list[h_index], bandwidth_rescale = T)$mu[,t.index]#,t.index = t.index)$mu
-    sigma2 <- est.sigma.mat.3.0(data = path, hv = ratio*h_list[h_index], lag = lag, bandwidth_rescale = T)$sig[,t.index]#,t.index = t.index,lag = lag)$sig
+    sigma2 <- est.sigma.mat.3.0(data = path, hv = ratio[h_index]*h_list[h_index], lag = lag, bandwidth_rescale = T)$sig[,t.index]#,t.index = t.index,lag = lag)$sig
     
     Tstat <- mu/sqrt(sigma2)
     

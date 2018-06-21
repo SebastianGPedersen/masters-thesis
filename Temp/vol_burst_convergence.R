@@ -7,8 +7,8 @@ source("Simulation/Jumps.R")
 source("Estimation/pre-average.R")
 source("Estimation/estimates.R")
 source("Estimation/estimates_reloaded.R")
+source("Estimation/estimates_revolution.R")
 
-p0 <- Sys.time()
 
 #seed
 set.seed(100)
@@ -18,17 +18,15 @@ omega <- 0
 K2 <- 0.5 #K2
 
 #Burst settings
-alpha <- 0.8
-beta <- 0.1
-c_1 <- (1-alpha)*0.005/(10/(60*24*7*52))^(1-alpha)
+beta <- 0.45
 c_2 <- sqrt((1-2*beta)*0.001^2/(10/(60*24*7*52))^(1-2*beta))
 
 #################### PARAMETERS CHANGING WITH N ####################
 #n = 60k and npaths = 500 is absolute max that my computer can keep in memory
-n_list <- c(50, 100, 200, 400, 800, 1600, 2000, 3000, 5000, 7500, 10000, 20000, 30000, 40000, 60000)
+n_list <- c(50, 200, 5000, 10000, 30000)
 
 #Initialize list with 5 mean, lower and upper for later plot
-n_processes <- 4
+n_processes <- 2
 
 all_plot_data <- vector("list", n_processes)
 for (i in 1:n_processes) {
@@ -60,11 +58,9 @@ for (my_n in 1:length(n_list)) {
   settings <- sim.setup(mat=mat, Npath = Npath, Nsteps = n, omega = omega) #6.5 hours
   Heston <- sim.heston(settings)
   Heston_vb <- sim.addvb(Heston,burst_time = 0.5, interval_length = 0.05, c_2 = c_2, beta = beta)
-  Heston_vbdb <- sim.adddb(Heston_vb, burst_time=0.5,interval_length=0.05, c_1 = c_1, alpha = alpha)
-  Heston_jump <- sim.addjump(Heston, burst_time = 0.5, interval_length = 0.05, c_1 = c_1, alpha = alpha)
-
+  
   #All paths
-  all_paths <- list(Heston, Heston_vb, Heston_vbdb, Heston_jump)
+  all_paths <- list(Heston, Heston_vb)
 
   for (j in 1:length(all_paths)) {
     #j <- 1
@@ -78,9 +74,15 @@ for (my_n in 1:length(n_list)) {
     path$Y <- t(dy)
     
     ######## CALCULATE T estimator ##########
-    mu_hat <- est.mu.mat.2.0(data = path, hd)$mu[,desired_index]
-    sigma_hat_2 <- est.sigma.raw.mat.2.0(data = path, hd)$sig[,desired_index]
-    T_hat <- sqrt(hd/K2) * mu_hat/sqrt(sigma_hat_2)
+    T_hat <- numeric(length = Npath)
+    
+    for (i in 1:Npath){
+      #i <- 1
+      single_path <- list(Y = path$Y[i,], time = path$time)
+      mu_hat <- est.mu(data = single_path, hd,t.index = desired_index)$mu[1]
+      sigma_hat_2 <- est.sigma.raw(data = single_path, hd,t.index = desired_index)$sig[1]
+      T_hat[i] <- sqrt(hd/K2) * mu_hat/sqrt(sigma_hat_2)
+    }
     
     T_hat_clean <- na.omit(T_hat) #There MIGHT be negtive sigma-hat but it is highly unlikely
     
@@ -96,13 +98,10 @@ for (my_n in 1:length(n_list)) {
 #################### PLOT ####################
 #Re-shape to data.frame(x, lower, mean, upper, farve)
 
-all_paths <- list(Heston, Heston_vb, Heston_vbdb, Heston_jump, Heston_vbjump)
-
 #Create numbers for colors
 all_plot_data[[1]]$process <- rep("Heston", length(all_plot_data[[1]]$mean))
 all_plot_data[[2]]$process <- rep("+ volatility burst", length(all_plot_data[[2]]$mean))
-all_plot_data[[3]]$process <- rep("+ drift burst & volatility burst", length(all_plot_data[[3]]$mean))
-all_plot_data[[4]]$process <- rep("+ jump", length(all_plot_data[[4]]$mean))
+
 
 #Create a single data_frame
 plot_data_frame <- data.frame(n = n_list ,
@@ -126,6 +125,6 @@ qplot(n, mean, data = plot_data_frame, geom = "line", color = process) +
   xlab("Number of observations") + ylab(TeX('$ T-estimator \\pm sd$'))
 
 #Save dataframe for later
-save(plot_data_frame, file="Figures2/Saved_data_for_plots/04_T-estimator2_without_noise.Rda")
+#saveRDS(plot_data_frame, file="Figures2/Saved_data_for_plots/03_T-estimator1_without_noise.Rda")
 
-print(Sys.time()-p0) #approx 10 min with max(n) = 60k and npaths = 500
+print(Sys.time()-p0)#approx 10 min with max(n) = 60k and npaths = 500
