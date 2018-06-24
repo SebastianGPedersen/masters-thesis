@@ -1,24 +1,27 @@
 library(ggplot2)
 setwd(Sys.getenv("masters-thesis"))
-source("Simulation/Heston.R")
+source("Simulation/BlackScholes.R")
 source("Simulation/Jumps.R")
+source("Simulation/Heston.R")
 source("Estimation/estimates_reloaded.R")
 
 #seed
 set.seed(100)
 
+i <- desired_indices
 #################### PARAMETERS THAT DON'T CHANGE ####################
 omega <- 0
 K2 <- 0.5 #K2
-nsteps <- 23000
-desired_indices <- ceiling((nsteps+1)/2)
+nsteps <- 23400
+desired_indices <- ceiling((nsteps-1)/2)
 threshold <- qnorm(0.975)
 h_mu <- 5/(52*7*24*60)
   
 ### Memory loop
 Npaths <- 500
-n_loops <- ceiling(Npaths/100)
-
+#n_loops <- ceiling(Npaths/100)
+n_loops <- 1
+  
 #Heston settings
 settings <- sim.setup(mat=6.5/(24*7*52), Npath = ceiling(Npaths/n_loops), Nsteps = nsteps, omega = 0) #6.5 hours
 
@@ -32,6 +35,7 @@ J <- k_max*sqrt(h_mu) #0.06%
 alpha <- 0.8
 c_1 <- (1-alpha)*J/(10/(60*24*7*52))^(1-alpha)
 
+sd(BS$Y[1,1:(ncol(BS$Y)-1)]-BS$Y[1,2:ncol(BS$Y)])
 
 #################### LOOP OVER N ####################
 rejection <- numeric(length = n_loops)
@@ -40,9 +44,10 @@ for (memory in 1:n_loops) {
   print(paste("Loop",memory, "out of ",n_loops))
   
   #Heston
-  Heston <- sim.heston(settings)
-  Heston_jump <- sim.addjump(Heston, burst_time = 0.5, interval_length = 0.05, c_1 = c_1, alpha = alpha)
-  path <- Heston_jump
+  BS <- sim.BlackScholes(mean = 0, sd = sigma, omega = 0, Nsteps = nsteps, Npath = ceiling(Npaths/n_loops))
+  BS_jump <- sim.addjump(BS, burst_time = 0.5, interval_length = 0.05, c_1 = c_1, alpha = alpha)
+  path <- BS_jump
+  #path <- BS
   
   #Create dy
   Y <- t(as.matrix(path$Y))
@@ -50,16 +55,33 @@ for (memory in 1:n_loops) {
   path$Y <- t(dy)
   
   #T-estimator
-  mu_hat <- est.mu.mat.2.0(data = path, h_mu)$mu[,desired_indices]
-  sigma_hat_2 <- est.sigma.raw.mat.2.0(data = path, h_mu)$sig[,desired_indices]
+  mu_hat <- est.mu.mat.2.0(data = path, h_mu)$mu[,desired_indices-1]
+  sigma_hat_2 <- est.sigma.raw.mat.2.0(data = path, h_mu)$sig[,desired_indices-1]
   T_hat <- sqrt(h_mu/K2) * mu_hat/sqrt(sigma_hat_2)
   
   T_hat[is.na(T_hat)] <- 0 #There MIGHT be negtive sigma-hat but it is highly unlikely
   
-  rejection[memory] <- mean((T_hat > threshold))
+  rejection[memory] <- mean((T_hat < -threshold))
 }
-
 rejection_perc <- mean(rejection)*100
+
+### Remember jump is in fact smaller than J
+### Check distribution results of mu
+mu_dist <- sqrt(h_mu)*mu_hat
+
+#Check mean. Mean is only half of what it's supposed to
+mean(mu_dist)
+1/sqrt(h_mu)*(-J)
+
+#Check variance. Seems correct
+sd(mu_dist)
+sqrt(K2)*sigma
+
+### Check distribution results of sigma
+sigma^2+1/h_mu*J^2
+mean(sigma_hat_2)
+sd(sigma_hat_2)
+
 
 x_min <- -(60*10):(60*30)/60
 normal_distribution <- 2.5

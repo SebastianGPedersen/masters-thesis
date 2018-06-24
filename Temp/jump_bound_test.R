@@ -1,13 +1,13 @@
-#Parameter
-c <- 1.5
-q <- qnorm(0.99)
-sigma <- 0.5
+#Parameter. Corresponding to original T-estimator
+c <- sqrt(2)
+q <- qnorm(0.975)
+sigma <- sqrt(0.0457)
 
 #test
 k <- seq(0,2, by = 0.001)
 
 #Rejection percentage above
-n_sims <- 20000
+n_sims <- 10000
 rejections <- numeric(length = length(k))
 
 for (i in 1:n_sims){
@@ -27,6 +27,4 @@ theoretical_max*100
 
 
 ## My calculations were correct - the theoretical maximum is the actual maximum. /Sebastian
-
-
 

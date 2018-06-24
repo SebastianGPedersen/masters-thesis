@@ -25,8 +25,8 @@ sigma <- sqrt(sigma2)
 (noise_ratio <- omega/(sqrt(dt)*sigma)) #10.66
 
 #Burn 5min in mu in:
-five_min <- 5 / (52*7*24*60)
-n_burn <- five_min / dt
+one_min <- 5 / (52*7*24*60)
+n_burn <- one_min / dt
 t.index <- seq(from = n_burn, to = n, by = 5) #Burn a volatility bandwidth (note 10 in Christensen)
 
 #Burst settings1
@@ -75,6 +75,7 @@ my_list <- rep(list(temp),n_loops)
 output_list <- rep(list(my_list),length(h_mu_list))
 
 p0 <- Sys.time()
+
 #################### LOOP OVER N ####################
 for (memory in 1:n_loops) {
   #memory <- 1
@@ -135,7 +136,7 @@ for (h_mu in 1:length(h_mu_list)) {
   for (memory in 1:n_loops) {
     output_mean[[h_mu]] <- output_mean[[h_mu]] + output_list[[h_mu]][[memory]]
   }
-  output_mean[[h_mu]] <- output_mean[[h_mu]] / n_loops
+  output_mean[[h_mu]] <- output_mean[[h_mu]] / n_loops*100
 }
 
 ### Find upper and lower for every h_mu
@@ -150,9 +151,9 @@ h_mins <- round(h_mu_list*(52*7*24*60),0)
   
 #Create a single data_frame
 plot_data_frame <- data.frame(ratios = ratio_list ,
-                              lower= rep(0.05,length(ratio_list)),
-                              mean= rep(0.05,length(ratio_list)),
-                              upper= rep(0.05,length(ratio_list)),
+                              lower= rep(5,length(ratio_list)),
+                              mean= rep(5,length(ratio_list)),
+                              upper= rep(5,length(ratio_list)),
                               mu_bandwidth = "5%")
 
 for (i in 1:length(output_mean)){
@@ -173,4 +174,5 @@ ggplot(plot_data_frame, aes(ratios, mean, color = mu_bandwidth)) +
   ggtitle("Rejection of T-estimator with jumps") +
   theme(plot.title = element_text(hjust = 0.5, size = 15))
   
+save(plot_data_frame, file="Figures2/Saved_data_for_plots/13_bandwidth_ratio.Rda")
 

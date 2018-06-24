@@ -16,9 +16,8 @@ threshold <- qnorm(0.975)
 n <- heston_params$Nsteps
 mat <- heston_params$mat
 dt <- mat/n
-n_burn <- h_mu / (5*dt)
+n_burn <- h_mu / (5*dt) #1min
 desired_indices <- seq(from = n_burn, to = 23400, by = 5) #Burn a mu in
-
 
 #### LOOP BECAUSE OF LACK OF MEMORY, SAVE BOTH T WITHOUT AND WITH SCALING
 
@@ -84,6 +83,8 @@ df_plot$time_points <- as.numeric(as.character(df_plot$time_points))*(52*7*24)
 #plot
 ggplot(df_plot, aes(time_points,values,color = Estimator),alpha = I(0.2)) + 
   geom_line() +
-  xlab("hours") +
-  ylab("Rejection percentage")
-  
+  xlab("Time in hours") +
+  ylab(TeX('$ P(|T| > q_{0.95})$')) +
+  ggtitle("The importance of re-scaling") +
+  theme(plot.title = element_text(hjust = 0.5, size = 14))
+

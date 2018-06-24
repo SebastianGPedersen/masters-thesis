@@ -81,6 +81,7 @@ results_mean <- apply(na.omit(temp),2,mean)*100 #na.omit because i stop it befor
 normal_distribution <- 2.5
 max_rejection <- (1-pnorm(sqrt(q^2-c^2)))*100
 
+#plot1
 x <- rep(percentage_list,3)
 
 y_list <- c(results_mean,
@@ -102,7 +103,33 @@ ggplot(plot_df,aes(x,y_list, color = names)) +
   ggtitle(TeX('$ P(T > q_{0.975})$ for various jump sizes')) +
   theme(plot.title = element_text(hjust = 0.5, size = 14)) +
   theme(legend.title = element_blank())
-  
 
-save(plot_df, file="Figures2/Saved_data_for_plots/04_extra_diff_jumps.Rda")
+#save(plot_df, file="Figures2/Saved_data_for_plots/04_extra_diff_jumps.Rda")
+
+
+
+#plot1
+perc_list <- percentage_list[1:round((length(percentage_list)+1)/2,0)] 
+
+x <- rep(perc_list,3)
+
+y_list <- c(results_mean[1:length(perc_list)],
+            rep(normal_distribution,length(perc_list)),
+            rep(max_rejection,length(perc_list)))
+
+names <- c(rep('rejection',length(perc_list)),
+           rep('2.5 %',length(perc_list)),
+           rep('theoretical max', length(perc_list)))
+
+
+plot_df <- data.frame(do.call('cbind',list(x,y_list,names)))
+
+
+ggplot(plot_df,aes(x,y_list, color = names)) +
+  geom_line() +
+  xlab("Jump size in %") +
+  ylab(TeX('$ P(T > q_{0.975})$')) +
+  ggtitle(TeX('$ P(T > q_{0.975})$ for various jump sizes')) +
+  theme(plot.title = element_text(hjust = 0.5, size = 14)) +
+  theme(legend.title = element_blank())
 
