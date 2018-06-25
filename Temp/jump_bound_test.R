@@ -21,7 +21,7 @@ plot(k,rejection_perc*100)
 
 
 #Theoretical max
-theoretical_max <- 1-pnorm(sqrt(q^2-c^2)) #Tydeligvis noget galt med c
+theoretical_max <- 1-pnorm(sqrt(q^2-c^2))
 theoretical_max*100
 
 

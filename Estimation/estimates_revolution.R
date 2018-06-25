@@ -72,5 +72,21 @@ est.sigma.mat.3.0 <- function(data, hv, kern = kern.leftexp, wkern=kern.parzen, 
 }
 
 
+#Pseudo-code for report
+sigma_estimator <- function(dY_vector, h_sigma, K_func, 
+                            time_points,lags=10){
+
+  
+  t_end <- time_points[length(time_points)]
+  kernels <- K_func(
+              (time_points[1:(length(time_points)-1)]-t_end)/h_sigma)
+  products <- kernels*dy_vector
+  
+  #Using the 'sigmas_cpp' function
+  sigmas_non_scaled <- sigmas_cpp(KdY = products,lags = lags)
+  sigmas <- 1/hv * sigmas_non_scaled/kernels^2
+  return(sigmas)
+}
+
 
 

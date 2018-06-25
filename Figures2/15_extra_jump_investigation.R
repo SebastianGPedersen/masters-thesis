@@ -1,3 +1,4 @@
+library(latex2exp)
 setwd(Sys.getenv("masters-thesis"))
 source("Module/table1functions.R")
 source("Simulation/add_all.R")
@@ -9,11 +10,12 @@ h_mu <- 5/(52*7*24*60)
 ratio <- 12
 lag <- 10
 
-#Burn a single mu in:
+#Burn a single minute in:
 n <- heston_params$Nsteps
 mat <- heston_params$mat
 dt <- mat/n
-n_burn <- h_mu / dt
+one_min <- 1/(52*7*24*60)
+n_burn <- one_min / dt
 t.index <- seq(from = n_burn, to = 23400, by = 5) #Burn a volatility bandwidth (note 10 in Christensen)
 
 # BURST SETTINGS (a = 0, 0.55, 0.65, 0.75 | b = 0.0, 0.1, 0.2, 0.3, 0.4), c_1 and c_2 from Batman
@@ -85,13 +87,24 @@ for (memory in 1:n_loops) {
 print(Sys.time()-p0)
 
 ### Take mean accross memories (assuming same number of paths in every memory loop)
-results_mean <- apply(temp,2,mean)
+results_mean <- apply(temp,2,mean)*100
 
 #plot
-plot_df <- data.frame(c_1 = c_1_list,rejection = results_mean)
+plot_df <- data.frame(percentage = percentage_list,
+                      rejection = results_mean,
+                      color = rep("Jumps",length(percentage_list)))
 
-ggplot(plot_df, aes(c_1,rejection)) +
-  geom_line()
+five_perc_df <- data.frame(percentage = percentage_list,
+                           rejection = rep(5,length(percentage_list)),
+                           color = rep("5%",length(percentage_list)))
 
+plot_df <- rbind(plot_df,five_perc_df)
 
+ggplot(plot_df, aes(percentage,rejection,color = color)) +
+  geom_line() +
+  xlab("Jump size in %") +
+  ylab(TeX('$ P(T^*> q_{0.95})$')) +
+  ggtitle(TeX('$ P(T^*> q_{0.95})$ for various jump sizes')) +
+  theme(plot.title = element_text(hjust = 0.5, size = 14)) +
+  theme(legend.title = element_blank())
 

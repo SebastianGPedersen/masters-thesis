@@ -32,12 +32,12 @@ int_g <- 1/4 #int(g)
 
 #################### PARAMETERS CHANGING WITH N ####################
 n_list <- c(800, 1600, 2000, 3000, 5000, 7500, 10000,
-            20000, 30000, 40000, 50000)
+            20000, 30000, 40000, 60000)
 
 #Initialize list with 5 mean, lower and upper for later plot
 
 #Initialize list with 5 mean, lower and upper for later plot
-n_processes <- 5
+n_processes <- 4
 
 all_plot_data <- vector("list", n_processes)
 for (i in 1:n_processes) {
@@ -76,10 +76,9 @@ for (my_n in 1:length(n_list)) {
   Heston_vb <- sim.addvb(Heston,burst_time = 0.5, interval_length = 0.05, c_2 = c_2, beta = beta,reverse = F, recenter = F)
   Heston_vbdb <- sim.adddb(Heston_vb, burst_time=0.5,interval_length=0.05, c_1 = c_1, alpha = alpha, reverse = F)
   Heston_jump <- sim.addjump(Heston, burst_time = 0.5, interval_length = 0.05, c_1 = c_1, alpha = alpha)
-  Heston_vbjump <- sim.addjump(Heston_vb, burst_time = 0.5, interval_length = 0.05, c_1 = c_1, alpha = alpha)
-  
+
   #All paths
-  all_paths <- list(Heston, Heston_vb, Heston_vbdb, Heston_jump, Heston_vbjump)
+  all_paths <- list(Heston, Heston_vb, Heston_vbdb, Heston_jump)
 
   for (j in 1:length(all_paths)) {
     #j <- 1
@@ -131,7 +130,6 @@ all_plot_data[[1]]$process <- rep("Heston", length(all_plot_data[[1]]$mean))
 all_plot_data[[2]]$process <- rep("+ volatility burst", length(all_plot_data[[2]]$mean))
 all_plot_data[[3]]$process <- rep("+ drift burst & volatility burst", length(all_plot_data[[3]]$mean))
 all_plot_data[[4]]$process <- rep("+ jump", length(all_plot_data[[4]]$mean))
-all_plot_data[[5]]$process <- rep("+ jump & volatility burst", length(all_plot_data[[5]]$mean))
 
 
 #Create a single data_frame
@@ -159,6 +157,6 @@ ggplot(plot_data_frame, aes(n, mean, color = process)) +
   theme(plot.title = element_text(hjust = 0.5, size = 14))
 
 #Save dataframe for later
-saveRDS(plot_data_frame, file="Figures2/Saved_data_for_plots/06_T-estimator2_with_noise.Rda")
+save(plot_data_frame, file="Figures2/Saved_data_for_plots/06_T-estimator2_with_noise.Rda")
 
 print(Sys.time()-p0) #approx 10 min with max(n) = 60k and npaths = 500

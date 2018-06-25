@@ -10,17 +10,18 @@ ratio <- 12
 lag <- 10
 
 ten_minutes <- 10 / (6.5*60) #Starts immeiately
-two_point_five_min <- 2.5 / (6.5*60) #Starts after 3hours 5min
+two_point_five_min <- 2.5 / (6.5*60) #The interval between jumps
 
-burst_times <- seq(ten_minutes,0.5,by = two_point_five_min)
-begin_times <- seq(0,0.5-ten_minutes,by = two_point_five_min)
+burst_times <- seq(ten_minutes,0.5,by = two_point_five_min) #The top of bursts
+begin_times <- seq(0,0.5-ten_minutes,by = two_point_five_min) #The beginnings (for plot)
 
 
-#Burn a single mu in:
+#Burn a single minute in:
 n <- heston_params$Nsteps
 mat <- heston_params$mat
 dt <- mat/n
-n_burn <- h_mu / dt
+one_min <- 1/(52*7*24*60)
+n_burn <- one_min / dt
 t.index <- seq(from = n_burn, to = 23400, by = 5) #Burn a volatility bandwidth (note 10 in Christensen)
 
 # BURST SETTINGS (a = 0, 0.55, 0.65, 0.75 | b = 0.0, 0.1, 0.2, 0.3, 0.4), c_1 and c_2 from Batman
@@ -68,7 +69,7 @@ burstsettings <- append(burstsettings,
 
 #Evt. reverse
 #### LOOP BECAUSE OF LACK OF MEMORY
-Npaths <- 200 #Takes approx. a second per path (because it has to estimate T for 35 processes w. 3 different bandwidths)
+Npaths <- 500 #Takes approx. a second per path (because it has to estimate T for 35 processes w. 3 different bandwidths)
 n_loops <- ceiling(Npaths/50) #After 50 it just scales linearly if not slower
 output_list <- list()
 set.seed(100)
@@ -123,7 +124,7 @@ for (memory in 1:n_loops) {
 print(Sys.time()-p0)
 
 ### Take mean accross memories (assuming same number of paths in every memory loop)
-results_mean <- results / n_loops
+results_mean <- results / n_loops*100
 
 
 ### Restructure
@@ -132,7 +133,7 @@ times_in_hours <- begin_times*6.5
 
 #Create a single data_frame
 plot_data_frame <- data.frame(x_axis = times_in_hours,
-                              rejection = rep(0.05,length(burst_times)),
+                              rejection = rep(5,length(burst_times)),
                               process = "5%")
 
 for (i in 1:nrow(results)){
@@ -150,5 +151,6 @@ ggplot(plot_data_frame, aes(x_axis, rejection, color = process)) +
   ggtitle("Rejection of T-estimator at different burst times") +
   theme(plot.title = element_text(hjust = 0.5, size = 15))
 
+save(plot_data_frame, file = "Figures2/Saved_data_for_plots/16_time_of_the_day.Rda")
 
 

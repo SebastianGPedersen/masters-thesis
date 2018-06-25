@@ -101,8 +101,8 @@ est.sigma.mat.2.0 <- function(data, hv, kern = kern.leftexp, wkern=kern.parzen, 
 
 #Without parallel - faster that with parallel
 est.mu.mat.2.0 <- function(data, hd, kern = kern.leftexp, bandwidth_rescale = F){
-  #data <- Heston
-  #hd <- h_mu
+  #data <- BS
+  #hd <- hd_list[hd]
   
   #kern handling
   if(is.list(kern)) kern<-kern$kern
@@ -130,8 +130,6 @@ est.mu.mat.2.0 <- function(data, hd, kern = kern.leftexp, bandwidth_rescale = F)
   n <- length(data$time)-1 #time includes time 0 and time t, wheras dy has one less
   
   mus <- matrix(nrow = paths, ncol = n)
-  
-  dy <- data$Y
 
   for (path in 1:paths) {
     #path <- 1
@@ -187,3 +185,16 @@ est.sigma.raw.mat.2.0 <- function(data, hv, kern = kern.leftexp){
   return(list(time = data$time[-1],sig = sigmas)) #Don't include time zero, because dy doesn't include
 }
 
+
+#This is just pseudo-code for the report
+mu_estimator <- function(dy_vector, K_function, h_mu,time_points){
+  
+  t_end <- time_points[length(time_points)]
+  kernels <- K_function(
+              (time_points[1:(length(time_points)-1)]-t_end)/h_mu)
+  sum_terms <- kernels*dy_vector
+  mu_non_scaled <- 1/h_mu * cumsum(sum_terms)
+  mu_estimates <- mu_non_scaled/kernels
+  
+  return(mu_estimates)
+}

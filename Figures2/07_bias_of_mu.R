@@ -6,6 +6,7 @@ source("Simulation/Bursts.R")
 source("Simulation/Jumps.R")
 source("Estimation/pre-average.R")
 source("Estimation/estimates.R")
+source("Estimation/estimates_reloaded.R")
 
 #################### PARAMETERS THAT DON'T CHANGE ####################
 omega2 <- 2.64*10^(-10) #What Mathias wrote
@@ -18,8 +19,8 @@ Npaths <- 1000
 sigma2 <- 0.0457
 sigma <- sqrt(sigma2)
 
-#Because of lack of memory, it is done in 10 loops
-n_loops <- 10
+#Because of lack of memory, it is done in loops
+n_loops <- ceiling(Npaths/100)
 
 #List to final values
 hd_list <- seq(1,20,by = 1)/ (60*24*7*52)
@@ -42,11 +43,12 @@ for (memory in 1:n_loops) {
     desired_index <- n-1 #Takes last index, so K uses as many points as possible
     T_sigma <- numeric(length = temp_paths)
     
-    for (i in 1:temp_paths) {
-      #i <- 1
-      single_path <- list(Y = diff(BS$Y[i,]), time = BS$time)
-      T_sigma[i] <- sqrt(hd_list[hd])/sqrt(K2*sigma2)*est.mu(data = single_path, hd = hd_list[hd], t.index = desired_index)$mu[1]
-    }
+    #Create dy
+    BS$Y <- t(diff(t(as.matrix(BS$Y))))
+    
+    mu <- est.mu.mat.2.0(data = BS, hd = hd_list[hd])$mu[,desired_index]
+    T_sigma <- sqrt(hd_list[hd])*mu/sqrt(K2*sigma2)
+
     var_bias_temp[memory,hd] <- mean(T_sigma^2) #We know it has mean zero, so E(mu^2) is more precise than Var(mu)
   }
 }
