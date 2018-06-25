@@ -16,7 +16,7 @@ hest    <- sim.heston(setting)
 hest.dt <- sim.heston.uneven(setting, seed = seed)
 
 # ADD burst
-Heston_vb   <- sim.addvb(hest, burst_time = 0.5, interval_length = 0.05, c_2 = , beta = 0.1, reverse = F)
+Heston_vb   <- sim.addvb(hest, burst_time = 0.5, interval_length = 0.05, c_2 =) #WHAT IS C2?, beta = 0.1, reverse = F)
 Heston_vbdb <- sim.adddb(Heston_vb, burst_time=0.5, interval_length=0.05, c_1 = , alpha=0.65, reverse = F)
 
 Heston_vb.dt   <- sim.addvb(hest.dt, burst_time = 0.5, interval_length = 0.05, c_2 = , beta = 0.1, reverse = F)

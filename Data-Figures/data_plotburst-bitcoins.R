@@ -12,12 +12,13 @@ source("spy/datahandling.R")
 
 # ESTIMATION PARAMETERS
 hd <- 300 #(seconds)
-hv <- hd                                          # TRY RATIO 1
+hv <- 1*hd                                                # TRY THIS OUT WITH RATIO 1
 lag = 10
 t.freq = 5 # every 5 seconds
 offset = 12 # skips the first minute (5*12seconds)
 
 # GET DATA AND ROLL
+SPY <- data.getFull()
 bitfinex <- data.getbitdata("bitfinex")
 bitmex <- data.getbitdata("bitmex")
 kraken <- data.getbitdata("kraken")
@@ -31,13 +32,17 @@ bitmex.T<-data.TforId(bitmex, "all", hd = hd, hv = hv, t.freq = t.freq, lag = la
 kraken.T<-data.TforId(kraken, "all", hd = hd, hv = hv, t.freq = t.freq, lag = lag, offset = offset, offset_perId = T)
 
 # MARK DAYS
+SPY <- data.dayID(SPY)
 bitfinex.T <- data.dayID(bitfinex.T)
 bitmex.T <- data.dayID(bitmex.T)
 kraken.T <- data.dayID(kraken.T)
 
+SPY.T <- data.TforId(SPY, "day", hd = hd, hv = hv, t.freq = t.freq, lag = lag, offset = offset, offset_perId = T)
+
 gc()
 
 # TSTARIA
+SPY.Tstar <- data.TtoStar(SPY.T, "day", 0.95)
 bitfinex.Tstar<-data.TtoStar(bitfinex.T, "day", 0.95)
 bitmex.Tstar<-data.TtoStar(bitmex.T, "day", 0.95)
 kraken.Tstar<-data.TtoStar(kraken.T, "day", 0.95)
@@ -51,7 +56,7 @@ kraken.Tstar<-data.TtoStar(kraken.T, "day", 0.95)
 bitfinex.bursts <- bitfinex.Tstar[db_0.95 == T,]
 
 # PICK ONE OUT
-bitfinex.burst <- bitfinex.bursts[4,]
+bitfinex.burst <- bitfinex.bursts[52,]
 
 # PLOTTERIA
 data.plot_db(bitfinex, bitfinex.burst$DateTime, hd = hd, hv = hv, lag = 10, blue = T)

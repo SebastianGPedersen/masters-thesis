@@ -69,13 +69,14 @@ plot(trades_dist)
 
 
 # SAVE
-setwd(Sys.getenv("masters-thesis"))
-# PREP FOR EXPORT
-time <- buckets[1:length(trades_dist)]
-
-trades <- data.frame(time = time ,trades = trades_dist)
-save(trades, file = "Simulation/trades.RDa")
-
+if(F){
+  setwd(Sys.getenv("masters-thesis"))
+  # PREP FOR EXPORT
+  time <- buckets[1:length(trades_dist)]
+  
+  trades <- data.frame(time = time ,trades = trades_dist)
+  save(trades, file = "Simulation/trades.RDa")
+}
 
 
 #

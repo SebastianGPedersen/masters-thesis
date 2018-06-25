@@ -36,10 +36,17 @@ data.dayID <- function(datatable, id = "day"){
   dt <- datatable
   # sort by dateTime
   setkey(dt, DateTime)
-  # Identify unique days
-  unDates <- unique(dt$Date)
-  # Match with ID number
-  dtB<-match(dt$Date, unDates)
+  if("Date" %in% names(dt)){
+    # Identify unique days
+    unDates <- unique(dt$Date)
+    # Match with ID number
+    dtB<-match(dt$Date, unDates)
+  }
+  else{
+    unDates <- unique(as.Date(dt$DateTime))
+    dtB<-match(as.Date(dt$DateTime), unDates)
+  }
+  
   # Add ID column
   dt[, paste0(id) := dtB]
   gc()
@@ -313,7 +320,7 @@ data.TtoStar <- function(Tdata, id_name, conf){
 }
 
 # PLOT
-data.plot_db<-function(data, burst_time, window = 20*60, hd, hv, lag = 10){
+data.plot_db<-function(data, burst_time, window = 20*60, hd, hv, lag = 10, blue = F){
   # NEEDS SCALE/OFFSET PARAMETERS FOR AESTETICS
   dt <- data
   # FIND WINDOW
@@ -352,10 +359,20 @@ data.plot_db<-function(data, burst_time, window = 20*60, hd, hv, lag = 10){
   
   offset <- mean(price)
   scale <- (max(Ttest)-min(Ttest))/(max(price)-min(price)) # check this later
-  p <- ggplot(data = plotdata, aes(x = Date)) +
-    geom_area(aes(y = T.statistic)) + #rescale this
-    geom_line(aes(y = (Price-offset)*scale, colour = "Price"), size = 1) + # size might change
-    scale_y_continuous(sec.axis = sec_axis(trans = ~./scale+offset, name = "Price"))
+  
+  if(blue){
+    p <- ggplot(data = plotdata, aes(x = Date)) +
+      geom_area(aes(y = T.statistic)) + #rescale this
+      geom_line(aes(y = (Price-offset)*scale, colour = "Price"), color = "dodgerblue3", size = 1) + # size might change
+      scale_y_continuous(sec.axis = sec_axis(trans = ~./scale+offset, name = "Price"))
+  }
+  else{
+    p <- ggplot(data = plotdata, aes(x = Date)) +
+      geom_area(aes(y = T.statistic)) + #rescale this
+      geom_line(aes(y = (Price-offset)*scale, colour = "Price"), size = 1) + # size might change
+      scale_y_continuous(sec.axis = sec_axis(trans = ~./scale+offset, name = "Price"))
+  }
+  
   p
   return(p)
 }
@@ -377,6 +394,55 @@ data.date_To_tindex<-function(dates, t_dates){
   out <- match( table$val, t_dates)
   return(out)
 }
+
+
+# TRADES DISTRIBUTION
+data.trades_dist <- function(data, bucketlength, bucketstart, bucketend){
+  # RETURNS GGPLOTTABLE DATA
+  require(ggplot2)
+  data <- data.dayID(data)
+  ndays <- length(unique(data$day))
+  # Remove date
+  t <- strftime(data$DateTime, format = "%H:%M:%S", tz = "UTC")
+  
+  # reformat as posixct - this forces all to same day (today)
+  ntimes <- as.POSIXct(t, format = "%H:%M:%S", tz = "UTC")
+  # SORT
+  ntimes <- sort(ntimes)
+  
+  if(missing(bucketstart) || missing(bucketend)){
+    # Setup buckets
+    buckets <- seq(data.floor_date(ntimes[1], unit = "day"), data.floor_date(ntimes[1], unit = "day")+3600*24, by = bucketlength)[-1]
+  }
+  else{
+    # MARK TERRITORY
+    dates<-as.Date(ntimes)[1]
+    
+    start <- as.POSIXct(paste0(dates, " ", bucketstart), tz = "UTC")
+    end <- as.POSIXct(paste0(dates, " ", bucketend), tz = "UTC")
+    
+    buckets <- seq(start, end, by = bucketlength)[-1]
+  }
+  
+  bucket.id <- .bincode(ntimes, breaks = c(0,buckets))
+  
+  dt <- data.table(Time = ntimes, bucket = bucket.id)
+  
+  N <- dt[, .N, by = bucket]$N/ndays
+  
+  # PLOT DATA
+  return(plot.data <- data.table(Time = buckets, N = N))
+}
+
+# EXAMPLES
+# data.trades_dist(sp, 300, "09:30:00", "16:00:00")
+# data.trades_dist(bit, 300)
+
+
+
+
+
+
 
 
 # REVERSE (only tested daily)

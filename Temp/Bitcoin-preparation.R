@@ -13,7 +13,6 @@ setwd(paste0(Sys.getenv("masters-thesis-data"),"/Bitcoin"))
 
 data.prep<-function(data, name){
 
-  
   # NAME FILE
   drop<-paste0(name,".rds")
   # LOGPRICE
