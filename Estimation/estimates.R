@@ -402,6 +402,7 @@ est.mu.new <- function(data, hd, kern = kern.leftexp, t.index, kn){
   return(list(time = out$time, mu = out$mu*coef))
 }
 
+#est.sigma.new(data = single_path,hv = hd, t.index = desired_index, kn = k_n,noisefun = est.noise.iid, theta = theta_1)$sig
 est.sigma.new <- function(data, hv, kern = kern.leftexp, t.index, kn, noisefun, theta){
   # data list should include a time column , Y column (log returns) and non-preavr obs (raw)
   # t.index should be index - we use data$time[t]
@@ -420,8 +421,7 @@ est.sigma.new <- function(data, hv, kern = kern.leftexp, t.index, kn, noisefun, 
   if(identical(kern, kern.leftexp$kern) & length(t.index)>1){
     #print("using .next")
     out <- est.sigma.raw.next(data = data, hv = hv, t.index = t.index)
-  }
-  else{
+  } else{
     out <- est.sigma.raw(data = data, hv = hv, kern = kern, t.index = t.index)
   }
   

@@ -117,8 +117,6 @@ for (memory in 1:n_loops) {
         }
   
         m <- rep(ncol(T_hat),N)
-        z<-est.z_quantile(m, rho, 0.95)$qZm
-        
         #Save percentage rejection in list
         temp[process,ratio] <- mean(Tstar>=z)
       }

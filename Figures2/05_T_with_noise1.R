@@ -50,7 +50,7 @@ for (i in 1:n_processes) {
 
 for (my_n in 1:length(n_list)) {
   print(my_n)
-  #my_n <- 1
+  #my_n <- 8
   #my_n <- length(n_list)
   mat <- 6.5/(24*7*52)#*52*7*24*60*60 #In years
   n <- n_list[my_n]

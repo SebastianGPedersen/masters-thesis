@@ -134,10 +134,8 @@ est.mu.mat.2.0 <- function(data, hd, kern = kern.leftexp, bandwidth_rescale = F)
   for (path in 1:paths) {
     #path <- 1
     dy <- data$Y[path,]
-    products <- kernels*dy
+    sum_terms <- kernels*dy
     
-    #zero lag
-    sum_terms <- products
     mu_non_scaled <- 1/hd * cumsum(sum_terms)
     mus[path,] <- mu_non_scaled/rescaling
   }
