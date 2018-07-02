@@ -31,7 +31,7 @@ Tstar_daily <- data.TtoStar(Tdata, "day", 0.95)
 bursts <- Tstar_daily[db_0.95 == T,]
 
 # PICK ONE OUT
-(burst <- bursts[12,])
+(burst <- bursts[23,])
 
 # PLOTTERIA
 data.plot_db(data, burst$DateTime, hd = hd, hv = hv, lag = 10)

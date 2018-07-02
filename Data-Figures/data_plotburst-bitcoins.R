@@ -12,7 +12,7 @@ source("spy/datahandling.R")
 
 # ESTIMATION PARAMETERS
 hd <- 300 #(seconds)
-hv <- 1*hd                                                # TRY THIS OUT WITH RATIO 1
+hv <- 12*hd                                               
 lag = 10
 t.freq = 5 # every 5 seconds
 offset = 12 # skips the first minute (5*12seconds)
@@ -56,7 +56,7 @@ kraken.Tstar<-data.TtoStar(kraken.T, "day", 0.95)
 bitfinex.bursts <- bitfinex.Tstar[db_0.95 == T,]
 
 # PICK ONE OUT
-bitfinex.burst <- bitfinex.bursts[52,]
+bitfinex.burst <- bitfinex.bursts[77,]
 
 # PLOTTERIA
 data.plot_db(bitfinex, bitfinex.burst$DateTime, hd = hd, hv = hv, lag = 10, blue = T)
@@ -73,7 +73,7 @@ min(bitfinex.T$Tval)
 bitmex.bursts <- bitmex.Tstar[db_0.95 == T,]
 
 # PICK ONE OUT
-bitmex.burst <- bitmex.bursts[52,]
+bitmex.burst <- bitmex.bursts[77,]
 
 # PLOTTERIA
 data.plot_db(bitmex, bitmex.burst$DateTime, hd = hd, hv = hv, lag = 10, blue =T)
@@ -91,14 +91,3 @@ kraken.burst <- kraken.bursts[62,]
 
 # PLOTTERIA
 data.plot_db(kraken, kraken.burst$DateTime, hd = hd, hv = hv, lag = 10, blue =T)
-
-
-# INVESTIGATION
-poi <- as.POSIXct(paste0(as.Date(bitfinex.bursts[day == 52, ]$DateTime)," 12:00:00"), tz = "UTC")
-poi <- as.POSIXct("2018-06-10 12:00:00", tz = "UTC")
-
-data.plot_db(bitfinex, poi, window = 60*60*12, hd = hd, hv = hv, lag = lag, blue = T)
-data.plot_db(bitmex, poi, hd = hd, hv = hv, lag = lag, blue = T)
-
-
-weekdays(as.Date(poi))
