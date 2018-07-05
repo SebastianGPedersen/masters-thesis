@@ -40,13 +40,23 @@ dt<-dt[dt$Date<=maxDate]
 return(dt)
 }
 
-BV.data_deseason_BV_Func <- function(dt, bucketLengthInMinutes, dayLengthInMinutes = 390){
+BV.data_deseason_BV_Func <- function(dt, bucketLengthInMinutes, dayLengthInMinutes = 390, SPY_bool = TRUE){
 #########################   Bucket stuff ####################
-buckets <- vol.est.DataIntradayBucket(DT = dt, m = bucketLengthInMinutes)
-dtB2<- .bincode(dt$DateTime, breaks = c(0, buckets))
+if(SPY_bool){
+  buckets <- vol.est.DataIntradayBucket(DT = dt, m = bucketLengthInMinutes)
+  dtB2<- .bincode(dt$DateTime, breaks = c(0, buckets))
+
+} else { # bitcoin
+  # dt<-copy(datatable)       # NOT SURE WHY, BUT COPY FIXED A BUG ABOUT .SD BEING LOCKED
+  time <- dt$DateTime
+  #Intraday
+  buckets <- seq(data.floor_date(time[1]), time[length(time)], by = bucketLengthInMinutes*60)
+  buckets[1] <- buckets[1] - 0.0001
+  dtB2<- .bincode(dt$DateTime, breaks = c(buckets, time[length(time)]))
+}
+  
 dt[, "id" := dtB2]
 rm(dtB2)
-# rm(dt)
 gc()
 print("IV estimation reached (SLOW)")
 ###################### IV Intraday stuff #############################
