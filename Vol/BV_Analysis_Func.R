@@ -40,7 +40,7 @@ dt<-dt[dt$Date<=maxDate]
 return(dt)
 }
 
-BV.data_deseason_BV_Func <- function(dt, bucketLengthInMinutes){
+BV.data_deseason_BV_Func <- function(dt, bucketLengthInMinutes, dayLengthInMinutes = 390){
 #########################   Bucket stuff ####################
 buckets <- vol.est.DataIntradayBucket(DT = dt, m = bucketLengthInMinutes)
 dtB2<- .bincode(dt$DateTime, breaks = c(0, buckets))
@@ -59,7 +59,7 @@ bvSDT
 # YEARLY parametrization
 bvSDT[, Vol:= sqrt(bvS1 * bucketLengthInMinutes/(60*24*252)),]
 
-nIntradayBuckets <- 390/bucketLengthInMinutes
+nIntradayBuckets <- dayLengthInMinutes/bucketLengthInMinutes
 bvSDT[, IntraDayBucket := id %% nIntradayBuckets]
 bvSDT$IntraDayBucket[bvSDT$IntraDayBucket==0] <- nIntradayBuckets
 
