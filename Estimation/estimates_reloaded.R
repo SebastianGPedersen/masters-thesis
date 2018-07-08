@@ -18,6 +18,7 @@ registerDoParallel(n_logic_units)
 ### SIGMA ###
 #With parallel
 est.sigma.mat.2.0 <- function(data, hv, kern = kern.leftexp, wkern=kern.parzen, lag=10, bandwidth_rescale = F){
+  Heston <- data #possible fix?
   #data <- path
   #hv <- 5 / (60*24*7*52)
   #lag <- 10

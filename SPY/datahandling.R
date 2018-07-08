@@ -389,7 +389,8 @@ data.date_To_tindex<-function(dates, t_dates){
   # ASSUMES SORTED
   date <- t_dates
   sorter <- data.table(date, val = date)
-  setattr(sorter, "sorted", "date")
+  #setattr(sorter, "sorted", "date")
+  sorter <- setkey(sorter)
   table <- sorter[J(dates), roll = "nearest"]
   out <- match( table$val, t_dates)
   return(out)
