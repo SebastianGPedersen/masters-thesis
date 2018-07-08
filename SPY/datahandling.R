@@ -60,6 +60,7 @@ data.xsecID <- function(datatable, bucketLengthInSeconds, id = "id"){
   time <- dt[, DateTime]
   #Intraday
   buckets <- seq(data.floor_date(time[1]), time[length(time)], by = bucketLengthInSeconds)
+  buckets[1] <- buckets[1] - 0.0000001
   dtB2<- .bincode(dt$DateTime, breaks = c(buckets, time[length(time)]))
   dt[, paste0(id) := dtB2]
   return(dt)
