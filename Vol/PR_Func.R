@@ -1,14 +1,22 @@
  #################################################### VARIOGRAM TABLE ########################################
  PR.variogram_prep_DT <- function(bvSDTfff){
- variogramDT <- bvSDTfff[ , c("DayBucket", "IntraDayBucket", "LogVolnCorrect")]
- names(variogramDT)[!(names(variogramDT)%in%c("DayBucket", "IntraDayBucket"))] <- "LogVolCorrected"
+ variogramDT <- bvSDTfff[ , c("DayBucket", "IntraDayBucket", "LogVolnCorrect", "lagInd")]
+ names(variogramDT)[!(names(variogramDT)%in%c("DayBucket", "IntraDayBucket", "lagInd"))] <- "LogVolCorrected"
  return(variogramDT)
  }
  
- PR.est.alpha <- function(variogramDT, m, bucketLengthInMinutes, OLS = T){
+ PR.est.alpha <- function(variogramDT, m, bucketLengthInMinutes, OLS = T, SPY_Bool = T){
    AnnualizedBucketLength <- bucketLengthInMinutes/(60*24*252)
    TradingDayh <- AnnualizedBucketLength*(1:m)
-   variogramValues <- PR.vgFunc2(variogramDT$LogVolCorrected, m)
+   if(SPY_Bool){
+     variogramValues <- PR.vgFunc2(variogramDT$LogVolCorrected, m)
+   } else {
+     lagInd <- variogramDT$lagInd
+     nBucket <- max(lagInd)
+     temp <- rep(NA, nBucket)
+     temp[lagInd] <- variogramDT$LogVolCorrected
+     variogramValues <- PR.vgFunc2(temp, m)
+   }
    if(OLS){
      fit <- lm(log(variogramValues)~ 1+log(TradingDayh))
      alpha <- (fit$coefficients[2] - 1)/2  
@@ -26,10 +34,14 @@
  PR.persistence_prep_DT <- PR.variogram_prep_DT
  
  
- PR.est.beta <- function(persistenceDT, TradingDayLagMin, TradingDayLagMax, bucketLengthInMinutes){
+ PR.est.beta <- function(persistenceDT, TradingDayLagMin, TradingDayLagMax, bucketLengthInMinutes, SPY_Bool = T){
    AnnualizedBucketLength <- bucketLengthInMinutes/(60*24*252)
    TradingDayh <- AnnualizedBucketLength*TradingDayLagMin:TradingDayLagMax
-   TradingDayACF <-as.vector(acf(persistenceDT$LogVolCorrected, lag.max = TradingDayLagMax, plot = F)[[1]])[TradingDayLagMin:TradingDayLagMax]
+   if(SPY_Bool){
+     TradingDayACF <-as.vector(acf(persistenceDT$LogVolCorrected, lag.max = TradingDayLagMax, plot = F)[[1]])[TradingDayLagMin:TradingDayLagMax]
+   } else {
+     TradingDayACF <- PR.acfFunc(DT = persistenceDT, lags = TradingDayLagMin:TradingDayLagMax, logVolCol = "LogVolCorrected")$acf
+   }
    fit <- lm(log(TradingDayACF)~ 1+log(TradingDayh))
    beta <- -fit$coefficients[2]
    
@@ -92,9 +104,9 @@ PR.acfFunc <- function(DT, lags, logVolCol = "LogVolCorrected"){
   lagInd <- DT$lagInd
   nBucket <- max(lagInd)
   meanVal <- mean(LogVolCorrected)
-  varFac <- (length(lagInd) - 1) * var(LogVolCorrected) # Variance is 1/(n-1)* sum(...). This is multiplied by (n-1) to only get the sum
+  varFac <- (length(lagInd) - 1) / length(lagInd) * var(LogVolCorrected) # Variance is 1/(n-1)* sum(...). This is multiplied by (n-1) to only get the sum
   for(i in seq_along(lags)){
-    print(i)
+    # print(i)
     set(x = resDT, i = i, j = "acf", value = PR.acfValue(LogVolCorrected, lags[i], nBucket, lagInd, varFac, meanVal))  
   }
   
@@ -109,7 +121,7 @@ PR.acfValue <- function(LogVolCorrected, hInd, nBucket, lagInd, varFac, meanVal)
     res <- NA
   } else {
     temp1 <- (LogVolCorrected-meanVal)*(x[lagInd+hInd]-meanVal)
-    temp2 <- sum(temp1, na.rm = T)
+    temp2 <- mean(temp1, na.rm = T)
     
     # varFac2 <- (sum(!is.na(temp1))-1)*var(LogVolCorrected[!iss.na(temp1)])
     res <- temp2/varFac
