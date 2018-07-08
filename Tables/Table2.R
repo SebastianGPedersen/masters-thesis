@@ -6,7 +6,7 @@ source("Simulation/add_all.R")
 ####### ESTIMATION PARAMETERS
 heston_params <- sim.setup()
 h_list <- c(120, 300, 600)/(52*7*24*60*60)
-ratio <- 1
+ratio_list <- c(15,12,10)
 lag <- 10
 
 #Burn a single mu in:
@@ -89,7 +89,7 @@ for (memory in 1:n_loops) {
     all_simulations <- sim.add_all(Heston = Heston, burst_args = burstsettings)
     
     ### CALCULATE TABLE 1
-    output_list[[memory]] <- Table1_func(all_simulations, h_list = h_list, ratio = ratio, t.index = t.index, lag = lag, conf = 95)
+    output_list[[memory]] <- Table1_func(all_simulations, h_list = h_list, ratio = ratio_list, t.index = t.index, lag = lag, conf = 95)
 }
 print(Sys.time()-p0)
 
@@ -102,11 +102,11 @@ Table1_results[,3+1:length(h_list)] <- Table1_results[,3+1:length(h_list)] /n_lo
 
 
 ###Re-structure Table as in Christensen et. al.:
-Table0 <- restructure_table1(Table1_results,h_list)
+Table2 <- restructure_table1(Table1_results,h_list)
 
 ### Save and view
-save(Table0, file = "Module/Table0_ratio1_lag10.Rdata")
+save(Table2, file = "Module/Table2.Rdata")
 
-View(Table0)
+View(Table2)
 
 
