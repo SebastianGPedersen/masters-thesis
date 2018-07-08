@@ -11,7 +11,7 @@ source("spy/dataFunctions.R")
 source("spy/datahandling.R")
 
 # ESTIMATION PARAMETERS
-hd <- 600 #(seconds)
+hd <- 300 #(seconds)
 hv <- 12*hd                                             # ATTEMPT WITH BANDWIDTH RATIO 1
 lag = 10
 t.freq = 5 # every 5 seconds

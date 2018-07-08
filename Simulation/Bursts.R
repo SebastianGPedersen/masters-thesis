@@ -158,7 +158,6 @@ sim.addvb <- function(Heston_res, burst_time = 0.5, interval_length = 0.05, c_2 
   
   #Change X,Y and vol
   Heston_res$X = Heston_res$X+sigma_add
-  #Heston_res$Y = Heston_res$X+new_epsilon
   Heston_res$Y = Heston_res$Y+sigma_add
   Heston_res$vol = new_vol
   
@@ -166,21 +165,27 @@ sim.addvb <- function(Heston_res, burst_time = 0.5, interval_length = 0.05, c_2 
   return(Heston_res)
 }
 sim.addvb.2.0 <- function(Heston_res, burst_time = 0.5, interval_length = 0.05, c_2 = 0.15, beta = 0.4, reverse = F, recenter = F) {
+  #Heston_res = all_sims[[i]]
+  #c_2 = burst_args[[i]]$c_2
+  #burst_time = burst_args[[i]]$burst_time
+  #reverse = burst_args[[i]]$reverse
+  #recenter = burst_args[[i]]$recenter
   
   #Intervals
   burst_begin_perc = burst_time-interval_length/2
+  
   if(reverse){
     burst_end_perc = burst_time+interval_length/2
-  }
-  else{
+  } else{
     burst_end_perc = burst_time
   }
+  
   burst_begin = burst_begin_perc * Heston_res$time[length(Heston_res$time)]
   burst_end = burst_end_perc * Heston_res$time[length(Heston_res$time)]
+  
   if(reverse){
     tau = (burst_end+burst_begin)/2
-  }
-  else{
+  } else{
     tau = burst_end
   }
   
@@ -248,10 +253,7 @@ sim.addvb.2.0 <- function(Heston_res, burst_time = 0.5, interval_length = 0.05, 
   #new_epsilon = epsilon_u_vol*sqrt(new_vol) #Multiplicates matrixes entrance-wise
   
   #Change X,Y and vol
-  if ("X" %in% names(Heston_res)) {
-    Heston_res$X <- Heston_res$X+sigma_add
-  }
-  #Heston_res$Y = Heston_res$X+new_epsilon
+  Heston_res$X <- Heston_res$X+sigma_add
   Heston_res$Y <- Heston_res$Y+sigma_add
   Heston_res$vol <- new_vol
   

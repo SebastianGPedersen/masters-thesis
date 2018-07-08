@@ -4,6 +4,7 @@ source("simulation/bursts.R")
 source("simulation/jumps.R")
 library(mgcv) #Used to extract unique rows from matrix
 
+#Add the volatility bursts first
 sim.add_all <- function(Heston, burst_args) {
   #burst_args <- burstsettings
   
@@ -11,7 +12,7 @@ sim.add_all <- function(Heston, burst_args) {
   #Initialize result_list
   all_sims <- list()
   for (i in 1:length(burst_args)) {
-    all_sims[[i]] <- list(Y = Heston$Y, time = Heston$time, params = burst_args[i])
+    all_sims[[i]] <- list(Y = Heston$Y, X = Heston$X, vol = Heston$vol, time = Heston$time, params = burst_args[i])
   }
 
   ### Add volatility - this MUST be done before drift burst and jump (this has SIGNIFICANT computation time)
@@ -27,11 +28,19 @@ sim.add_all <- function(Heston, burst_args) {
   #Get unique combinations of c(beta,c2)
   betas_c2s_unique <- uniquecombs(betas_c2s)
   if (!is.null(nrow(betas_c2s_unique))) {
-    betas_c2s_u_zero <- betas_c2s_unique[betas_c2s_unique[,1] != 0,] #Remove the zero
+    betas_c2s_u_zero <- betas_c2s_unique[betas_c2s_unique[,1] != 0,] #Remove the zero.
+    
+    if (is.null(nrow(betas_c2s_u_zero))) {
+      betas_c2s_u_zero <- matrix(betas_c2s_u_zero, ncol = 4) #If only one row -> create matrix
+    }
+    
     #Add all combinations of c(beta,c_2) to Heston
-  
     for (row in 1:nrow(betas_c2s_u_zero)) {
-      Heston_vb <- sim.addvb.2.0(Heston_res = Heston, beta = betas_c2s_u_zero[row,1], c_2 = betas_c2s_u_zero[row,2],recenter = betas_c2s_u_zero[row,3],reverse = betas_c2s_u_zero[row,4])
+      Heston_vb <- sim.addvb.2.0(Heston_res = Heston, 
+                                 beta = betas_c2s_u_zero[row,1], 
+                                 c_2 = betas_c2s_u_zero[row,2],
+                                 recenter = betas_c2s_u_zero[row,3],
+                                 reverse = betas_c2s_u_zero[row,4])
       for (replace in 1:nrow(betas_c2s)) {
         if ((betas_c2s[replace,1] ==  betas_c2s_u_zero[row,1]) & (betas_c2s[replace,2] ==  betas_c2s_u_zero[row,2])) {
           all_sims[[replace]]$Y <- Heston_vb$Y
@@ -54,6 +63,53 @@ sim.add_all <- function(Heston, burst_args) {
     }
   }
 
+  #return
+  return(all_sims)
+}
+
+#Add everything to every burst
+sim.add_all2 <- function(Heston, burst_args) {
+  #burst_args <- burstsettings
+  
+  
+  #Initialize result_list
+  all_sims <- list()
+  for (i in 1:length(burst_args)) {
+    all_sims[[i]] <- list(Y = Heston$Y, X = Heston$X, vol = Heston$vol, time = Heston$time, params = burst_args[i])
+  }
+
+  
+  ### Add the bursts
+  for (i in 1:length(burst_args)) {
+    #i <- 
+    beta <- burst_args[[i]]$beta
+    alpha <- burst_args[[i]]$alpha
+    jump <- burst_args[[i]]$jump
+    
+    if (beta > 0) {
+      all_sims[[i]]$Y <- sim.addvb.2.0(Heston_res = all_sims[[i]],
+                                       beta = beta, 
+                                       c_2 = burst_args[[i]]$c_2,
+                                       burst_time = burst_args[[i]]$burst_time,
+                                       reverse = burst_args[[i]]$reverse,
+                                       recenter = burst_args[[i]]$recenter)$Y
+    }
+    
+    if (alpha > 0 & jump) { #add 
+      all_sims[[i]]$Y <- sim.addjump(Heston_res = all_sims[[i]],
+                                     alpha = alpha, 
+                                     c_1 = burst_args[[i]]$c_1,
+                                     burst_time = burst_args[[i]]$burst_time)$Y
+      
+    } else if (alpha > 0) { #add drift burst
+      all_sims[[i]]$Y <- sim.adddb(Heston_res = all_sims[[i]],
+                                   alpha = alpha, 
+                                   c_1 = burst_args[[i]]$c_1,
+                                   burst_time = burst_args[[i]]$burst_time,
+                                   reverse = burst_args[[i]]$reverse)$Y    
+    }
+  }
+  
   #return
   return(all_sims)
 }

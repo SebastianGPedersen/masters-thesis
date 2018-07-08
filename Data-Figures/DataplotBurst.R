@@ -31,9 +31,31 @@ Tstar_daily <- data.TtoStar(Tdata, "day", 0.95)
 bursts <- Tstar_daily[db_0.95 == T,]
 
 # PICK ONE OUT
-(burst <- bursts[23,])
+(burst <- bursts[15,])
 
 # PLOTTERIA
 data.plot_db(data, burst$DateTime, hd = hd, hv = hv, lag = 10)
 
 weekdays(as.Date(burst$DateTime))
+
+# PLOT ZOOMED OUT
+
+fullday <- data[day == burst$day,]
+
+
+require(ggplot2)
+plotdata <- data.frame(Date = fullday$DateTime, Price = exp(fullday$logPrice))
+
+ggplot(data = plotdata, aes(x = Date)) +
+    geom_line(aes(y = Price, colour = "Price"))
+
+fullday <- data[day == burst$day,]
+
+poi <- as.POSIXct("2014-03-19 15:00:00", tz = "UTC")
+
+intra <- data[DateTime > poi-20*60 & DateTime < poi+20*60, ]
+
+plotdata <- data.frame(Date = intra$DateTime, Price = exp(intra$logPrice))
+
+ggplot(data = plotdata, aes(x = Date)) +
+  geom_line(aes(y = Price, colour = "Price"))

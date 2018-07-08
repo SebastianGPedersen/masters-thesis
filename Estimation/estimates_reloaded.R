@@ -18,6 +18,7 @@ registerDoParallel(n_logic_units)
 ### SIGMA ###
 #With parallel
 est.sigma.mat.2.0 <- function(data, hv, kern = kern.leftexp, wkern=kern.parzen, lag=10, bandwidth_rescale = F){
+  Heston <- data #possible fix?
   #data <- path
   #hv <- 5 / (60*24*7*52)
   #lag <- 10
@@ -34,12 +35,13 @@ est.sigma.mat.2.0 <- function(data, hv, kern = kern.leftexp, wkern=kern.parzen, 
   
   #kernels
   kernels <- kern((data$time[1:(length(data$time)-1)]-t_now)/hv)
-  rescaling <- kern((data$time[2:(length(data$time))]-t_now)/hv)
+  #rescaling <- kern((data$time[2:(length(data$time))]-t_now)/hv)
+  rescaling <- kernels
   
   #Extra rescaling
   if (bandwidth_rescale) {
     K2 <- 0.5
-    x <- (Heston$time[1]-Heston$time[2:length(Heston$time)])/hv
+    x <- (data$time[1]-data$time[2:length(data$time)])/hv
     scaling_integral <- 0.5 * (1-exp(2*x))
     
     rescaling <- rescaling / sqrt(0.5/scaling_integral) #sqrt because rescaling is squared later
@@ -99,27 +101,25 @@ est.sigma.mat.2.0 <- function(data, hv, kern = kern.leftexp, wkern=kern.parzen, 
 }
 
 #Without parallel - faster that with parallel
-est.mu.mat.2.0 <- function(data, hd, kern = kern.leftexp, wkern=kern.parzen, bandwidth_rescale = F){
-  Heston <- data
-  #hd <- h_mu
+est.mu.mat.2.0 <- function(data, hd, kern = kern.leftexp, bandwidth_rescale = F){
+  #data <- BS
+  #hd <- hd_list[hd]
   
   #kern handling
   if(is.list(kern)) kern<-kern$kern
   if(!is.function(kern)) stop("kern should be either function or list containing function")
-  
-  if(is.list(wkern)) wkern<-wkern$kern
-  if(!is.function(wkern)) stop("wkern should be either function or list containing function")
-  
+
   t_now <- data$time[length(data$time)]
   
   #kernels
   kernels <- kern((data$time[1:(length(data$time)-1)]-t_now)/hd)
-  rescaling <- kern((data$time[2:length(data$time)]-t_now)/hd)
+  #rescaling <- kern((data$time[2:length(data$time)]-t_now)/hd)
+  rescaling <- kernels
   
   #Extra rescaling
   if (bandwidth_rescale) {
     K2 <- 0.5
-    x <- (Heston$time[1]-Heston$time[2:length(Heston$time)])/hd
+    x <- (data$time[1]-data$time[2:length(data$time)])/hd
     scaling_integral <- 0.5 * (1-exp(2*x))
     
     rescaling <- rescaling / sqrt(0.5/scaling_integral)
@@ -131,16 +131,12 @@ est.mu.mat.2.0 <- function(data, hd, kern = kern.leftexp, wkern=kern.parzen, ban
   n <- length(data$time)-1 #time includes time 0 and time t, wheras dy has one less
   
   mus <- matrix(nrow = paths, ncol = n)
-  
-  dy <- data$Y
 
   for (path in 1:paths) {
     #path <- 1
     dy <- data$Y[path,]
-    products <- kernels*dy
+    sum_terms <- kernels*dy
     
-    #zero lag
-    sum_terms <- products
     mu_non_scaled <- 1/hd * cumsum(sum_terms)
     mus[path,] <- mu_non_scaled/rescaling
   }
@@ -148,5 +144,56 @@ est.mu.mat.2.0 <- function(data, hd, kern = kern.leftexp, wkern=kern.parzen, ban
   return(list(time = data$time[-1],mu = mus)) #Don't include time zero, because dy doesn't include
 }
 
+#Added a raw estimator as well
+est.sigma.raw.mat.2.0 <- function(data, hv, kern = kern.leftexp){
+  #data <- Heston
+  #hd <- h_mu
+  
+  #kern handling
+  if(is.list(kern)) kern<-kern$kern
+  if(!is.function(kern)) stop("kern should be either function or list containing function")
+  
+  t_now <- data$time[length(data$time)]
+  
+  #kernels
+  kernels <- kern((data$time[1:(length(data$time)-1)]-t_now)/hv)
+  #rescaling <- kern((data$time[2:length(data$time)]-t_now)/hd)
+  rescaling <- kernels
+  
+  
+  #Initialize for loop
+  paths <- dim(data$Y)[1]
+  
+  n <- length(data$time)-1 #time includes time 0 and time t, wheras dy has one less
+  
+  sigmas <- matrix(nrow = paths, ncol = n)
+  
+  dy <- data$Y
+  
+  for (path in 1:paths) {
+    #path <- 1
+    dy <- data$Y[path,]
+    products <- kernels*dy^2
+    
+    #zero lag
+    sum_terms <- products
+    sigmas_non_scaled <- 1/hv * cumsum(sum_terms)
+    sigmas[path,] <- sigmas_non_scaled/rescaling
+  }
+  
+  return(list(time = data$time[-1],sig = sigmas)) #Don't include time zero, because dy doesn't include
+}
 
 
+#This is just pseudo-code for the report
+mu_estimator <- function(dy_vector, K_function, h_mu,time_points){
+  
+  t_end <- time_points[length(time_points)]
+  kernels <- K_function(
+              (time_points[1:(length(time_points)-1)]-t_end)/h_mu)
+  sum_terms <- kernels*dy_vector
+  mu_non_scaled <- 1/h_mu * cumsum(sum_terms)
+  mu_estimates <- mu_non_scaled/kernels
+  
+  return(mu_estimates)
+}

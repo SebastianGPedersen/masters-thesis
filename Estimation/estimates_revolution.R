@@ -34,12 +34,13 @@ est.sigma.mat.3.0 <- function(data, hv, kern = kern.leftexp, wkern=kern.parzen, 
   #For sigma3.0
   t_now <- data$time[length(data$time)]
   kernels <- kern((data$time[1:(length(data$time)-1)]-t_now)/hv)
-  rescaling <- kern((data$time[2:length(data$time)]-t_now)/hv)
+  #rescaling <- kern((data$time[2:length(data$time)]-t_now)/hv)
+  rescaling <- kernels
   
   #Extra rescaling
   if (bandwidth_rescale) {
     K2 <- 0.5
-    x <- (Heston$time[1]-Heston$time[2:length(Heston$time)])/hv
+    x <- (data$time[1]-data$time[2:length(data$time)])/hv
     scaling_integral <- 0.5 * (1-exp(2*x))
     
     rescaling <- rescaling / sqrt(0.5/scaling_integral) #sqrt because it is squared later
@@ -70,6 +71,22 @@ est.sigma.mat.3.0 <- function(data, hv, kern = kern.leftexp, wkern=kern.parzen, 
   return(list(time = data$time[-1], sig = sigmas)) #Don't include time zero as this is not in dy
 }
 
+
+#Pseudo-code for report
+sigma_estimator <- function(dY_vector, h_sigma, K_func, 
+                            time_points,lags=10){
+
+  
+  t_end <- time_points[length(time_points)]
+  kernels <- K_func(
+              (time_points[1:(length(time_points)-1)]-t_end)/h_sigma)
+  products <- kernels*dy_vector
+  
+  #Using the 'sigmas_cpp' function
+  sigmas_non_scaled <- sigmas_cpp(KdY = products,lags = lags)
+  sigmas <- 1/hv * sigmas_non_scaled/kernels^2
+  return(sigmas)
+}
 
 
 
