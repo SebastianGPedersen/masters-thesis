@@ -41,11 +41,6 @@ bitfinex.T<-data.TforId(bitfinex, "all", hd = hd, hv = hv, t.freq = t.freq, lag 
 bitmex.T<-data.TforId(bitmex, "all", hd = hd, hv = hv, t.freq = t.freq, lag = lag, offset = offset, offset_perId = T)
 kraken.T<-data.TforId(kraken, "all", hd = hd, hv = hv, t.freq = t.freq, lag = lag, offset = offset, offset_perId = T)
 
-# MARK DAYS
-bitfinex.T <- data.dayID(bitfinex.T)
-bitmex.T <- data.dayID(bitmex.T)
-kraken.T <- data.dayID(kraken.T)
-
 if(F){
   # TEST if works
   # fill up with 1:n per day
@@ -198,7 +193,7 @@ data.Tseasonality<-function(Tdistdata, name = "Data SPY", log = F){
   }
   
 #data.Tseasonality(mex, name = "Data bitMEX", log = F)
-data.Tseasonality(spy, name = "Data SPY", log = F)
+#data.Tseasonality(spy, name = "Data SPY", log = F)
 
 #######################
 # DIFFERENT BANDWIDTH #
@@ -208,14 +203,14 @@ data.Tseasonality(spy, name = "Data SPY", log = F)
 Tdata <- data.TforId(data, "day", hd = hd, hv = hv, t.freq = t.freq, lag = lag, offset = offset, offset_perId = T)
 spy<-Tdist(Tdata)
 
-Tdata2 <- data.TforId(data, "day", hd = hd*2, hv = hv*2, t.freq = t.freq, lag = lag, offset = offset, offset_perId = T)
-spy2<-Tdist(Tdata2)
+#Tdata2 <- data.TforId(data, "day", hd = hd*2, hv = hv*2, t.freq = t.freq, lag = lag, offset = offset, offset_perId = T)
+#spy2<-Tdist(Tdata2)
 
-Tdata3 <- data.TforId(data, "day", hd = hd/2, hv = hv/2, t.freq = t.freq, lag = lag, offset = offset, offset_perId = T)
-spy3<-Tdist(Tdata3)
+#Tdata3 <- data.TforId(data, "day", hd = hd/2, hv = hv/2, t.freq = t.freq, lag = lag, offset = offset, offset_perId = T)
+#spy3<-Tdist(Tdata3)
 
-Tdata4 <- data.TforId(data, "day", hd = hd/4, hv = hv/4, t.freq = t.freq, lag = lag, offset = offset, offset_perId = T)
-spy4<-Tdist(Tdata4)
+#Tdata4 <- data.TforId(data, "day", hd = hd/4, hv = hv/4, t.freq = t.freq, lag = lag, offset = offset, offset_perId = T)
+#spy4<-Tdist(Tdata4)
 
 buckets <- spy$Time
 timebreaks <- c(buckets[1], buckets[floor(length(buckets)/4)], buckets[floor(length(buckets)*2/4)],
@@ -225,9 +220,9 @@ labels <- strftime(timebreaks, format = "%H:%M", tz = "UTC")
 
 g1 <- ggplot() +
   geom_point(aes(x = Time, y = Mean, group = 1, col = "300"), data = spy) +
-  geom_point(aes(x = Time, y = Mean, group = 1, col = "600"), data = spy2) +
-#  geom_point(aes(x = Time, y = Mean, group = 1, col = "150"), data = spy3) +
-  geom_point(aes(x = Time, y = Mean, group = 1, col = "75"), data = spy4) +
+  #geom_point(aes(x = Time, y = Mean, group = 1, col = "600"), data = spy2) +
+  #geom_point(aes(x = Time, y = Mean, group = 1, col = "150"), data = spy3) +
+  #geom_point(aes(x = Time, y = Mean, group = 1, col = "75"), data = spy4) +
   labs(color = expression("Bandwidth"~mu)) +
   ylab("Average absolute T-statistic") +
   scale_x_datetime("Time bucket", breaks = timebreaks, labels = labels)
@@ -280,29 +275,29 @@ Sigmadist<-function(dataT){
 }
 
 # Sigma
-spy<-Sigmadist(Tdata)
-spy2<-Sigmadist(Tdata2)
-spy3<-Sigmadist(Tdata3)
-spy4<-Sigmadist(Tdata4)
+#spy<-Sigmadist(Tdata)
+#spy2<-Sigmadist(Tdata2)
+#spy3<-Sigmadist(Tdata3)
+#spy4<-Sigmadist(Tdata4)
 
-buckets <- spy$Time
-timebreaks <- c(buckets[1], buckets[floor(length(buckets)/4)], buckets[floor(length(buckets)*2/4)],
-                buckets[floor(length(buckets)*3/4)], buckets[length(buckets)])
+#buckets <- spy$Time
+#timebreaks <- c(buckets[1], buckets[floor(length(buckets)/4)], buckets[floor(length(buckets)*2/4)],
+#                buckets[floor(length(buckets)*3/4)], buckets[length(buckets)])
 
-labels <- strftime(timebreaks, format = "%H:%M", tz = "UTC")
+#labels <- strftime(timebreaks, format = "%H:%M", tz = "UTC")
 
-g1 <- ggplot() +
-  geom_point(aes(x = Time, y = Mean, group = 1, col = "300"), data = spy) +
-  geom_point(aes(x = Time, y = Mean, group = 1, col = "600"), data = spy2) +
+#g1 <- ggplot() +
+#  geom_point(aes(x = Time, y = Mean, group = 1, col = "300"), data = spy) +
+  #geom_point(aes(x = Time, y = Mean, group = 1, col = "600"), data = spy2) +
   #  geom_point(aes(x = Time, y = Mean, group = 1, col = "150"), data = spy3) +
-  geom_point(aes(x = Time, y = Mean, group = 1, col = "75"), data = spy4) +
-  labs(color = expression("Bandwidth"~mu)) +
-  ylab("Average absolute Sigma") +
-  scale_x_datetime("Time bucket", breaks = timebreaks, labels = labels)
-g1
+  #geom_point(aes(x = Time, y = Mean, group = 1, col = "75"), data = spy4) +
+#  labs(color = expression("Bandwidth"~mu)) +
+#  ylab("Average absolute Sigma") +
+#  scale_x_datetime("Time bucket", breaks = timebreaks, labels = labels)
+#g1
 
 ############################
-# SEASONALITY OF MU EST #
+# SEASONALITY OF MU EST    #
 # --------BANDWIDTHS------ #
 ############################
 
@@ -341,23 +336,49 @@ Mudist<-function(dataT){
 }
 
 # T
-spy<-Mudist(Tdata)
-spy2<-Mudist(Tdata2)
-spy3<-Mudist(Tdata3)
-spy4<-Mudist(Tdata4)
+#spy<-Mudist(Tdata)
+#spy2<-Mudist(Tdata2)
+#spy3<-Mudist(Tdata3)
+#spy4<-Mudist(Tdata4)
 
-buckets <- spy$Time
+#buckets <- spy$Time
+#timebreaks <- c(buckets[1], buckets[floor(length(buckets)/4)], buckets[floor(length(buckets)*2/4)],
+#                buckets[floor(length(buckets)*3/4)], buckets[length(buckets)])
+
+#labels <- strftime(timebreaks, format = "%H:%M", tz = "UTC")
+
+#g1 <- ggplot() +
+#  geom_point(aes(x = Time, y = sqrt(300)*Mean, group = 1, col = "300"), data = spy) +
+#  geom_point(aes(x = Time, y = sqrt(600)*Mean, group = 1, col = "600"), data = spy2) +
+#  #  geom_point(aes(x = Time, y = sqrt(150)*Mean, group = 1, col = "150"), data = spy3) +
+#  geom_point(aes(x = Time, y = sqrt(75)*Mean, group = 1, col = "75"), data = spy4) +
+#  labs(color = expression("Bandwidth"~mu)) +
+#  ylab("Average absolute Mu") +
+#  scale_x_datetime("Time bucket", breaks = timebreaks, labels = labels)
+#g1
+
+############################
+# SEASONALITY OF BOTH EST  #
+#                          #
+############################
+mu <- Mudist(Tdata)
+sigma <- Sigmadist(Tdata)
+
+buckets <- mu$Time
 timebreaks <- c(buckets[1], buckets[floor(length(buckets)/4)], buckets[floor(length(buckets)*2/4)],
                 buckets[floor(length(buckets)*3/4)], buckets[length(buckets)])
 
 labels <- strftime(timebreaks, format = "%H:%M", tz = "UTC")
 
-g1 <- ggplot() +
-  geom_point(aes(x = Time, y = sqrt(300)*Mean, group = 1, col = "300"), data = spy) +
-  geom_point(aes(x = Time, y = sqrt(600)*Mean, group = 1, col = "600"), data = spy2) +
-  #  geom_point(aes(x = Time, y = sqrt(150)*Mean, group = 1, col = "150"), data = spy3) +
-  geom_point(aes(x = Time, y = sqrt(75)*Mean, group = 1, col = "75"), data = spy4) +
-  labs(color = expression("Bandwidth"~mu)) +
-  ylab("Average absolute Mu") +
+require(ggplot2)
+plotdata <- data.frame(Time = mu$Time, Mu = sqrt(300)*mu$Mean, Sigma = sqrt(sigma$Mean)) # mange punkter uden ændring
+
+offset <- mean(plotdata$Sigma)-mean(plotdata$Mu)-5*10^-6
+scale <- (max(plotdata$Mu)-min(plotdata$Mu))/(max(plotdata$Sigma)-min(plotdata$Sigma)) # check this later
+
+p <- ggplot(data = plotdata, aes(x = Time)) +
+  geom_point(aes(y = Mu, color = "Mu")) + #rescale this
+  geom_point(aes(y = (Sigma-offset)*scale, colour = "Sigma")) + 
+  scale_y_continuous(sec.axis = sec_axis(trans = ~./scale+offset, name = "Sigma")) +
   scale_x_datetime("Time bucket", breaks = timebreaks, labels = labels)
-g1
+p

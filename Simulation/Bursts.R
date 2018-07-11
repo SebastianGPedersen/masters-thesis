@@ -152,7 +152,7 @@ sim.addvb <- function(Heston_res, burst_time = 0.5, interval_length = 0.05, c_2 
   #epsilon_u_vol = (Heston_res$Y-Heston_res$X)/sqrt(Heston_res$vol) #this is gamma/sqrt(n) * rnorm
   
   vol_burst_vector <- sapply(Heston_res$time, function(x) sigma(x)^2)
-  new_vol <- Heston_res$vol + matrix(rep(vol_burst_vector,nrow(Heston_res$X)),nrow = paths)
+  new_vol <- Heston_res$vol + matrix(rep(vol_burst_vector,nrow(Heston_res$X)),nrow = paths, byrow = T) #FS 11-07 | byrow = T
 
   #new_epsilon = epsilon_u_vol*sqrt(new_vol) #Multiplicates matrixes entrance-wise
   
@@ -243,7 +243,7 @@ sim.addvb.2.0 <- function(Heston_res, burst_time = 0.5, interval_length = 0.05, 
   indexes <- ((t>=burst_begin) & (t <=burst_end) & (t!=tau))
   vol_burst_vector[indexes] <- (c_2/abs(tau-t[indexes])^beta)^2
 
-  new_vol <- Heston_res$vol + matrix(rep(vol_burst_vector,nrow(Heston_res$X)),nrow = paths)
+  new_vol <- Heston_res$vol + matrix(rep(vol_burst_vector,nrow(Heston_res$X)),nrow = paths, byrow = T) #FS 11-07 | byrow = T
   
   #new_epsilon = epsilon_u_vol*sqrt(new_vol) #Multiplicates matrixes entrance-wise
   
