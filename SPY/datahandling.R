@@ -581,3 +581,27 @@ reverse_matrix<-function(reverse_data){
   }
   return(list(x = x, y = y, xt = xt, ct = ct, time = time))
 }
+
+data.cont <- function(DT, maxTol){
+  #extract longest continous period
+  t <- DT$Time
+  maxTol <- 120
+  dt <- diff(t)
+  
+  ddt <- diff(c(0,which(dt>=maxTol), length(t)))
+  
+  # crit <- ddt==max(ddt[ddt!=max(ddt)]) # second longest interval
+  crit <- ddt==max(ddt) # longest interval. 
+  maxPeriod <- which(crit)
+  
+  StartEnd <-  c(c(0,which(dt>=maxTol), length(t))[maxPeriod] + 1 , c(0,which(dt>=maxTol), length(t))[maxPeriod+1])
+  DT2 <- DT[StartEnd[1]:StartEnd[2],]
+  
+  return(DT2)
+}
+
+data.Changed <- function(Vec){
+  # finds Changing values
+  dn <- diff(Vec)
+  return( c(TRUE, dn != 0))
+}

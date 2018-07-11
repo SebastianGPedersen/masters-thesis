@@ -48,7 +48,7 @@ c_2_func <- function(beta) {
   return(c_2)
 }
 
-alphas <- list(c(0,F),c(0.55,T),c(0.55,F),c(0.65,T),c(0.65,F),c(0.75,T),c(0.75,F)) #Size and whether or not it is a jump
+alphas <- list(c(0,F),c(0.55,F),c(0.55,T),c(0.65,F),c(0.75,F)) #Size and whether or not it is a jump
 betas <- c(0,0.1,0.2,0.3,0.4)
 
 #Get burst settings as a list (uses sim.burstsetting for standardization)
@@ -70,10 +70,11 @@ for (beta_index in 1:length(betas)) {
 
 #Evt. reverse
 #### LOOP BECAUSE OF LACK OF MEMORY
-Npaths <- 300 #Takes approx. a second per path (because it has to estimate T for 35 processes w. 3 different bandwidths)
+Npaths <- 1000 #Takes approx. a second per path (because it has to estimate T for 35 processes w. 3 different bandwidths)
 n_loops <- ceiling(Npaths/50) #After 50 it just scales linearly if not slower
 output_list <- list()
 
+p0 <- Sys.time()
 for (memory in 1:n_loops) {
     #memory <- 1
   
@@ -90,6 +91,7 @@ for (memory in 1:n_loops) {
     ### CALCULATE TABLE 1
     output_list[[memory]] <- Table1_func(all_simulations, h_list = h_list, ratio = ratio, t.index = t.index, lag = lag, conf = 95)
 }
+print(Sys.time()-p0)
 
 ### Take mean accross memories (assuming same number of paths in every memory loop)
 Table1_results <- output_list[[1]]

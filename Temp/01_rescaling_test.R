@@ -8,15 +8,15 @@ source("Estimation/rescaling.R")
 # ESTIMATION PARAMETERS
 heston_params <- sim.setup()
 h_mu <- 5/(52*7*24*60) #5 min as Christensen
-ratio <- 15
+ratio <- 5
 lag <- 10
 threshold <- qnorm(0.975)
 
-# Burn a single mu in
+# Burn a minute in
 n <- heston_params$Nsteps
 mat <- heston_params$mat
 dt <- mat/n
-n_burn <- h_mu / dt
+n_burn <- h_mu / (5*dt)
 desired_indices <- seq(from = n_burn, to = 23400, by = 5) #Burn a mu in
 
 
@@ -83,5 +83,7 @@ df_plot$time_points <- as.numeric(as.character(df_plot$time_points))*(52*7*24)
 
 #plot
 ggplot(df_plot, aes(time_points,values,color = Estimator),alpha = I(0.2)) + 
-  geom_line()
+  geom_line() +
+  xlab("hours") +
+  ylab("Rejection percentage")
   

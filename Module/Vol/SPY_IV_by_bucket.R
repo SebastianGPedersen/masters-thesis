@@ -87,7 +87,7 @@ sqrt(252*resList$IVest$bvDT$bv)
 
 
 #Intraday
-bucketLengthInMinutes <- 1
+bucketLengthInMinutes <- 5
 buckets <- vol.est.DataIntradayBucket(DT = dt, m = bucketLengthInMinutes)
 dtB2<- .bincode(dt$DateTime, breaks = c(0, buckets))
 dt[, "id" := dtB2]
@@ -178,12 +178,43 @@ bvSDTfff[, lagInd:= (as.numeric(DayBucket)-1)*IntradayPerDay + (IntraDayBucket)]
 # bvSDTfff[, correctionOverfit := simpleCorrection[IntraDayBucket],]
 # bvSDTfff[, VolOCorrect := Vol/correctionOverfit,]
 
-lags <- 1:(nrow(bvSDTfff)/2)
-acfNoCorrectionRes <- acfFunc(bvSDTfff, lags, logVolCol = "LogVol")
-acfRes <- acfFunc(bvSDTfff, lags, logVolCol = "LogVolnCorrect")
+## Bitcoin
+bvSDTfff <- bvS_List$bvSDTfff
+nIntradayBuckets <- max(bvSDTfff$IntraDayBucket)
+IntradayPerDay <- (60/bucketLengthInMinutes)*24
+##
 
-plot(acfNoCorrectionRes[1:(IntradayPerDay*3)], ylab = "ACF", xlab = "Lag in buckets", main = "ACF of Log Volatility - Alternate modelling", sub = "17.5 hour night")
-barplot(height = acfNoCorrectionRes[1:(IntradayPerDay*3)]$acf , names.arg = acfNoCorrectionRes[1:(IntradayPerDay*3)]$hInd, space = 0, ylab = "ACF", xlab = "Lag in buckets", main = "ACF of Log Volatility - Alternate modelling", sub = "17.5 hour night")
+lags <- 1:(nrow(bvSDTfff)/2)
+acfNoCorrectionRes <- PR.acfFunc(bvSDTfff, lags, logVolCol = "LogVol")
+acfRes <- PR.acfFunc(bvSDTfff, lags, logVolCol = "LogVolnCorrect")
+acfRes2 <- PR.acfFunc(bvSDTfff, lags, logVolCol = "LogVolsCorrect")
+# temp <- bvSDTfff[1:78]
+# PR.acfFunc(temp, 1:5, logVolCol = "LogVol")
+# acf(x = temp$LogVol, lag.max = 5, plot = F)$acf
+
+# plot(acfNoCorrectionRes[1:(IntradayPerDay*3)], ylab = "ACF", xlab = "Lag in buckets", main = "ACF of Log Volatility - Alternate modelling", sub = "17.5 hour night")
+# barplot(height = acfNoCorrectionRes[1:(IntradayPerDay*3)]$acf , names.arg = acfNoCorrectionRes[1:(IntradayPerDay*3)]$hInd, space = 0, ylab = "ACF", xlab = "Lag in buckets", main = "ACF of Log Volatility - Alternate modelling", sub = "17.5 hour night")
+# barplot(height = acfRes[1:(IntradayPerDay*3)]$acf , names.arg = acfRes[1:(IntradayPerDay*3)]$hInd, space = 0, ylab = "ACF", xlab = "Lag in buckets", main = "ACF of deseasonalized Log Volatility - Alternate modelling", sub = "17.5 hour night")
+
+### Bitcoin
+## Effect of deseasonalizing - none
+par(mfrow = c(3,1))
+maxLagFact <- min(IntradayPerDay*3, max(lags))
+barplot(height = acfNoCorrectionRes[1:maxLagFact]$acf , names.arg = acfNoCorrectionRes[1:maxLagFact]$hInd, space = 0, ylab = "ACF", xlab = "Lag in buckets", main = "ACF of Log Volatility - Alternate modelling", sub = "17.5 hour night")
+barplot(height = acfRes[1:maxLagFact]$acf , names.arg = acfRes[1:maxLagFact]$hInd, space = 0, ylab = "ACF", xlab = "Lag in buckets", main = "ACF of deseasonalized Log Volatility - Alternate modelling", sub = "17.5 hour night")
+barplot(height = acfRes2[1:maxLagFact]$acf , names.arg = acfRes2[1:maxLagFact]$hInd, space = 0, ylab = "ACF", xlab = "Lag in buckets", main = "ACF of deseasonalized Log Volatility - Alternate modelling", sub = "17.5 hour night")
+par(mfrow = c(1,1))
+any(diff(acfRes[1:maxLagFact]$hInd) != 1)
+
+## long acf
+par(mfrow = c(3,1))
+maxLagFact <- min(5000, max(lags))
+barplot(height = acfNoCorrectionRes[1:maxLagFact]$acf , names.arg = acfNoCorrectionRes[1:maxLagFact]$hInd, space = 0, ,ylab = "ACF", xlab = "Lag", main = "ACF of Log Volatility")
+barplot(height = acfRes[1:maxLagFact]$acf , names.arg = acfRes[1:maxLagFact]$hInd, space = 0, ylab = "ACF", xlab = "Lag", main = "ACF of deseasonalized Log Volatility")
+barplot(height = acfRes2[1:maxLagFact]$acf , names.arg = acfRes2[1:maxLagFact]$hInd, space = 0, ylab = "ACF", xlab = "Lag", main = "ACF of deseasonalized Log Volatility")
+par(mfrow = c(1,1))
+any(diff(acfRes[1:maxLagFact]$hInd) != 1)
+###
 
 require(ggplot2)
 q <- ggplot(data = acfNoCorrectionRes[1:(IntradayPerDay*3)], mapping = aes(x = hInd, y = acf)) +
@@ -227,6 +258,7 @@ par(mfrow=c(2,1))
 plot(acfNoCorrectionRes[1:(IntradayPerDay)], xlab = "lags", main = "ACF for log-vol")
 plot(acfRes[1:(IntradayPerDay)])
 par(mfrow=c(1,1))
+
 acf(bvSDTfff$LogVol, lag.max = length(bvSDTfff$LogVol)/2)
 acf(bvSDTfff$LogVolnCorrect, lag.max = length(bvSDTfff$LogVolnCorrect)/2)
 
@@ -247,8 +279,10 @@ plot(bvSDTfff$LogVolsCorrect[1:nIntradayBuckets*100]-bvSDTfff$LogVolnCorrect[1:n
 # saveRDS(bvSDTfff, "asd")
 ################### Stationarity ##########################
 require(fUnitRoots)
+bvSDTfff <- bvS_List$bvSDTfff
 mydata <- bvSDTfff$LogVolsCorrect
 mydata <- bvSDTfff$LogVolnCorrect
+
 
 plot(mydata[1:100])
 ppShort <- PP.test(mydata, lshort = T)
@@ -268,15 +302,45 @@ for(i in 1:maxlag){
 summary(adfres@test$lm)
 
 max(maxADF)
-adfTest(mydata,lags = 16, type = "nc")@test$p.value
+adfTest(mydata,lags = 65, type = "nc")@test$p.value
 #Always good
 pacf(mydata, lag.max = 1000)
 
-resList <- adf.Fit.optimalP(y = mydata, maxP = 600, critF = FFF.AICc)
+
+
+### BC
+bvSDTfff <- bvS_List$bvSDTfff
+mydata <- rep(NA, max(bvSDTfff$lagInd))
+mydata[bvSDTfff$lagInd] <- bvSDTfff$LogVolnCorrect
+### 
+
+resList <- adf.Fit.optimalP(y = mydata, maxP = 300, critF = FFF.AICc)
 resList$optimalP
-#### RESULTS
+# summary(resList$fit)
+#### SPY RESULTS
 # 5-min: 162
 # 10-min: 37
 # 15-min: 52
 # 30-min: 16
 plot(resList$CritVec)
+resList$NcompleteCases
+plot(resList$testStats)
+max(resList$testStats[resList$NcompleteCases>=300 & !is.na(resList$testStats)])
+plot(resList$testStats[!is.na(resList$testStats)])
+plot(resList$testStats[resList$NcompleteCases>=400])
+# resList30 <- resList
+# resList <-  resList5
+# resList <-  resList10
+
+
+
+plot(1:max(bvSDTfff$IntraDayBucket), bvSDTfff$sCorrect[1:max(bvSDTfff$IntraDayBucket)], type = "l", lwd = 2, xlab = "s", ylab = "Estimated log volatility", 
+     main = "Estimated intraday seasonality", sub = paste0(bucketLengthInMinutes, "-minute buckets. P = ", res$optimalP))
+
+lines(bvSDTfff$nCorrect[1:max(bvSDTfff$IntraDayBucket)], type = "l", col = "red", lwd = 2)
+legend("topright", legend=c("Simple", "Flexible Fourier form"),
+       col=c("black",  "red"), lty=1, cex=0.8)
+
+
+plot()
+lines(, col = "red")

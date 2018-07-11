@@ -6,8 +6,9 @@ source("Simulation/Bursts.R")
 source("Simulation/Jumps.R")
 source("Estimation/pre-average.R")
 source("Estimation/estimates.R")
+source("Estimation/estimates_reloaded.R")
+source("Estimation/estimates_revolution.R")
 
-p0 <- Sys.time()
 
 #seed
 set.seed(100)
@@ -17,17 +18,15 @@ omega <- 0
 K2 <- 0.5 #K2
 
 #Burst settings
-alpha <- 0.55
 beta <- 0.45
-c_1 <- (1-alpha)*0.005/(10/(60*24*7*52))^(1-alpha)
 c_2 <- sqrt((1-2*beta)*0.001^2/(10/(60*24*7*52))^(1-2*beta))
 
 #################### PARAMETERS CHANGING WITH N ####################
 #n = 60k and npaths = 500 is absolute max that my computer can keep in memory
-n_list <- c(50, 100, 200, 400, 800, 1600, 2000, 3000, 5000, 7500, 10000, 20000, 30000, 40000, 60000)
+n_list <- c(50, 200, 5000, 10000, 30000)
 
 #Initialize list with 5 mean, lower and upper for later plot
-n_processes <- 5
+n_processes <- 2
 
 all_plot_data <- vector("list", n_processes)
 for (i in 1:n_processes) {
@@ -59,12 +58,9 @@ for (my_n in 1:length(n_list)) {
   settings <- sim.setup(mat=mat, Npath = Npath, Nsteps = n, omega = omega) #6.5 hours
   Heston <- sim.heston(settings)
   Heston_vb <- sim.addvb(Heston,burst_time = 0.5, interval_length = 0.05, c_2 = c_2, beta = beta)
-  Heston_vbdb <- sim.adddb(Heston_vb, burst_time=0.5,interval_length=0.05, c_1 = c_1, alpha = alpha)
-  Heston_jump <- sim.addjump(Heston, burst_time = 0.5, interval_length = 0.05, c_1 = c_1, alpha = alpha)
-  Heston_vbjump <- sim.addjump(Heston_vb, burst_time = 0.5, interval_length = 0.05, c_1 = c_1, alpha = alpha)
   
   #All paths
-  all_paths <- list(Heston, Heston_vb, Heston_vbdb, Heston_jump, Heston_vbjump)
+  all_paths <- list(Heston, Heston_vb)
 
   for (j in 1:length(all_paths)) {
     #j <- 1
@@ -105,9 +101,6 @@ for (my_n in 1:length(n_list)) {
 #Create numbers for colors
 all_plot_data[[1]]$process <- rep("Heston", length(all_plot_data[[1]]$mean))
 all_plot_data[[2]]$process <- rep("+ volatility burst", length(all_plot_data[[2]]$mean))
-all_plot_data[[3]]$process <- rep("+ drift burst & volatility burst", length(all_plot_data[[3]]$mean))
-all_plot_data[[4]]$process <- rep("+ jump", length(all_plot_data[[4]]$mean))
-all_plot_data[[5]]$process <- rep("+ jump & volatility burst", length(all_plot_data[[5]]$mean))
 
 
 #Create a single data_frame
@@ -132,6 +125,6 @@ qplot(n, mean, data = plot_data_frame, geom = "line", color = process) +
   xlab("Number of observations") + ylab(TeX('$ T-estimator \\pm sd$'))
 
 #Save dataframe for later
-saveRDS(plot_data_frame, file="Figures2/Saved_data_for_plots/03_T-estimator1_without_noise.Rda")
+#saveRDS(plot_data_frame, file="Figures2/Saved_data_for_plots/03_T-estimator1_without_noise.Rda")
 
-print(Sys.time()-p0) #approx 10 min with max(n) = 60k and npaths = 500
+print(Sys.time()-p0)#approx 10 min with max(n) = 60k and npaths = 500

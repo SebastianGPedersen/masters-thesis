@@ -1,28 +1,25 @@
 library(ggplot2)
+library(latex2exp)
 setwd(Sys.getenv("masters-thesis"))
-source("Simulation/Heston.R")
 source("Simulation/BlackScholes.R")
-source("Simulation/Bursts.R")
-source("Simulation/Jumps.R")
-source("Estimation/pre-average.R")
-source("Estimation/estimates.R")
+source("Estimation/estimates_reloaded.R")
 
 #################### PARAMETERS THAT DON'T CHANGE ####################
-omega2 <- 2.64*10^(-10)*25 #Then sd is 5 times as high
+omega2 <- 2.64*10^(-10)*25 #What Mathias wrote
 omega <- sqrt(omega2)
 K2 <- 0.5 #K2
 n <- 23400
 mat <- 6.5/(24*7*52)
 dt <- mat/n
 Npaths <- 1000
-sigma2 <- 0.0457/25 #Then sd is 5 times as low
-sigma <- sqrt(sigma2) 
+sigma2 <- 0.0457/25
+sigma <- sqrt(sigma2)
 
-#Because of lack of memory, it is done in 10 loops
-n_loops <- 10
+#Because of lack of memory, it is done in loops
+n_loops <- ceiling(Npaths/100)
 
 #List to final values
-hd_list <- seq(1,20,by = 1)/ (2*60*24*7*52)
+hd_list <- seq(1,20,by = 1)/ (60*24*7*52)
 var_bias_temp <- matrix(nrow = n_loops,ncol = length(hd_list))
 
 for (memory in 1:n_loops) {
@@ -31,23 +28,22 @@ for (memory in 1:n_loops) {
   temp_paths <- Npaths / n_loops
   set.seed(100*memory) #We need a new seed in every loop
   BS <- sim.BlackScholes(mean = 0, sd = sigma, omega = omega, Nsteps = n, Npath = temp_paths)
+
+  #Create dy
+  BS$Y <- t(diff(t(as.matrix(BS$Y))))
   
   #################### LOOP OVER H_D ####################
   
   #H_d from 1min to 15min
-    
   for (hd in 1:length(hd_list)) {
     
-    #hd <- 1
+    #hd <- 2
     desired_index <- n-1 #Takes last index, so K uses as many points as possible
-    mu_hat <- numeric(length = temp_paths)
     
-    for (i in 1:temp_paths) {
-      #i <- 1
-      single_path <- list(Y = diff(BS$Y[i,]), time = BS$time)
-      mu_hat[i] <- sqrt(hd_list[hd])/sqrt(K2*sigma^2)*est.mu(data = single_path, hd = hd_list[hd], t.index = desired_index)$mu[1]
-    }
-    var_bias_temp[memory,hd] <- mean(mu_hat^2) #We know it has mean zero, so E(mu^2) is more precise than Var(mu)
+    mu <- est.mu.mat.2.0(data = BS, hd = hd_list[hd])$mu[,desired_index]
+    T_sigma <- sqrt(hd_list[hd])*mu/sqrt(K2*sigma2)
+
+    var_bias_temp[memory,hd] <- mean(T_sigma^2) #We know it has mean zero, so E(mu^2) is more precise than Var(mu)
   }
 }
 
@@ -58,7 +54,7 @@ for (hd in 1:length(hd_list)) {
 }
 
 #Compute the the bias from the last noise term
-noise <- 1+omega^2 / (hd_list*K2*sigma^2)
+noise <- 1+omega^2 / (hd_list*K2*sigma2)
 
 
 #################### PLOT ####################
@@ -66,9 +62,14 @@ hd_minutes <- hd_list*(60*24*7*52)
 data <- data.frame(hd = hd_minutes, target = (1:length(hd_minutes)*0)+1, var_bias = var_bias, var_bias_noise = noise)
 
 ggplot() +
-  geom_line(data=data, aes(x=hd, y=var_bias, col = "T_sigma"), size = 1) +
-  geom_line(data=data, aes(x=hd, y=var_bias_noise, col = "R_bias"), size = 1) +
-  geom_line(data=data, aes(x=hd, y=target, col = "target"), size = 1) +
-  xlab("Bandwidth, hd") + ylab("Normalized Variance")
-
+  geom_line(data=data, aes(x=hd, y=var_bias, col = "Var_mu"), size = 1) +
+  geom_line(data=data, aes(x=hd, y=var_bias_noise, col = "var-noise"), size = 1) +
+  geom_line(data=data, aes(x=hd, y=target, col = "1"), size = 1) +
+  xlab(TeX('$h_n$')) + ylab("Normalized Variance") +
+  ggtitle(TeX('Bias of $\\sqrt{h_n} \\mu_t^n$ for different bandwidths')) +
+  theme(plot.title = element_text(hjust = 0.5, size = 14)) +
+  scale_color_discrete(name = "Expression",
+                       labels = unname(TeX(
+    c("1",'Var $\\left( \\frac{\\sqrt{h_n} \\mu_t^n}{\\sqrt{K_2 \\sigma^2}} \\right)$',
+      "$1+\\frac{\\omega^2}{h_n K_2 \\sigma^2$"))))
 

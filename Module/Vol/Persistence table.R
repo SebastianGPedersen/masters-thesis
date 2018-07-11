@@ -95,13 +95,37 @@ p
 
 
 ##############
-plotLogACF <- function(persistenceDT, TradingDayLagMin, TradingDayLagMax, bucketLengthInMinutes){
+plotLogACF <- function(persistenceDT, TradingDayLagMin, TradingDayLagMax, bucketLengthInMinutes, SPY_Bool = F){
   AnnualizedBucketLength <- bucketLengthInMinutes/(60*24*252)
+  if(SPY_Bool){
+    TradingDayACF <-as.vector(acf(persistenceDT$LogVolCorrected, lag.max = TradingDayLagMax, plot = F)[[1]])[TradingDayLagMin:TradingDayLagMax]
+  } else {
+    TradingDayACF <- PR.acfFunc(DT = persistenceDT, lags = TradingDayLagMin:TradingDayLagMax, logVolCol = "LogVolCorrected")$acf
+  }
+  
+  if(any(TradingDayACF<0)){ # if any negative, change max, and do it again
+    lastBeforeNeg <- which(TradingDayACF<0)[1] -1
+    print(c(TradingDayLagMax, lastBeforeNeg))
+    TradingDayLagMax <- lastBeforeNeg
+    
+    if(SPY_Bool){
+      TradingDayACF <-as.vector(acf(persistenceDT$LogVolCorrected, lag.max = TradingDayLagMax, plot = F)[[1]])[TradingDayLagMin:TradingDayLagMax]
+    } else {
+      TradingDayACF <- PR.acfFunc(DT = persistenceDT, lags = TradingDayLagMin:TradingDayLagMax, logVolCol = "LogVolCorrected")$acf
+    }
+  }
+  
   TradingDayh <- AnnualizedBucketLength*TradingDayLagMin:TradingDayLagMax
-  TradingDayACF <-as.vector(acf(persistenceDT$LogVolCorrected, lag.max = TradingDayLagMax, plot = F)[[1]])[TradingDayLagMin:TradingDayLagMax]
+  
   plot(log(TradingDayh), log(TradingDayACF), xlab = expression(log~(h)), ylab = expression(log~ (rho)), sub = paste(bucketLengthInMinutes,"-minute buckets"))
   return(NULL)
 }
 
 plotLogACF(persistenceDTList[[slice]], xyList[[slice]][1], xyList[[slice]][length(xyList[[slice]])], bucketLengthInMinutes[slice])
 PR.est.beta(persistenceDTList[[slice]], 19344^(1/4), 19344^(1/3), bucketLengthInMinutes[slice])
+
+
+
+## BTC
+persistenceDT <- PR.persistence_prep_DT(bvSDTfff = bvS_List$bvSDTfff)
+plotLogACF(persistenceDT = persistenceDT, TradingDayLagMin = 1, TradingDayLagMax = length(bvSDTfff[[1]]/2), bucketLengthInMinutes = 5, SPY_Bool = T)

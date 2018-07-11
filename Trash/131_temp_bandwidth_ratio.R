@@ -29,7 +29,7 @@ K2 <- 0.5 #K2
 n <- 23400
 mat <- 6.5/(24*7*52)
 dt <- mat/n
-Npaths <- 100 #Temporary. Should be 1000
+Npaths <- 1000 #Temporary. Should be 1000
 sigma2 <- 0.0457
 sigma <- sqrt(sigma2)
 lag <- 10 #Temporary. Should be 100
