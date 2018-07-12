@@ -54,8 +54,8 @@ data<-data.frame(time = hest$time[t.index], Tstat = meanT, time.dt = hest.dt$tim
 
 require(ggplot2)
 ggplot() +
-  geom_point(data=data, aes(x=time*60*60, y=Tstat, col = "even dt"), size = 1) +
-  geom_point(data=data, aes(x=time.dt*60*60, y=Tstat.dt, col = "uneven dt"), size = 1) +
+  geom_point(data=data, aes(x=time*60*60, y=Tstat, col = "equidistant"), size = 1) +
+  geom_point(data=data, aes(x=time.dt*60*60, y=Tstat.dt, col = "non-equidistant"), size = 1) +
   xlab("time") + ylab("Average absolute T value") 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
