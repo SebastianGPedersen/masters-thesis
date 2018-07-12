@@ -27,9 +27,6 @@ dt <- dt[rowsToInclude]
 ###########
 
 
-
-
-
 dayLengthInMinutes <- 24*60
 bucketLengthInMinutes <- c(5,10,15,30)
 m <- 3:200
