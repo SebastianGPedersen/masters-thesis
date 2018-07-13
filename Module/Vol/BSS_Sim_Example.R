@@ -15,8 +15,9 @@ source("datahandling.R")
 setwd(cd_UNIQUE_NAME_BSS_Sim)
 rm(cd_UNIQUE_NAME_BSS_Sim)
 ##################################
-temp <- BV.get_SPY_data(maxDate = "2014-01-03")
-plot(temp$DateTime, exp(temp$logPrice))
+# temp <- BV.get_SPY_data(maxDate = "2014-01-03")
+# plot(temp$DateTime, exp(temp$logPrice))
+
 Fit <- sim.BSS.Fit(bucketLengthInMinutes = 5)
 Fit$bvS_List$bvSDTfff
 Fit$alpha
