@@ -47,7 +47,7 @@ gc()
 ###################### IV Day stuff #############################
 
 # resList <- vol.est.IVestPathwise(dt)
-resList <- readRDS("FullDayresList.rds")
+# resList <- readRDS("FullDayresList.rds")
 # saveRDS(resList, "FullDayresList.rds")
 
 resList$IVest
@@ -147,6 +147,8 @@ res$fit$rank
 summary(res$fit)
 sum(is.na(res$fit$coefficients))
 res$optimalP
+res$fit
+
 plot(res$DT$LogVol[1:nIntradayBuckets])
 lines(res$fit$fitted.values[1:nIntradayBuckets])
 plot(res$fit$fitted.values[1:nIntradayBuckets]-res$fit$coefficients[1])

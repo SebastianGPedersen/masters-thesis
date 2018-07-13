@@ -74,7 +74,8 @@ print("IV estimation completed")
 bvSDT <- resListIntraday$IVest$bvSDT
 bvSDT
 # YEARLY parametrization
-bvSDT[, Vol:= sqrt(bvS1 * bucketLengthInMinutes/(60*24*252)),]
+# bvSDT[, Vol:= sqrt(bvS1 * bucketLengthInMinutes/(60*24*252)),]
+bvSDT[, Vol:= sqrt(bvS1),]
 
 nIntradayBuckets <- dayLengthInMinutes/bucketLengthInMinutes
 bvSDT[, IntraDayBucket := id %% nIntradayBuckets]
@@ -101,6 +102,6 @@ bvSDTfff[, LogVolnCorrect := LogVol - nCorrect,]
 IntradayPerDay <- (60/bucketLengthInMinutes)*24
 bvSDTfff[, lagInd:= (as.numeric(DayBucket)-1)*IntradayPerDay + (IntraDayBucket)]
 
-return(list(bvSDTfff=bvSDTfff, optimalP=res$optimalP, buckets=buckets, countDT = resListIntraday$countDT))
+return(list(bvSDTfff=bvSDTfff, optimalP=res$optimalP, buckets=buckets, countDT = resListIntraday$countDT, FFF = res, Period = max(bvSDTfff$IntraDayBucket), bucketLengthInMinutes = bucketLengthInMinutes))
 
 }

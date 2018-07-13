@@ -13,7 +13,7 @@ rm(cd_UNIQUE_NAME_Toy)
 ##################################
 
 ########## DATA
-dt <- BV.get_SPY_data(maxDate = "2014-02-01") #Gets first month of data
+dt <- BV.get_SPY_data() #Gets first month of data
 
 ########### Vol estimation
 bucketLengthInMinutes <- 5 # Can't trust results if going lower

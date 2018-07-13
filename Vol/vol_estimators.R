@@ -19,7 +19,7 @@ vol.est.DataIntradayBucket <- function(DT, m){
     stop("m needs to specify equal-sized buckets from 9.30 to 16.00, i.e.")
   }
   
-  allDays <- as.POSIXct.Date(as.Date(unique(dt$Date))) 
+  allDays <- as.POSIXct.Date(as.Date(unique(DT$Date))) 
   
   buckets2 <- seq(from = 34200+m*60, to = 57600, by = m*60) #every day, get hours 09.30+m to 16.00
   buckets <- .POSIXct(character(length(allDays)*length(buckets2)), tz = "UTC") #rep(NA, length(allDays)*length(buckets2))

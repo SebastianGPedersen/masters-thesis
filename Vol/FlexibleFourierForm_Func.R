@@ -40,15 +40,19 @@ FFF.estOptimalP<- function(DT, maxP, dataCol,  IntradayCol, dayCol, dailyInterac
   return(list(optimalP = optimalP, DT = bestDT, fit = bestFit, ColNames = bestColNames, Crit = bestCrit, CritVec = CritVec))
 }
 
-FFF.initFFF <- function(DT, P, IntradayCol){
+FFF.initFFF <- function(DT, P, IntradayCol, Period){
   #EDITS DT BY REFERENCE
   #data.table DT with cols
     #IntradayCol (column name as string): Col with repeating numbers 1:x, with x denoting a number of intervals the day has been split into (5min buckets, 6.5h day = 78)
+    # Can be used more generally, by denoting a column with times to "predict" in. Used for simulation.
   #P number of sin & cos terms to include
   
   # vol <- DT$volCol #extract only once
   intraDayVec <- DT[[IntradayCol]]
-  Period <- max(intraDayVec)
+  
+  if(missing(Period)){
+    Period <- max(intraDayVec)
+  }
   
   sinTerm <- function(p){
     #NOT vectorized in p

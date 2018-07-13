@@ -6,8 +6,9 @@
  }
  
  PR.est.alpha <- function(variogramDT, m, bucketLengthInMinutes, OLS = T, SPY_Bool = T){
-   AnnualizedBucketLength <- bucketLengthInMinutes/(60*24*252)
-   TradingDayh <- AnnualizedBucketLength*(1:m)
+   # AnnualizedBucketLength <- bucketLengthInMinutes/(60*24*252)
+   # TradingDayh <- AnnualizedBucketLength*(1:m)
+   TradingDayh <- 1:m
    if(SPY_Bool){
      variogramValues <- PR.vgFunc2(variogramDT$LogVolCorrected, m)
    } else {
@@ -35,8 +36,9 @@
  
  
  PR.est.beta <- function(persistenceDT, TradingDayLagMin, TradingDayLagMax, bucketLengthInMinutes, SPY_Bool = T){
-   AnnualizedBucketLength <- bucketLengthInMinutes/(60*24*252)
-   TradingDayh <- AnnualizedBucketLength*TradingDayLagMin:TradingDayLagMax
+   # AnnualizedBucketLength <- bucketLengthInMinutes/(60*24*252)
+   # TradingDayh <- AnnualizedBucketLength*TradingDayLagMin:TradingDayLagMax
+   TradingDayh <- TradingDayLagMin:TradingDayLagMax
    if(SPY_Bool){
      TradingDayACF <-as.vector(acf(persistenceDT$LogVolCorrected, lag.max = TradingDayLagMax, plot = F)[[1]])[TradingDayLagMin:TradingDayLagMax]
    } else {
