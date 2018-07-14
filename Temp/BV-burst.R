@@ -29,19 +29,16 @@ vol.est.performance <- function(data, thetas){
     # PRE AVERAGING
     Rstar    <- matrix(NA, nrow = dim(Y)[1], ncol = N-k+1)
     omegaest <- rep(NA, dim(Y)[1]) #matrix(NA, nrow = dim(Y)[1], ncol = dim(Y)[2])
-    RVstar   <- rep(NA, dim(Y)[1]) #matrix(NA, nrow = dim(Y)[1], ncol = dim(Y)[2])
     BVstar   <- rep(NA, dim(Y)[1]) #matrix(NA, nrow = dim(Y)[1], ncol = dim(Y)[2])
     
     for(i in 1:dim(Y)[1]){
-      Rstar[i,]    <- vol.est.preA(Y[i,], k)
+      Rstar[i,]    <- vol_est_preA(Y[i,], k)
       # OMEGA
       omegaest[i] <- vol.est.omega2(Data_subset = diff(Y[i,]))
-      # RV*
-      RVstar[i]   <- vol.est.RVstar(Rstar[i,], k, omegaest[i], theta)
       # BV*
-      BVstar[i]   <- vol.est.BVstar(Rstar[i,], k, omegaest[i], theta)
+      BVstar[i]   <- vol_est_BVstar(Rstar[i,], k, omegaest[i], theta)
     }
-    return(data.table(theta = theta, RV = mean(RVstar/IV), BV = mean(BVstar/IV)))
+    return(data.table(theta = theta, IV = mean(IV), BV = mean(BVstar), BVIV = mean(BVstar/IV)))
   }
   # DO SO FOR EACH THETA
   mid <- NULL
@@ -51,19 +48,20 @@ vol.est.performance <- function(data, thetas){
   return(mid)
 }
 
-thetas <- c(0.1, 0.5, 1, 2, 5)
+thetas <- c(0.5, 1, 2)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~HESTON-SIMULATION~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Nsteps <- 40000; Npath <- 1000 # 40 000; 10 000 # TAKES ROUGHLY 1.5 hours for all schemes
+Nsteps <- 100000; Npath <- 100 # 40 000; 10 000 # TAKES ROUGHLY 1.5 hours for all schemes
 
 # MEMORY LOOP
 total <- NULL
-for(mem in 1:10){
+for(mem in 1:100){
   gc()
   print(mem)
   print(paste0("Loop cycle: ",mem," - ",Sys.time()))
   # BURST/JUMP SETTINGS
-  burst_time <- 0.5; interval_length <- 0.05; alpha <- 0.8; beta <- 0.1;
+  burst_time <- 0.5; interval_length <- 0.05; alpha <- 0.8; beta <- 0.45;
   c_1 <- (1-alpha)*0.005/(10/(60*24*7*52))^(1-alpha); c_2 <- sqrt((1-2*beta)*0.001^2/(10/(60*24*7*52))^(1-2*beta));
+
   
   # RAW
   hest <- sim.heston(sim.setup(Nsteps = Nsteps, Npath = Npath))
@@ -74,10 +72,7 @@ for(mem in 1:10){
     # VB
     hestvb <- sim.addvb(Heston_res = hest, burst_time = burst_time, interval_length = interval_length,
                         c_2 = c_2, beta = beta, reverse = F, recenter = F)
-    # VB JUMP
-    hestvbJ <- sim.addjump(Heston_res = hestvb, burst_time = burst_time, interval_length = interval_length,
-                           c_1 = c_1, alpha = alpha)
-    
+
     # VB DriftBurst - high alpha
     hestdbvb<-sim.adddb(Heston_res = hestvb, burst_time = burst_time, interval_length = interval_length,
                       c_1 = c_1, alpha = alpha, reverse = F)
@@ -99,9 +94,6 @@ for(mem in 1:10){
   vb <- vol.est.performance(hestvb, thetas)
   vb<-vb[, id:= "vb"]
   
-  vbJ <- vol.est.performance(hestvbJ, thetas)
-  vbJ<-vbJ[, id:= "vbJ"]
-  
   dbvb <- vol.est.performance(hestdbvb, thetas)
   dbvb<-dbvb[, id:= "dbvb"]
   
@@ -112,4 +104,6 @@ for(mem in 1:10){
 }
 
 # MEAN OF EACH
-fullmean <- total[, lapply(.SD, mean), by = c("theta", "id"), .SDcols = c("BV","RV")]
+fullmean <- total[, lapply(.SD, mean), by = c("theta", "id"), .SDcols = c("BV")]
+
+saveRDS(fullmean, file = "BV-burstOHNE-RV.rds")

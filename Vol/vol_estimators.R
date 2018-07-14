@@ -258,4 +258,7 @@ vol.est.preA<-function(logPrice_Data, K){
   return(r/K)
 }
 
+require(Rcpp)
+
+sourceCpp("Vol/volest.cpp")
 
