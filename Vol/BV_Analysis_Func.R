@@ -1,6 +1,6 @@
 cd_UNIQUE_NAME_BV_ANALYSIS__ <- getwd()
 
-setwd(paste0(Sys.getenv("masters-thesis"), "\\Vol"))
+setwd(paste0(Sys.getenv("masters-thesis"), "/Vol"))
 source("vol_estimators.R")
 source("FlexibleFourierForm_Func.R")
 
