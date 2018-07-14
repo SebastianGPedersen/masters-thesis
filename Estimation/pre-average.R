@@ -43,5 +43,3 @@ est.NewPreAverage <- function(delta_y, k_n, kernel_func = NA) {
   return(y_bar)
 }
 
-
-

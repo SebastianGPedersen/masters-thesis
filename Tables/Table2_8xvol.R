@@ -102,11 +102,11 @@ Table1_results[,3+1:length(h_list)] <- Table1_results[,3+1:length(h_list)] /n_lo
 
 
 ###Re-structure Table as in Christensen et. al.:
-Table2 <- restructure_table1(Table1_results,h_list)
+Table2_8xvol <- restructure_table1(Table1_results,h_list)
 
 ### Save and view
-save(Table2, file = "Module/Table2.Rdata")
+save(Table2_8xvol, file = "Module/Table2_8xvol.Rdata")
 
-View(Table2)
+View(Table2_8xvol)
 
 
