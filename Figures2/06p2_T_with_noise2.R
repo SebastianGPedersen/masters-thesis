@@ -1,7 +1,7 @@
 library(ggplot2)
+library(latex2exp)
 setwd(Sys.getenv("masters-thesis"))
 source("Simulation/Heston.R")
-source("Simulation/BlackScholes.R")
 source("Simulation/Bursts.R")
 source("Simulation/Jumps.R")
 source("Estimation/pre-average.R")
@@ -16,8 +16,8 @@ omega <- sqrt(omega2)
 K2 <- 0.5
 
 #Burst settings
-alpha <- 0.55
-beta <- 0.45
+alpha <- 0.8
+beta <- 0.1
 c_1 <- (1-alpha)*0.005/(10/(60*24*7*52))^(1-alpha)
 c_2 <- sqrt((1-2*beta)*0.001^2/(10/(60*24*7*52))^(1-2*beta))
 
@@ -29,7 +29,7 @@ psi_3 <- 1 #int(g'(x)^2)
 
 
 #################### PARAMETERS CHANGING WITH N ####################
-n_list <- c(800, 1600, 2000, 3000, 5000, 7500, 10000, 20000)#, 30000, 40000, 60000)
+n_list <- c(800, 1600, 2000, 3000, 5000, 7500, 10000, 20000, 30000, 40000, 60000)
 
 #Initialize list with 5 mean, lower and upper for later plot
 
@@ -47,7 +47,7 @@ for (i in 1:n_processes) {
 p0 <- Sys.time()
 for (my_n in 1:length(n_list)) {
   print(my_n)
-  #my_n <- 8
+  #my_n <- 5
   #my_n <- length(n_list)
   mat <- 6.5/(24*7*52)#*52*7*24*60*60 #In years
   n <- n_list[my_n]
@@ -69,8 +69,6 @@ for (my_n in 1:length(n_list)) {
   ############ Simulation #########
   Npath <- 400
   settings <- sim.setup(mat=mat, Npath = Npath, Nsteps = n, omega = omega) #6.5 hours
-  BS <- sim.BlackScholes(mean = 0, sd = sqrt(settings$theta), omega = omega, Nsteps = settings$Nsteps, Npath = settings$Npath)
-  
   Heston <- sim.heston(settings)
   Heston_vb <- sim.addvb(Heston,burst_time = 0.5, interval_length = 0.05, c_2 = c_2, beta = beta, reverse = F, recenter = F)
   Heston_vbdb <- sim.adddb(Heston_vb, burst_time=0.5,interval_length=0.05, c_1 = c_1, alpha = alpha, reverse = F)
@@ -82,18 +80,17 @@ for (my_n in 1:length(n_list)) {
   for (j in 1:length(all_paths)) {
     #j <- 1
     path <- all_paths[[j]]
-    #path <- BS
+
     #We need to transpose Y for dy to work properly
     path$Y <- t(diff(t(as.matrix(path$Y))))
     
     #Calculate T-hat
     mu_hat <- 1/(psi_1*k_n)*est.mu.pre_avg.mat.2.0(data = path,hd,k_n)$mu[,desired_index]
-    sigma_hat2_biased <- 1/(psi_2*k_n)*est.sigma.pre_avg.mat.2.0(data = path,hv = hd,k_n)$sig[,desired_index] #Måske 
+    sigma_hat2_biased <- 1/(psi_2*k_n)*est.sigma.pre_avg.mat.2.0(data = path,hv = hd,k_n)$sig[,desired_index]
     bias_term <- psi_3*K2/(psi_2*theta_1^2*mat) * omega^2
     sigma_hat2 <- sigma_hat2_biased - bias_term
     T_hat <- sqrt(hd) * mu_hat / sqrt(sigma_hat2)
   
-    
     T_hat_clean <- na.omit(T_hat) #There MIGHT be negtive sigma-hat but it is highly unlikely
     
     ######## SAVE MEAN AND VARIANCE FOR PLOT #######
@@ -103,17 +100,6 @@ for (my_n in 1:length(n_list)) {
   }
 }
 print(Sys.time()-p0)
-
-
-#### CHECK DISTRIBUTION RESULTS
-#Mu
-(correct_var <- K2*settings$theta)
-var(sqrt(hd)*mu_hat)
-var(sqrt(hd)*mu_hat)/correct_var #Rammer 80% af var
-
-#Sigma
-mean(sigma_hat2) #Rammer alt alt for højt
-mean(sigma_hat2)/correct_var #Rammer 80% af var
 
 #################### PLOT ####################
 #Re-shape to data.frame(x, lower, mean, upper, farve)
@@ -150,6 +136,6 @@ ggplot(plot_data_frame, aes(n, mean, color = process)) +
   theme(plot.title = element_text(hjust = 0.5, size = 14))
 
 #Save dataframe for later
-save(plot_data_frame, file="Figures2/Saved_data_for_plots/05_T-estimator1_with_noise.Rda")
+save(plot_data_frame, file="Figures2/Saved_data_for_plots/06p2_T_with_noise2.Rda")
 
 print(Sys.time()-p0) #approx 10 min with max(n) = 60k and npaths = 500

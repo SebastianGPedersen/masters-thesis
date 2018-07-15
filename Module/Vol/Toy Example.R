@@ -1,7 +1,7 @@
 #### source functions neeeded
 cd_UNIQUE_NAME_Toy <- getwd()
 
-setwd(paste0(Sys.getenv("masters-thesis"), "\\Vol"))
+setwd(paste0(Sys.getenv("masters-thesis"), "/Vol"))
 source("vol_estimators.R")
 source("FlexibleFourierForm_Func.R")
 source("BV_Analysis_Func.R")

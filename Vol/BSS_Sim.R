@@ -8,6 +8,7 @@ sim.BSS.equidist_times <- function(Nsteps = 100, mat = 6.5/(24*7*52)){
 }
 
 sim.BSS <- function(hVec, nPaths, S0 = 1, mu_add = 0, type = "Gamma", Fit){
+  time_points <- hVec[-1] #For output
   # Assums hVec[1] = 0
   if(missing(Fit)){
     Fit <- sim.BSS.Fit()
@@ -20,10 +21,10 @@ sim.BSS <- function(hVec, nPaths, S0 = 1, mu_add = 0, type = "Gamma", Fit){
   Vol <- sim.BSS.Vol(hVec, nPaths, type, Fit$alpha, Fit$memory_param, Fit$log_c_sigma, Fit$nu, Fit$bvS_List)
   dW  <- replicate(n = nPaths, rnorm(length(hVec), 0, 1), simplify = T)
   lnS <-  apply((mu_add - (Vol^2)/2) * dt + Vol*sqrt(dt)*dW, 2, cumsum)
-  S   <- S0 * exp(lnS)
+  #S   <- S0 * exp(lnS)
   # Transpose S and Vol to get: Rows = Paths, Cols = Steps
-  S <- rbind(rep(S0, nPaths), S)
-  return(list(S = t(S), Vol = t(Vol)))
+  #S <- rbind(rep(S0, nPaths), S)
+  return(list(time = time_points,X = t(lnS), vol = t(Vol)))
   
 }
 

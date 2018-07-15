@@ -1,4 +1,5 @@
 library(ggplot2)
+library(latex2exp)
 setwd(Sys.getenv("masters-thesis"))
 source("Simulation/Heston.R")
 source("Simulation/Bursts.R")
@@ -28,7 +29,7 @@ psi_3 <- 1 #int(g'(x)^2)
 
 
 #################### PARAMETERS CHANGING WITH N ####################
-n_list <- c(800, 1600, 2000, 3000, 5000, 7500, 10000, 20000)#, 30000, 40000, 60000)
+n_list <- c(800, 1600, 2000, 3000, 5000, 7500, 10000, 20000, 30000, 40000, 60000)
 
 #Initialize list with 5 mean, lower and upper for later plot
 
@@ -135,6 +136,6 @@ ggplot(plot_data_frame, aes(n, mean, color = process)) +
   theme(plot.title = element_text(hjust = 0.5, size = 14))
 
 #Save dataframe for later
-save(plot_data_frame, file="Figures2/Saved_data_for_plots/05_T-estimator1_with_noise.Rda")
+save(plot_data_frame, file="Figures2/Saved_data_for_plots/05p2_T-estimator1_with_noise.Rda")
 
 print(Sys.time()-p0) #approx 10 min with max(n) = 60k and npaths = 500

@@ -18,7 +18,6 @@ registerDoParallel(n_logic_units)
 ### SIGMA ###
 #With parallel
 est.sigma.mat.2.0 <- function(data, hv, kern = kern.leftexp, wkern=kern.parzen, lag=10, bandwidth_rescale = F){
-  Heston <- data #possible fix?
   #data <- path
   #hv <- 5 / (60*24*7*52)
   #lag <- 10
@@ -103,7 +102,9 @@ est.sigma.mat.2.0 <- function(data, hv, kern = kern.leftexp, wkern=kern.parzen, 
 #Without parallel - faster that with parallel
 est.mu.mat.2.0 <- function(data, hd, kern = kern.leftexp, bandwidth_rescale = F){
   #data <- BS
+  #data <- process
   #hd <- hd_list[hd]
+  #bandwidth_rescale <- T
   
   #kern handling
   if(is.list(kern)) kern<-kern$kern
@@ -258,11 +259,11 @@ est.sigma.pre_avg.mat.2.0 <- function(data, hv, k_n, kern = kern.leftexp){
   for (path in 1:paths) {
     #path <- 1
     dy <- data$Y[path,]
-    products <- (kernels*dy)^2
+    products <- kernels*dy
     pre_avg <- c(rep(0,k_n),est.NewPreAverage(delta_y = products, k_n)) #Pad with zeros in beggining so vector is corect size.
     
     #zero lag
-    sum_terms <- pre_avg
+    sum_terms <- pre_avg^2
     sigmas_non_scaled <- 1/hv * cumsum(sum_terms)
     sigmas[path,] <- sigmas_non_scaled/rescaling^2
   }
