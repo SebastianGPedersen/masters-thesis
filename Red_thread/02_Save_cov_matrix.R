@@ -1,5 +1,5 @@
-setwd(Sys.getenv("masters-thesis"))
-load("../Personal/Fit.Rda") #15-20sek. Loads the fit with Gamma function.
+setwd(Sys.getenv("masters-thesis-data"))
+load("BSS_sim/Fit.Rda") #15-20sek. Loads the fit with Gamma function.
 
 setwd(paste0(Sys.getenv("masters-thesis"), "/Vol"))
 source("vol_estimators.R")
@@ -12,7 +12,6 @@ source("BSS_Sim.R")
 setwd(paste0(Sys.getenv("masters-thesis"), "/SPY"))
 source("datahandling.R")
 
-#Rammer jeg 4GB undervejs..?
 
 p0 <- Sys.time() #7sec w. 1000 steps, 1000 paths
 Nsteps <- 23400

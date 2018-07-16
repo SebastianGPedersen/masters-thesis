@@ -22,6 +22,6 @@ rm(cd_UNIQUE_NAME_BSS_Sim)
 Fit <- sim.BSS.Fit(bucketLengthInMinutes = 5)
 
 
-setwd(Sys.getenv("masters-thesis"))
-save(Fit, file = "../Personal/Fit.Rda")
+setwd(Sys.getenv("masters-thesis-data"))
+save(Fit, file = "BSS_sim/Fit.Rda")
 
