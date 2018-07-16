@@ -109,9 +109,10 @@ save.BSS.cov <- function(hVec, nPaths, S0 = 1, mu_add = 0, type = "Gamma", Fit){
   covMat <- t(chol(covMat)) 
   
   #Save covariance matrix
-  setwd(Sys.getenv("masters-thesis"))
-  save(covMat, file = "../Personal/CovMat.Rda")
-  
+
+  setwd(Sys.getenv("masters-thesis-data"))
+  save(covMat, file = "BSS_sim/covMat.Rda")
+
 }
 
 

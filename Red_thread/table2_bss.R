@@ -4,7 +4,7 @@ source("Simulation/add_all.R")
 
 
 ####### ESTIMATION PARAMETERS
-heston_params <- sim.setup(Nsteps = 1000, Npath = 10)
+heston_params <- sim.setup()
 h_list <- c(120, 300, 600)/(52*7*24*60*60)
 ratio_list <- c(15,12,10)
 lag <- 10
@@ -23,8 +23,8 @@ c_1_func <- function(alpha) {
     c_1 <- (1-alpha)*0.005/(10/(60*24*7*52))^(1-alpha)
   } 
   else if (alpha == 0.65){
-      c_1 <- (1-alpha)*0.01/(10/(60*24*7*52))^(1-alpha)
-    } 
+    c_1 <- (1-alpha)*0.01/(10/(60*24*7*52))^(1-alpha)
+  } 
   else if (alpha == 0.75) {
     c_1 <- (1-alpha)*0.015/(10/(60*24*7*52))^(1-alpha)
   }
@@ -76,20 +76,20 @@ output_list <- list()
 
 p0 <- Sys.time()
 for (memory in 1:n_loops) {
-    #memory <- 1
+  #memory <- 1
   
-    ### Keep track
-    print(paste("Loop",memory, "out of ",n_loops))
-    print(paste("Expected time left:", round(Npaths-(memory-1)*Npaths/n_loops,0),"seconds")) #One second per path
-    
-    ### SIMULATE ALL PATHS
-    heston_params$Npath <- ceiling(Npaths/n_loops)
-    Heston <- sim.heston(heston_params)
-    
-    all_simulations <- sim.add_all(Heston = Heston, burst_args = burstsettings)
-    
-    ### CALCULATE TABLE 1
-    output_list[[memory]] <- Table1_func(all_simulations, h_list = h_list, ratio = ratio_list, t.index = t.index, lag = lag, conf = 95)
+  ### Keep track
+  print(paste("Loop",memory, "out of ",n_loops))
+  print(paste("Expected time left:", round(Npaths-(memory-1)*Npaths/n_loops,0),"seconds")) #One second per path
+  
+  ### SIMULATE ALL PATHS
+  heston_params$Npath <- ceiling(Npaths/n_loops)
+  Heston <- sim.heston(heston_params)
+  
+  all_simulations <- sim.add_all(Heston = Heston, burst_args = burstsettings)
+  
+  ### CALCULATE TABLE 1
+  output_list[[memory]] <- Table1_func(all_simulations, h_list = h_list, ratio = ratio_list, t.index = t.index, lag = lag, conf = 95)
 }
 print(Sys.time()-p0)
 
