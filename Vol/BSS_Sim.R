@@ -55,13 +55,64 @@ sim.BSS.Vol <- function(hVec, nPaths, type, alpha, memory_param, log_c_sigma, nu
   covMat <- covMat * nu^2
   genMat <- t(chol(covMat)) 
   
+  #Save covariance matrix
+  setwd(Sys.getenv("masters-thesis"))
+  save(genMat, file = "../Personal/CovMat.Rda")
+  
   log_Deseason_Sigma_Paths <- replicate(n = nPaths, genMat %*% rnorm(n, 0, 1), simplify = T)
   seasonal_Component <- sim.BSS.Seasonality(hVec, bvS_List)
   
   return(exp(log_c_sigma + log_Deseason_Sigma_Paths + seasonal_Component))
 }
 
+save.BSS.cov <- function(hVec, nPaths, S0 = 1, mu_add = 0, type = "Gamma", Fit){
 
+  # Assums hVec[1] = 0
+  if(missing(Fit)){
+    Fit <- sim.BSS.Fit()
+  }
+  
+  hVec <- hVec * (60*24*7*52)/Fit$bvS_List$bucketLengthInMinutes # time in buckets
+  dt   <- diff(hVec)
+  hVec <- hVec[-1] #Remove time 0  
+  
+  ###Change to sim.BSS.Vol types
+  alpha <- Fit$alpha
+  memory_param <- Fit$memory_param
+  log_c_sigma <- Fit$log_c_sigma
+  nu <- Fit$nu
+  bvS_List <- Fit$bvS_List
+  
+  ###Run Sim.BSS.vol both without copy of covariance matrix
+  if(type == "Power"){
+    BSS_Cor <- BSS.power_cor
+    BSS_Cov <- BSS.power_cov
+    BSS_Var <- BSS.power_var
+  } else if(type == "Gamma"){
+    BSS_Cor <- BSS.gamma_cor
+    BSS_Cov <- BSS.gamma_cov
+    BSS_Var <- BSS.gamma_var
+  } else {
+    stop("Unsupported type")
+  }
+  
+  covMat <- outer(hVec, hVec, FUN = function(x,y) abs(x-y))
+
+  covMat[upper.tri(covMat)] <- BSS_Cov(hVec = covMat[upper.tri(covMat)], alpha = alpha, memory_param = memory_param)
+  
+  covMat[lower.tri(covMat)] <- t(covMat)[lower.tri(covMat)]
+  # covMat # Now symmetric
+  diag(covMat) <- BSS_Var(alpha = alpha, memory_param = memory_param)
+  # covMat
+  n <- length(hVec)
+  covMat <- covMat * nu^2
+  covMat <- t(chol(covMat)) 
+  
+  #Save covariance matrix
+  setwd(Sys.getenv("masters-thesis"))
+  save(covMat, file = "../Personal/CovMat.Rda")
+  
+}
 
 
 

@@ -260,5 +260,5 @@ vol.est.preA<-function(logPrice_Data, K){
 
 require(Rcpp)
 
-sourceCpp("Vol/volest.cpp")
+sourceCpp(paste0(Sys.getenv("masters-thesis"),"/Vol/volest.cpp"))
 
