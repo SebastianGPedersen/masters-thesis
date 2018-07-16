@@ -17,10 +17,10 @@ source("Kernels/kernels.R")
 omega2 <- 2.64*10^(-10)
 omega <- sqrt(omega2)
 K2 <- 0.5 #K2
-n <- 23400
+n <- 100
 mat <- 6.5/(24*7*52)
 dt <- mat/n
-Npaths <- 100 #One year of S&P-500
+Npaths <- 10 #One year of S&P-500
 sigma2 <- 0.0457
 sigma <- sqrt(sigma2)
 lag <- 10 #Temporary. Should be 100
