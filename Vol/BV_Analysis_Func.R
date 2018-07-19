@@ -1,11 +1,11 @@
-cd_UNIQUE_NAME_BV_ANALYSIS__ <- getwd()
-
-setwd(paste0(Sys.getenv("masters-thesis"), "/Vol"))
-source("vol_estimators.R")
-source("FlexibleFourierForm_Func.R")
-
-setwd(cd_UNIQUE_NAME_BV_ANALYSIS__)
-rm(cd_UNIQUE_NAME_BV_ANALYSIS__)
+# cd_UNIQUE_NAME_BV_ANALYSIS__ <- getwd()
+# 
+# setwd(paste0(Sys.getenv("masters-thesis"), "/Vol"))
+# source("vol_estimators.R")
+# source("FlexibleFourierForm_Func.R")
+# 
+# setwd(cd_UNIQUE_NAME_BV_ANALYSIS__)
+# rm(cd_UNIQUE_NAME_BV_ANALYSIS__)
 
 
 BV.get_SPY_data <- function(maxDate = "2014-12-31"){
