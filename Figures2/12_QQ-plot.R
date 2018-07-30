@@ -17,14 +17,14 @@ p0 <- Sys.time()
 omega2 <- 2.64*10^(-10)
 omega <- sqrt(omega2)
 K2 <- 0.5 #K2
-n <- 23400 /7 #Cheating again
-mat <- 6.5/(24*7*52) /7
+n <- 23400 #Cheating again
+mat <- 6.5/(24*7*52)
 dt <- mat/n
 Npaths <- 1000
 sigma2 <- 0.0457
 sigma <- sqrt(sigma2)
 (noise_ratio <- omega/(sqrt(dt)*sigma)) #10.66
-lag <- 100
+lag <- 10
 
 #Because of lack of memory, it is done in loops
 n_loops <- 1

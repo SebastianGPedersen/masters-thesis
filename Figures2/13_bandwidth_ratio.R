@@ -165,12 +165,17 @@ for (i in 1:length(output_mean)){
 
 
 ##### PLOT #####
-ggplot(plot_data_frame, aes(ratios, mean, color = mu_bandwidth)) +
+ggplot(data = plot_data_frame, aes(ratios, mean, color = mu_bandwidth)) +
   geom_line() +
+  scale_fill_discrete(guide=F) +
   geom_ribbon(aes(ymin = lower, ymax = upper, fill = mu_bandwidth), alpha = 0.3) +
-  xlab("Bandwidth ratio") + ylab('Rejection percentage') +
+  xlab("Bandwidth ratio, C") + ylab(TeX('$P(T^* > q_{95})$'))  + # ylab('Rejection percentage') +
   ggtitle("Rejection of T-estimator with jumps") +
-  theme(plot.title = element_text(hjust = 0.5, size = 15))
-  
-save(plot_data_frame, file="Figures2/Saved_data_for_plots/13_bandwidth_ratio.Rda")
+  theme(plot.title = element_text(hjust = 0.5, size = 15)) +
+  scale_color_discrete(name = "Drift bandwidth",
+                       labels = unname(TeX(
+                         c("$5\\%$","$h_{\\mu} = 2$", "$h_{\\mu} = 5$", "$h_{\\mu} = 10$"))))
 
+
+#save(plot_data_frame, file="Figures2/Saved_data_for_plots/13_bandwidth_ratio.Rda")
+load(file="Figures2/Saved_data_for_plots/13_bandwidth_ratio.Rda")

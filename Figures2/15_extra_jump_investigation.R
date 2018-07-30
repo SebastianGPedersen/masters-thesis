@@ -67,7 +67,7 @@ for (memory in 1:n_loops) {
       
       #Calculate T
       mu_hat <- est.mu.mat.2.0(data = all_simulations[[process]], hd = h_mu, bandwidth_rescale = T)$mu[,t.index]
-      sigma2_hat <- est.sigma.mat.3.0(data = all_simulations[[process]], hv = ratio*h_mu, bandwidth_rescale = T)$sig[,t.index]
+      sigma2_hat <- est.sigma.mat.2.0(data = all_simulations[[process]], hv = ratio*h_mu, lag = lag, bandwidth_rescale = T)$sig[,t.index]
       T_hat <- sqrt(h_mu) * mu_hat/ sqrt(sigma2_hat)
         
       #Calculate T_max and thresholds

@@ -9,13 +9,16 @@ source("Simulation/Jumps.R")
 set.seed(100)
 
 #Heston settings
-settings <- sim.setup(mat=6.5/(24*7*52), Npath = 2, omega = 0) #6.5 hours
+#settings <- sim.setup(mat=6.5/(24*7*52), Npath = 2, omega = 0) #6.5 hours
+settings <- sim.setup(mat=6.5/(24*252), Npath = 2, omega = 0) #6.5 hours
 
 #Burst settings
 alpha <- 0.55
 beta <- 0.45
-c_1 <- (1-alpha)*0.005/(10/(60*24*7*52))^(1-alpha)
-c_2 <- sqrt((1-2*beta)*0.001^2/(10/(60*24*7*52))^(1-2*beta))
+#c_1 <- (1-alpha)*0.005/(10/(60*24*7*52))^(1-alpha)
+#c_2 <- sqrt((1-2*beta)*0.001^2/(10/(60*24*7*52))^(1-2*beta))
+c_1 <- (1-alpha)*0.005/(10/(60*24*252))^(1-alpha)
+c_2 <- sqrt((1-2*beta)*0.001^2/(10/(60*24*252))^(1-2*beta))
 
 #Get results with and without bursts. OBS: I have replaced c_1=3 with c_1 = 0.3
 Heston <- sim.heston(settings)

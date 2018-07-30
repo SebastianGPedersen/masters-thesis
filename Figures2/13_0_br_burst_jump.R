@@ -1,4 +1,5 @@
 library(ggplot2)
+library(latex2exp)
 setwd(Sys.getenv("masters-thesis"))
 source("Simulation/Heston.R")
 source("Simulation/add_all.R")
@@ -7,6 +8,7 @@ source("Estimation/estimates_revolution.R")
 source("Estimation/rho.R")
 source("estimation/teststat.R")
 
+set.seed(100)
 
 ####### ESTIMATION PARAMETERS
 heston_params <- sim.setup()
@@ -46,16 +48,16 @@ c_1_func <- function(alpha) {
 c_2_func <- function(beta) {
   c_2 <- 0 #if beta = 0
   if (beta == 0.1) {
-    c_2 <- sqrt((1-2*beta)*(0.00093*0.25)^2/(10/(60*24*7*52))^(1-2*beta))
+    c_2 <- sqrt((1-2*beta)*(8*0.00093*0.25)^2/(10/(60*24*7*52))^(1-2*beta))
   }
   else if (beta == 0.2) {
-    c_2 <- sqrt((1-2*beta)*(0.00093*0.5)^2/(10/(60*24*7*52))^(1-2*beta))
+    c_2 <- sqrt((1-2*beta)*(8*0.00093*0.5)^2/(10/(60*24*7*52))^(1-2*beta))
   }
   else if (beta == 0.3) {
-    c_2 <- sqrt((1-2*beta)*(0.00093*0.75)^2/(10/(60*24*7*52))^(1-2*beta))
+    c_2 <- sqrt((1-2*beta)*(8*0.00093*0.75)^2/(10/(60*24*7*52))^(1-2*beta))
   }
   else if (beta == 0.4) {
-    c_2 <- sqrt((1-2*beta)*(0.00093*1)^2/(10/(60*24*7*52))^(1-2*beta))
+    c_2 <- sqrt((1-2*beta)*(8*0.00093*1)^2/(10/(60*24*7*52))^(1-2*beta))
   }
   return(c_2)
 }
@@ -67,33 +69,30 @@ burstsettings[[1]] <- sim.burstsetting(jump = F,
                                        c_1 = 0,
                                        beta = 0,
                                        c_2 = 0)
-
 burstsettings[[2]] <- sim.burstsetting(jump = F,
-                                  alpha = 0.55,
-                                  c_1 = c_1_func(0.55),
-                                  beta = 0,
-                                  c_2 = 0)
-
+                                       alpha = 0.55,
+                                       c_1 = c_1_func(0.55),
+                                       beta = 0,
+                                       c_2 = 0)
 burstsettings[[3]] <- sim.burstsetting(jump = T,
                                        alpha = 0.55,
                                        c_1 = c_1_func(0.55),
                                        beta = 0,
                                        c_2 = 0)
-
 burstsettings[[4]] <- sim.burstsetting(jump = F,
                                        alpha = 0,
                                        c_1 = 0,
-                                       beta = 0.4,
-                                       c_2 = c_2_func(0.4))
+                                       beta = 0.2,
+                                       c_2 = c_2_func(0.2))
 
 
 #The ratio parameters
-ratio_list <- seq(1,30,by = 1) #From 1 to 20
+ratio_list <- 1:30
 h_mu <- 5 / (52*7*24*60)
 
 #Because of lack of memory, it is done in loops
-Npaths <- 300 #15min
-n_loops <- ceiling(Npaths/50) #After 50 it just scales linearly if not slower
+Npaths <- 1000 #15min
+n_loops <- ceiling(Npaths/100) #After 50 it just scales linearly if not slower
 output_list <- list()
 N <- ceiling(Npaths/n_loops)
 
@@ -179,8 +178,9 @@ for (i in 1:nrow(output_mean)){
 ##### PLOT #####
 ggplot(plot_data_frame, aes(ratios, value, color = process)) +
   geom_line() +
-  xlab("Bandwidth ratio") + ylab('Rejection percentage') +
+  xlab(TeX("Bandwidth ratio, C")) + ylab(TeX('$P(T^* > q_{95})$')) + # 'Rejection percentage') +
   ggtitle("Rejection of T-estimator") +
   theme(plot.title = element_text(hjust = 0.5, size = 15))
   
+#save(plot_data_frame, file="Figures2/Saved_data_for_plots/13_0_br_burst_jump.Rda")
 

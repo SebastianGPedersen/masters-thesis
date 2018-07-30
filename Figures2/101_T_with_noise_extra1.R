@@ -4,16 +4,16 @@ setwd(Sys.getenv("masters-thesis"))
 source("Simulation/Heston.R")
 source("Simulation/Bursts.R")
 source("Simulation/Jumps.R")
-source("Estimation/pre-average.R")
-source("Estimation/estimates.R")
 source("Estimation/estimates_reloaded.R")
 
 #seed
 set.seed(100)
 
 #################### PARAMETERS THAT DON'T CHANGE ####################
-omega <- 0
-K2 <- 0.5 #K2
+omega2 <- 2.64*10^(-10) #What Mathias wrote
+omega <- sqrt(omega2)
+K2 <- 0.5
+lag <- 10
 
 #Burst settings
 alpha <- 0.55
@@ -22,8 +22,9 @@ c_1 <- (1-alpha)*0.005/(10/(60*24*7*52))^(1-alpha)
 c_2 <- sqrt((1-2*beta)*0.001^2/(10/(60*24*7*52))^(1-2*beta))
 
 #################### PARAMETERS CHANGING WITH N ####################
-#n = 60k and npaths = 500 is absolute max that my computer can keep in memory
-n_list <- c(50, 100, 200, 400, 800, 1600, 2000, 3000, 5000, 7500, 10000, 20000, 30000, 40000, 60000)
+n_list <- c(800, 1600, 2000, 3000, 5000, 7500, 10000, 20000, 30000, 40000, 60000)
+
+#Initialize list with 5 mean, lower and upper for later plot
 
 #Initialize list with 5 mean, lower and upper for later plot
 n_processes <- 4
@@ -36,29 +37,32 @@ for (i in 1:n_processes) {
 }
 
 #################### LOOP OVER N ####################
-
+p0 <- Sys.time()
 for (my_n in 1:length(n_list)) {
-  #my_n <- 1
   print(my_n)
+  #my_n <- 5
   #my_n <- length(n_list)
   mat <- 6.5/(24*7*52)#*52*7*24*60*60 #In years
   n <- n_list[my_n]
   dt <- mat/n #In years
-  hd <- 10^(-2)*dt^(1/2) #If years
+  #hd <- 2*10^3*n^(-1/4) #If miliseconds
+  theta_2 <- 10^(-1) #for h_d
+  hd <- mat*theta_2*n^(-1/3) #If years
   
-  #Check that they are reasonable
-  hd/dt
+  #Check they are reasonable
+  #n/k_n #We shouldn't use to many in pre-avg
+  #hd/(k_n*dt) #We should have enough pre-avg within bandwidth
   
   #The index where i calculate T
-  desired_index <- ceiling((n+1)/2) #because it includes t_0 and T, we take (n+1)/2.
+  desired_index <- ceiling((n+1)/2)
   
   
   ############ Simulation #########
-  Npath <- 500
+  Npath <- 400
   settings <- sim.setup(mat=mat, Npath = Npath, Nsteps = n, omega = omega) #6.5 hours
   Heston <- sim.heston(settings)
-  Heston_vb <- sim.addvb(Heston,burst_time = 0.5, interval_length = 0.05, c_2 = c_2, beta = beta)
-  Heston_vbdb <- sim.adddb(Heston_vb, burst_time=0.5,interval_length=0.05, c_1 = c_1, alpha = alpha)
+  Heston_vb <- sim.addvb(Heston,burst_time = 0.5, interval_length = 0.05, c_2 = c_2, beta = beta, reverse = F, recenter = F)
+  Heston_vbdb <- sim.adddb(Heston_vb, burst_time=0.5,interval_length=0.05, c_1 = c_1, alpha = alpha, reverse = F)
   Heston_jump <- sim.addjump(Heston, burst_time = 0.5, interval_length = 0.05, c_1 = c_1, alpha = alpha)
 
   #All paths
@@ -67,31 +71,22 @@ for (my_n in 1:length(n_list)) {
   for (j in 1:length(all_paths)) {
     #j <- 1
     path <- all_paths[[j]]
-    
-    #We need to transpose Y for dy to work properly
-    Y <- t(as.matrix(path$Y))
-    dy <- diff(Y)
-    
-    #Plug bag into path-list
-    path$Y <- t(dy)
-    
-    ######## CALCULATE T estimator ##########
-    #T_hat <- numeric(length = Npath)
-    
-    mu_hat <- est.mu.mat.2.0(data = path, hd)$mu[,desired_index]
-    sigma_hat_2 <- est.sigma.raw.mat.2.0(data = path, hd)$sig[,desired_index]
-    T_hat <- sqrt(hd/K2) * mu_hat/sqrt(sigma_hat_2)
-    
-    T_hat_clean <- na.omit(T_hat) #There MIGHT be negtive sigma-hat but it is highly unlikely
-    
-    ######## SAVE MEAN AND VARIANCE FOR PLOT #######
 
+    #We need to transpose Y for dy to work properly
+    path$Y <- t(diff(t(as.matrix(path$Y))))
+    
+    #Calculate T-hat
+    mu_hat <- est.mu.mat.2.0(data = path,hd)$mu[,desired_index]
+    sigma_hat2 <- est.sigma.mat.2.0(data = path,hv = hd,lag = lag)$sig[,desired_index]
+    T_hat_clean <- sqrt(hd)*mu_hat / sqrt(sigma_hat2)
+  
+    ######## SAVE MEAN AND VARIANCE FOR PLOT #######
     all_plot_data[[j]]$means[my_n] <- mean(T_hat_clean)
-    all_plot_data[[j]]$lower[my_n] <- all_plot_data[[j]]$means[my_n] -sqrt(var(T_hat_clean))
-    all_plot_data[[j]]$upper[my_n] <- all_plot_data[[j]]$means[my_n] +sqrt(var(T_hat_clean))
+    all_plot_data[[j]]$lower[my_n] <- all_plot_data[[j]]$means[my_n] - sqrt(var(T_hat_clean))
+    all_plot_data[[j]]$upper[my_n] <- all_plot_data[[j]]$means[my_n] + sqrt(var(T_hat_clean))
   }
 }
-
+print(Sys.time()-p0)
 
 #################### PLOT ####################
 #Re-shape to data.frame(x, lower, mean, upper, farve)
@@ -120,12 +115,14 @@ for (i in 2:length(all_plot_data)){
 }
 
 ##### PLOT #####
-  
-qplot(n, mean, data = plot_data_frame, geom = "line", color = process) +
+ggplot(plot_data_frame, aes(n, mean, color = process)) +
+  geom_line() +
   geom_ribbon(aes(ymin = lower, ymax = upper, fill = process), alpha = 0.3) +
-  xlab("Number of observations") + ylab(TeX('$ T-estimator \\pm sd$'))
+  xlab("Number of observations") + ylab(TeX('$ T-estimator \\pm sd$')) +
+  ggtitle(TeX("T convergence with $\\Sigma_t^n$ as vol estimator")) +
+  theme(plot.title = element_text(hjust = 0.5, size = 14))
 
 #Save dataframe for later
-save(plot_data_frame, file="Figures2/Saved_data_for_plots/03_T-estimator1_without_noise.Rda")
+save(plot_data_frame, file="Figures2/Saved_data_for_plots/101p2_T_with_noise_extra1.Rda")
 
 print(Sys.time()-p0) #approx 10 min with max(n) = 60k and npaths = 500

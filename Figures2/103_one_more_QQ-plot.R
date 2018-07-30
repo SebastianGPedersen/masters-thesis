@@ -32,7 +32,7 @@ desired_index <- n-1
 #List to final values
 hd_list <- c(2,5,10) / (60*24*7*52) #5 min
 lag <- 10
-T_estimator <- matrix(nrow = Npaths,ncol = length(lag_list))
+T_estimator <- matrix(nrow = Npaths,ncol = length(hd_list))
 
 for (memory in 1:n_loops) {
   #memory <- 1
@@ -49,8 +49,8 @@ for (memory in 1:n_loops) {
   for (hd in 1:length(hd_list)) {
     print(paste0("memory = ",memory, ", hd = ",hd_list[hd],sep = ""))
     sig_hat <- est.sigma.mat(data, hv = hd_list[hd], t.index = desired_index, lag = lag)$sig
-    mu_hat <- est.mu.mat(data, hd = hd, t.index = desired_index)$mu
-    T_estimator[((memory-1)*temp_paths+1):(memory*temp_paths),lag] <- sqrt(hd) * mu_hat / sqrt(sig_hat)    
+    mu_hat <- est.mu.mat(data, hd = hd_list[hd], t.index = desired_index)$mu
+    T_estimator[((memory-1)*temp_paths+1):(memory*temp_paths),hd] <- sqrt(hd_list[hd]) * mu_hat / sqrt(sig_hat)    
   }
 
 }
@@ -63,24 +63,19 @@ plot_data_frame <- data.frame(do.call("rbind",
                                 cbind(T_estimator[,2],rep("hd = 10",dim(T_estimator)[1])),
                                 cbind(T_estimator[,3],rep("hd = 100",dim(T_estimator)[1])))))
 
-colnames(plot_data_frame) <- c("T_estimator", "Lags")
+colnames(plot_data_frame) <- c("T_estimator", "Bandwidth")
 
 #Numeric and factor
 plot_data_frame$T_estimator <- as.numeric(as.character(plot_data_frame$T_estimator))
-plot_data_frame$Lags <- as.factor(plot_data_frame$Lags)
+plot_data_frame$Bandwidth <- as.factor(plot_data_frame$Bandwidth)
 
 
-g1 <- ggplot(plot_data_frame, aes(x = T_estimator, fill = Lags)) + 
-  xlab("T value") + ylab("Density") + 
-  geom_density(adjust = 1.5, alpha = 0.3)+
-  theme(legend.position="none")
-g1
-g2 <- ggplot(plot_data_frame) + 
-  stat_qq(aes(sample = T_estimator, colour = Lags)) +
+ggplot(plot_data_frame) + 
+  stat_qq(aes(sample = T_estimator, colour = Bandwidth)) +
   geom_abline(intercept = 0, slope = 1) +
   xlab("Quantile of standard normal") + ylab("Quantile of T") +
-  theme(legend.position=c(0.87,0.16))
-g2
-
-grid.arrange(g1,g2,nrow = 1,
-             top = textGrob("Distribution of T-estimator",gp=gpar(fontsize=20)))
+  ggtitle(TeX("QQ-plot of T")) +
+  theme(plot.title = element_text(hjust = 0.5, size = 14)) +
+  scale_color_discrete(name = "Bandwidths",
+                       labels = unname(TeX(
+                         c("$h_n = 2$min","$h_n = 5$min", "$h_n = 10$min"))))
