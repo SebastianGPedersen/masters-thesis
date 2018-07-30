@@ -20,7 +20,8 @@ sim.BSS <- function(hVec, nPaths, S0 = 1, mu_add = 0, type = "Gamma", Fit){
   
   Vol <- sim.BSS.Vol(hVec, nPaths, type, Fit$alpha, Fit$memory_param, Fit$log_c_sigma, Fit$nu, Fit$bvS_List)
   dW  <- replicate(n = nPaths, rnorm(length(hVec), 0, 1), simplify = T)
-  lnS <-  apply((mu_add - (Vol^2)/2) * dt + Vol*sqrt(dt)*dW, 2, cumsum)
+  lnS <-  apply(mu_add * dt + Vol*sqrt(dt)*dW, 2, cumsum)
+  # lnS <-  apply((mu_add - (Vol^2)/2) * dt + Vol*sqrt(dt)*dW, 2, cumsum)
   #S   <- S0 * exp(lnS)
   # Transpose S and Vol to get: Rows = Paths, Cols = Steps
   #S <- rbind(rep(S0, nPaths), S)
