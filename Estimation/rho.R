@@ -104,9 +104,12 @@ est.rho.third_degree <- function(T_vector) {
   all_real_x <- c(Re(x_1), Re(x_2), Re(x_3))
   all_real_x <- sort(all_real_x)
   
+  #Check if some are outside
+  if (all_real_x[1] < -1) {return(all_real_x[3])} #If the first is outside, the first two are
+  if (all_real_x[3] > 1) {return(all_real_x[1])} #If the last is outside, the last two are
   
+  ### If 3 solutions inside interval
   #Find out if first or last observation maximizes 
-  
   log_lik <- function(rho) {
     term1 <- -N/2 * log(2*pi)
     term2 <- -N/2 * log(1-rho^2)
