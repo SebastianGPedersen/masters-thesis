@@ -11,9 +11,9 @@ source("spy/dataFunctions.R")
 source("spy/datahandling.R")
 
 # ESTIMATION PARAMETERS
-hd <- 300 #(seconds)
-hv <- hd*12                                    # ATTEMPT RATIO of 1 FOR DB
-lag = 10
+hd <- 600 #(seconds)
+hv <- hd*10                                    # ATTEMPT RATIO of 1 FOR DB
+lag = 30
 t.freq = 5 # every 5 seconds
 offset = 12 # skips the first minute (5*12seconds)
 

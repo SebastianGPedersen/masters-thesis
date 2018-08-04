@@ -4,14 +4,22 @@ source("Simulation/add_all.R")
 
 
 ####### ESTIMATION PARAMETERS
-heston_params <- sim.setup()
 h_list <- c(120, 300, 600)/(52*7*24*60*60)
 ratio_list <- c(15,12,10)
 lag <- 10
 
-#Burn a single mu in:
-n <- heston_params$Nsteps
-mat <- heston_params$mat
+# IMPORT BSS as "HESTON"
+setwd(Sys.getenv("masters-thesis-data"))
+load("BSSsim.Rdata") # called BSSsim
+setwd(Sys.getenv("masters-thesis"))
+
+setting <- sim.setup(Nstep = 20000)
+
+BSSsim$Y <- BSSsim$X + setting$omega*rnorm(   length(BSSsim$time), 0 , 1   ) # add microstruct
+
+# Burn a single mu in:
+n <- length(BSSsim$time)
+mat <- 6.5/(52*7*24)
 dt <- mat/n
 n_burn <- ceiling(max(h_list) / dt)
 t.index <- seq(from = n_burn, to = n, by = 5) #Burn a volatility bandwidth (note 10 in Christensen)
@@ -31,19 +39,19 @@ c_1_func <- function(alpha) {
   return(c_1)
 }
 
-c_2_func <- function(beta) {
+c_2_func <- function(beta) { # multiply 8 infront of 0.00093 for high vol #
   c_2 <- 0 #if beta = 0
   if (beta == 0.1) {
-    c_2 <- sqrt((1-2*beta)*(8*0.00093*0.25)^2/(10/(60*24*7*52))^(1-2*beta))
+    c_2 <- sqrt((1-2*beta)*(0.00093*0.25)^2/(10/(60*24*7*52))^(1-2*beta))
   }
   else if (beta == 0.2) {
-    c_2 <- sqrt((1-2*beta)*(8*0.00093*0.5)^2/(10/(60*24*7*52))^(1-2*beta))
+    c_2 <- sqrt((1-2*beta)*(0.00093*0.5)^2/(10/(60*24*7*52))^(1-2*beta))
   }
   else if (beta == 0.3) {
-    c_2 <- sqrt((1-2*beta)*(8*0.00093*0.75)^2/(10/(60*24*7*52))^(1-2*beta))
+    c_2 <- sqrt((1-2*beta)*(0.00093*0.75)^2/(10/(60*24*7*52))^(1-2*beta))
   }
   else if (beta == 0.4) {
-    c_2 <- sqrt((1-2*beta)*(8*0.00093*1)^2/(10/(60*24*7*52))^(1-2*beta))
+    c_2 <- sqrt((1-2*beta)*(0.00093*1)^2/(10/(60*24*7*52))^(1-2*beta))
   }
   return(c_2)
 }
@@ -74,6 +82,8 @@ Npaths <- 1000 #Takes approx. a second per path (because it has to estimate T fo
 n_loops <- ceiling(Npaths/50) #After 50 it just scales linearly if not slower
 output_list <- list()
 
+pathsPer <- Npaths/n_loops
+
 p0 <- Sys.time()
 for (memory in 1:n_loops) {
   #memory <- 1
@@ -82,9 +92,12 @@ for (memory in 1:n_loops) {
   print(paste("Loop",memory, "out of ",n_loops))
   print(paste("Expected time left:", round(Npaths-(memory-1)*Npaths/n_loops,0),"seconds")) #One second per path
   
-  ### SIMULATE ALL PATHS
-  heston_params$Npath <- ceiling(Npaths/n_loops)
-  Heston <- sim.heston(heston_params)
+  ### INSTEAD OF SIMULATION WE EXTRACT WHAT WE NEED
+  Heston <- list(time = BSSsim$time,
+                 Y = BSSsim$Y[((memory-1)*pathsPer+1):(memory*pathsPer), ],
+                 X = BSSsim$X[((memory-1)*pathsPer+1):(memory*pathsPer), ],
+                 vol = BSSsim$vol[((memory-1)*pathsPer+1):(memory*pathsPer), ]
+                 )
   
   all_simulations <- sim.add_all(Heston = Heston, burst_args = burstsettings)
   
@@ -105,7 +118,7 @@ Table1_results[,3+1:length(h_list)] <- Table1_results[,3+1:length(h_list)] /n_lo
 Table2 <- restructure_table1(Table1_results,h_list)
 
 ### Save and view
-save(Table2, file = "Module/Table2.Rdata")
+save(Table2, file = "Module/BSS_Table2_normalvol.Rdata")
 
 View(Table2)
 

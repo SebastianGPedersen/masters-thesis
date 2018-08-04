@@ -91,13 +91,15 @@ data.plot_db(kraken, kraken.burst$DateTime, hd = hd, hv = hv, lag = 10, blue =T)
 # INVESTIGATION
 poi <- as.POSIXct(paste0(as.Date(bitfinex.bursts[day == 31, ]$DateTime)," 12:00:00"), tz = "UTC")
 
-poi <- as.POSIXct("2018-06-10 17:00:00", tz = "UTC")
+poi <- as.POSIXct("2018-06-10 16:45:00", tz = "UTC")
 
-data.plot_db(bitfinex, poi, window = 60*60*2, hd = hd, hv = hv, lag = lag, blue = T)
-data.plot_db(bitfinex, poi, window = 60*60*2, hd = 2*hd, hv = 2*hv/12, lag = lag, blue = T)
+data.plot_db(bitfinex, poi, window = 5*60, hd = hd, hv = hv, lag = lag, blue = T)
+data.plot_db(bitmex, poi, window = 5*60, hd = hd, hv = hv, lag = lag, blue = T)
+data.plot_db(kraken, poi, window = 5*60, hd = hd, hv = hv, lag = lag, blue = T)
+#data.plot_db(bitfinex, poi, window = 60*60*2, hd = 2*hd, hv = 2*hv/12, lag = lag, blue = T)
 
 data.plot_db(bitmex, poi, window = 60*60*2, hd = hd, hv = hv, lag = lag, blue = T)
-data.plot_db(bitmex, poi, window = 60*60*2, hd = 2*hd, hv = 2*hv/12, lag = lag, blue = T)
+#data.plot_db(bitmex, poi, window = 60*60*2, hd = 2*hd, hv = 2*hv/12, lag = lag, blue = T)
 
 data.plot_db(bitfinex, as.POSIXct("2018-04-25 11:00:00", tz = "UTC"), window = 60*60*2, hd = hd, hv = hv, lag = lag, blue = T)
 data.plot_db(bitfinex, as.POSIXct("2018-04-25 11:00:00", tz = "UTC"), window = 60*60*2, hd = hd*2, hv = 2*hd/12, lag = lag, blue = T)

@@ -55,21 +55,21 @@ for(i in 1:N){
 }
 data<-list(index = time[, 1])
 
-data$index <- time[,1]; data$mu <- time[,2]; data$mu.optim <- time[,3]; data$sig <- time[,4]; data$sig.optim <- time[,5]
+data$index <- time[,1]/1000; data$mu <- time[,2]; data$mu.optim <- time[,3]; data$sig <- time[,4]; data$sig.optim <- time[,5]
 
 data<-data.frame(data)
 
 g1 <- ggplot() +
-  geom_line(data=data, aes(x=index, y=mu, col = "est.mu"), size = 1) +
-  geom_line(data=data, aes(x=index, y=mu.optim, col = "est.mu.next"), size = 1) +
+  geom_line(data=data, aes(x=index, y=mu, col = "Naïve (drift)"), size = 1) +
+  geom_line(data=data, aes(x=index, y=mu.optim, col = "Recursive (drift)"), size = 1) +
   ylab("Run time (ms)") +
-  scale_x_continuous(name = "t.index", breaks = pretty(index, 2))
+  scale_x_continuous(name = "Number of T-calculations", breaks = pretty(index/1000, 2))
 
 g2 <- ggplot() +
-  geom_line(data=data, aes(x=index, y=sig, col = "est.sigma"), size = 1) +
-  geom_line(data=data, aes(x=index, y=sig.optim, col = "est.sigma.next"), size = 1) +
+  geom_line(data=data, aes(x=index, y=sig, col = "Naïve (volatility)"), size = 1) +
+  geom_line(data=data, aes(x=index, y=sig.optim, col = "Recursive (volatility)"), size = 1) +
   ylab("Run time (ms)") +
-  scale_x_continuous(name = "t.index", breaks = pretty(index, 2))
+  scale_x_continuous(name = "Number of T-calculations", breaks = pretty(index/1000, 2))
 
 
 grid.arrange(g1,g2,nrow = 1,

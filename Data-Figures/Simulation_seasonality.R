@@ -12,7 +12,7 @@ source("estimation/estimates_revolution.R")
 # CHECK FOR SEASONALITY OF T IN UN-EVEN DT STUDY TO DETERMINE ORIGIN OF SEASONALITY
 
 # SIMULATE
-setting <- sim.setup(Npath = 249, Nsteps = 100000, omega = 1.6*10^-5)
+setting <- sim.setup(Npath = 250, Nsteps = 23400, omega = 1.6*10^-5)
 
 seed<-2342
 set.seed(seed)
@@ -31,7 +31,7 @@ hv <- 12*hd
 lag = 10
 t.freq = 5 # every 5 seconds
 offset = 12 # skips the first minute (5*12seconds)
-t.index <- seq(offset, 100000, by = t.freq)
+t.index <- seq(offset, 23400, by = t.freq)
 
 # ESTIMATION
 # even
@@ -47,8 +47,8 @@ Tstat.dt <- mu.dt/sqrt(sigma2.dt)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ T ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # MEAN ACROSS DAYS
-meanT<-colMeans(abs(Tstat))
-meanT.dt<-colMeans(abs(Tstat.dt))
+meanT<-apply(Tstat, 2, var) #colvars
+meanT.dt<-apply(Tstat, 2, var) #colvars
 
 data<-data.frame(time = hest$time[t.index], Tstat = meanT, time.dt = hest.dt$time[t.index], Tstat.dt = meanT.dt)
 
@@ -56,14 +56,16 @@ require(ggplot2)
 ggplot() +
   geom_point(data=data, aes(x=time*60*60, y=Tstat, col = "equidistant"), size = 1) +
   geom_point(data=data, aes(x=time.dt*60*60, y=Tstat.dt, col = "non-equidistant"), size = 1) +
-  xlab("time") + ylab("Average absolute T value") 
+  ylab("Variance of the T-statistic") +
+  xlab("Time") +
+  geom_hline(yintercept = 1)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ SIGMA ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # MEAN ACROSS DAYS
-meanT<-colMeans(abs(sigma2))
-meanT.dt<-colMeans(abs(sigma2.dt))
+meanT<-colMeans(sigma2)
+meanT.dt<-colMeans(sigma2.dt)
 
 data<-data.frame(time = hest$time[t.index], Tstat = meanT, time.dt = hest.dt$time[t.index], Tstat.dt = meanT.dt)
 

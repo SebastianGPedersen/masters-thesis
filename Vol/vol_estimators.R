@@ -260,6 +260,9 @@ vol.est.preA<-function(logPrice_Data, K){
 
 require(Rcpp)
 
+# WD handling
 
-sourceCpp(paste0(Sys.getenv("masters-thesis"),"/Vol/volest.cpp"))
+tmp <- getwd()
+
+sourceCpp(paste0(Sys.getenv("masters-thesis"),"/vol/volest.cpp"))
 
