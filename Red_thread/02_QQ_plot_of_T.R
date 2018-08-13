@@ -1,5 +1,7 @@
 setwd(Sys.getenv("masters-thesis"))
-load("../Personal/Fit.Rda") #15-20sek. Loads the fit with Gamma function.
+#load("../Personal/Fit.Rda") #15-20sek. Loads the fit with Gamma function.
+
+load("Fit.Rdata")
 
 library(ggplot2)
 source("Vol/BSS_Sim.R") 

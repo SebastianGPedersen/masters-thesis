@@ -11,8 +11,8 @@ source("spy/dataFunctions.R")
 source("spy/datahandling.R")
 
 # ESTIMATION PARAMETERS
-hd <- 300 #(seconds)
-hv <- 12*hd                                          # TRY RATIO 1
+hd <- 600 #(seconds)
+hv <- hd                                      # TRY RATIO 1
 lag = 10
 t.freq = 5 # every 5 seconds
 offset = 12 # skips the first minute (5*12seconds)
@@ -59,7 +59,7 @@ if(F){
 
 Tdist<-function(dataT){
   # ABSOLUTELY
-  absT.unsorted<-abs(dataT$Tval)
+  absT.unsorted<-dataT$Tval
   
   # STRIP DATE
   t <- strftime(dataT$DateTime, format = "%H:%M:%S", tz = "UTC")
@@ -82,10 +82,8 @@ Tdist<-function(dataT){
   
   a <- data.table(DateTime = ntimes, absT = absT, index = ind)
   
-  print(a[, .N, by = index])
-  
   # dist
-  dist <- a[, mean(.SD[["absT"]]), by = index]
+  dist <- a[, var((.SD[["absT"]])), by = index]
   
   # plot data
   return(data.table(Time = dates, Mean = dist$V1))
@@ -106,7 +104,8 @@ labels <- strftime(timebreaks, format = "%H:%M", tz = "UTC")
 
 g1 <- ggplot() +
   geom_point(aes(x = Time, y = Mean, group = 1, col = "SPY"), data = spy) +
-  ylab("Average absolute T-statistic") +
+  ylab("Variance of the T-statistic") +
+  geom_hline(yintercept = 1) +
   scale_x_datetime("Time bucket", breaks = timebreaks, labels = labels)
 g1
 
@@ -120,7 +119,8 @@ if(F){
   labels <- strftime(timebreaks, format = "%H:%M", tz = "UTC")
   g2 <- ggplot() +
     geom_point(aes(x = Time, y = Mean, group = 1, col = "BitFinex"), data = finex) +
-    ylab("Average absolute T-statistic") +
+    ylab("Variance of the T-statistic") +
+    geom_hline(yintercept = 1) +
     scale_x_datetime("Time bucket", breaks = timebreaks, labels = labels)
   g2
   
@@ -131,7 +131,8 @@ if(F){
   labels <- strftime(timebreaks, format = "%H:%M", tz = "UTC")
   g3 <- ggplot() +
     geom_point(aes(x = Time, y = Mean, group = 1, col = "BitMEX"), data = mex) +
-    ylab("Average absolute T-statistic") +
+    ylab("Variance of the T-statistic") +
+    geom_hline(yintercept = 1) +
     scale_x_datetime("Time bucket", breaks = timebreaks, labels = labels)
   g3
   
@@ -142,7 +143,8 @@ if(F){
   labels <- strftime(timebreaks, format = "%H:%M", tz = "UTC")
   g4 <- ggplot() +
     geom_point(aes(x = Time, y = Mean, group = 1, col = "Kraken"), data = krak) +
-    ylab("Average absolute T-statistic") +
+    ylab("Variance of the T-statistic") +
+    geom_hline(yintercept = 1) +
     scale_x_datetime("Time bucket", breaks = timebreaks, labels = labels)
   g4
 }
@@ -224,15 +226,15 @@ g1 <- ggplot() +
   #geom_point(aes(x = Time, y = Mean, group = 1, col = "150"), data = spy3) +
   #geom_point(aes(x = Time, y = Mean, group = 1, col = "75"), data = spy4) +
   labs(color = expression("Bandwidth"~mu)) +
-  ylab("Average absolute T-statistic") +
+  ylab("Variance of the T-statistic") +
   scale_x_datetime("Time bucket", breaks = timebreaks, labels = labels)
 g1
 
 
-data.Tseasonality(spy2, name = "Data SPY", log = F)
+#data.Tseasonality(spy2, name = "Data SPY", log = F)
 data.Tseasonality(spy, name = "Data SPY", log = F)
-data.Tseasonality(spy3, name = "Data SPY", log = F)
-data.Tseasonality(spy4, name = "Data SPY", log = F)
+#data.Tseasonality(spy3, name = "Data SPY", log = F)
+#data.Tseasonality(spy4, name = "Data SPY", log = F)
 
 
 ############################
@@ -242,7 +244,7 @@ data.Tseasonality(spy4, name = "Data SPY", log = F)
 
 Sigmadist<-function(dataT){
   # ABSOLUTELY
-  absT.unsorted<-abs(dataT$Sigma)
+  absT.unsorted<-dataT$Sigma
   
   # STRIP DATE
   t <- strftime(dataT$DateTime, format = "%H:%M:%S", tz = "UTC")
@@ -303,7 +305,7 @@ Sigmadist<-function(dataT){
 
 Mudist<-function(dataT){
   # ABSOLUTELY
-  absT.unsorted<-abs(dataT$Mu)
+  absT.unsorted<-dataT$Mu
   
   # STRIP DATE
   t <- strftime(dataT$DateTime, format = "%H:%M:%S", tz = "UTC")
@@ -329,7 +331,7 @@ Mudist<-function(dataT){
   print(a[, .N, by = index])
   
   # dist
-  dist <- a[, mean(.SD[["absT"]]), by = index]
+  dist <- a[, var(.SD[["absT"]]), by = index]
   
   # plot data
   return(data.table(Time = dates, Mean = dist$V1))
@@ -371,14 +373,17 @@ timebreaks <- c(buckets[1], buckets[floor(length(buckets)/4)], buckets[floor(len
 labels <- strftime(timebreaks, format = "%H:%M", tz = "UTC")
 
 require(ggplot2)
-plotdata <- data.frame(Time = mu$Time, Mu = sqrt(300)*mu$Mean, Sigma = sqrt(sigma$Mean)) # mange punkter uden ændring
+plotdata <- data.frame(Time = mu$Time, Mu = sqrt(hd)^2*mu$Mean, Sigma = (sigma$Mean)) # mange punkter uden ændring
 
-offset <- mean(plotdata$Sigma)-mean(plotdata$Mu)-5*10^-6
-scale <- (max(plotdata$Mu)-min(plotdata$Mu))/(max(plotdata$Sigma)-min(plotdata$Sigma)) # check this later
+offset <- 0 # mean(plotdata$Sigma)-mean(plotdata$Mu)-5*10^-6
+scale <-  1 #(max(plotdata$Mu)-min(plotdata$Mu))/(max(plotdata$Sigma)-min(plotdata$Sigma)) # check this later
 
 p <- ggplot(data = plotdata, aes(x = Time)) +
   geom_point(aes(y = Mu, color = "Mu")) + #rescale this
-  geom_point(aes(y = (Sigma-offset)*scale, colour = "Sigma")) + 
-  scale_y_continuous(sec.axis = sec_axis(trans = ~./scale+offset, name = "Sigma")) +
-  scale_x_datetime("Time bucket", breaks = timebreaks, labels = labels)
+  #geom_point(aes(y = (Sigma-offset)*scale, colour = "Sigma")) +
+  geom_point(aes(y = Sigma, colour = "Sigma")) + 
+  #scale_y_continuous(sec.axis = sec_axis(trans = ~./scale+offset, name = "Sigma")) +
+  scale_x_datetime("Time bucket", breaks = timebreaks, labels = labels) +
+  ylab("Value")
+
 p

@@ -15,7 +15,7 @@ source("datahandling.R")
 
 
 p0 <- Sys.time() #7sec w. 1000 steps, 1000 paths
-Nsteps <- 23400
+Nsteps <- 20000
 Npaths <- 1
 
 #Create time points

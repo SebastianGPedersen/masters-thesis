@@ -57,8 +57,8 @@ sim.BSS.Vol <- function(hVec, nPaths, type, alpha, memory_param, log_c_sigma, nu
   genMat <- t(chol(covMat)) 
   
   #Save covariance matrix
-  setwd(Sys.getenv("masters-thesis"))
-  save(genMat, file = "../Personal/CovMat.Rda")
+  #setwd(Sys.getenv("masters-thesis"))
+  #save(genMat, file = "../Personal/CovMat.Rda")
   
   log_Deseason_Sigma_Paths <- replicate(n = nPaths, genMat %*% rnorm(n, 0, 1), simplify = T)
   seasonal_Component <- sim.BSS.Seasonality(hVec, bvS_List)

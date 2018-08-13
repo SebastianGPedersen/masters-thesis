@@ -22,9 +22,9 @@ rm(cd_UNIQUE_NAME_BSS_Sim)
 Fit <- sim.BSS.Fit(bucketLengthInMinutes = 5)
 
 setwd(Sys.getenv("masters-thesis"))
-save(Fit, file = "Red_thread/Fit.Rda")
+#save(Fit, file = "Red_thread/Fit.Rda")
 
-load("Red_thread/Fit.Rda") #15-20sek
+#load("Red_thread/Fit.Rda") #15-20sek
 
 Fit$bvS_List$bvSDTfff
 Fit$alpha
@@ -33,8 +33,8 @@ Fit$log_c_sigma
 Fit$nu
 
 p0 <- Sys.time()
-timepoints <- sim.BSS.equidist_times(Nsteps = 2000)
-test <- sim.BSS(hVec = timepoints, nPaths = 1000, S0 = 200, mu_add = 0, type = "Gamma", Fit = Fit)
+timepoints <- sim.BSS.equidist_times(Nsteps = 20000)
+test <- sim.BSS(hVec = timepoints, nPaths = 10000, S0 = 200, mu_add = 0, type = "Gamma", Fit = Fit)
 print(Sys.time()-p0) #Assume 2000*10sek in time = 5.56hours. This night can simulate 1000 paths and 23400 steps
 
 test

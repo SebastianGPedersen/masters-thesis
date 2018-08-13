@@ -1,6 +1,6 @@
 setwd(Sys.getenv("masters-thesis"))
-load("../Personal/Fit.Rda") #15-20sek. Loads the fit with Gamma function.
-
+#load("../Personal/Fit.Rda") #15-20sek. Loads the fit with Gamma function.
+load("Fit.Rdata")
 library(ggplot2)
 source("Vol/BSS_Sim.R") 
 source("Simulation/Noise.R")
@@ -8,13 +8,13 @@ source("Estimation/estimates_reloaded.R")
 
 p0 <- Sys.time() #7sec w. 1000 steps, 1000 paths
 Nsteps <- 1000
-Npaths <- 1
+Npaths <- 2
 
 #Create time points
 timepoints <- sim.BSS.equidist_times(Nsteps = Nsteps)
 
 #Save covariance matrix
-save.BSS.cov(hVec = timepoints, nPaths = Npaths, S0 = 200, mu_add = 0, type = "Gamma", Fit = Fit)
+#save.BSS.cov(hVec = timepoints, nPaths = Npaths, S0 = 200, mu_add = 0, type = "Gamma", Fit = Fit)
 p0 <- Sys.time() #7sec w. 1000 steps, 1000 paths
 
 
@@ -74,10 +74,4 @@ ggplot(plot_data_frame) +
   geom_abline(intercept = 0, slope = 1) +
   xlab("Quantile of standard normal") + ylab("Quantile of T") +
   theme(legend.position=c(0.87,0.16))
-
-
-setwd(Sys.getenv("masters-thesis"))
-source("Estimation/estimates_revolution.R")
-sig <- est.sigma.mat.3.0(list(time = 1:100, Y = matrix(1:200/100, nrow = 2, ncol = 100)), hv = 2)
-
 
