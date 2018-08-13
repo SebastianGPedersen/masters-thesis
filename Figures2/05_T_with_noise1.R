@@ -13,7 +13,7 @@ set.seed(100)
 p0 <- Sys.time()
 
 #################### PARAMETERS THAT DON'T CHANGE ####################
-omega2 <- 2.64*10^(-10) #What Mathias wrote
+omega2 <- 2.64*10^(-10)
 omega <- sqrt(omega2)
 K2 <- 0.5 #K2
 

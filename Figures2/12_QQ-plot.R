@@ -26,6 +26,8 @@ sigma <- sqrt(sigma2)
 (noise_ratio <- omega/(sqrt(dt)*sigma)) #10.66
 lag <- 10
 
+k_n_list <- c(2,3,5,10)
+
 #Because of lack of memory, it is done in loops
 n_loops <- 1
 desired_index <- n-1

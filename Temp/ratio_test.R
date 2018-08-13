@@ -17,9 +17,10 @@ K2 <- 0.5
 
 #Burst settings
 alpha <- 0.8
-beta <- 0.1
+beta <- 0.4
 c_1 <- (1-alpha)*0.005/(10/(60*24*7*52))^(1-alpha)
-c_2 <- sqrt((1-2*beta)*0.001^2/(10/(60*24*7*52))^(1-2*beta))
+c_2 <- sqrt((1-2*beta)*(8*0.001)^2/(10/(60*24*7*52))^(1-2*beta))
+ratio <- 1
 
 #Constants regarding pre-avg kernel
 psi_1 <- 1/4 #int(g)
@@ -85,7 +86,7 @@ for (my_n in 1:length(n_list)) {
     
     #Calculate T-hat
     mu_hat <- 1/(psi_1*k_n)*est.mu.pre_avg.mat.2.0(data = path,hd,k_n)$mu[,desired_index]
-    sigma_hat2_biased <- 1/(psi_2*k_n)*est.sigma.pre_avg.mat.2.0(data = path,hv = hd,k_n)$sig[,desired_index]
+    sigma_hat2_biased <- 1/(psi_2*k_n)*est.sigma.pre_avg.mat.2.0(data = path,hv = hd*ratio,k_n)$sig[,desired_index]
     bias_term <- psi_3*K2/(psi_2*theta_1^2*mat) * omega^2
     sigma_hat2 <- sigma_hat2_biased - bias_term
     T_hat <- sqrt(hd) * mu_hat / sqrt(sigma_hat2)
@@ -135,6 +136,6 @@ ggplot(plot_data_frame, aes(n, mean, color = process)) +
   theme(plot.title = element_text(hjust = 0.5, size = 14))
 
 #Save dataframe for later
-save(plot_data_frame, file="Figures2/Saved_data_for_plots/06p2_T_with_noise2.Rda")
+#save(plot_data_frame, file="Figures2/Saved_data_for_plots/06p2_T_with_noise2.Rda")
 
 print(Sys.time()-p0) #approx 10 min with max(n) = 60k and npaths = 500

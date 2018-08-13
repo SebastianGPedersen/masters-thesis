@@ -81,7 +81,7 @@ df_plot$values <- as.numeric(as.character(df_plot$values))
 df_plot$time_points <- as.numeric(as.character(df_plot$time_points))*(52*7*24)
 
 #plot
-ggplot(df_plot, aes(time_points,values,color = Estimator),alpha = I(0.2)) + 
+ggplot(df_plot, aes(time_points,values*100,color = Estimator),alpha = I(0.2)) + 
   geom_line() +
   xlab("Time in hours") +
   ylab(TeX('$ P(|T| > q_{0.95})$')) +

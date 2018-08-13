@@ -108,7 +108,7 @@ ggplot() +
   geom_line(data=plot_data_frame, aes(x=hd, y=target, col = "1"), size = 1) +
   geom_line(data=plot_data_frame, aes(x=hd, y=sigma_bias1, col = "sigma_bias"), size = 1) +
   geom_line(data=plot_data_frame, aes(x=hd, y=T_bias, col = "T_bias"), size = 1) +
-  xlab(TeX("Bandwidth, $h_n$")) + ylab("Value") +
+  xlab(TeX("Bandwidth in minutes")) + ylab("Value") +
   ggtitle(TeX('Bias of volatility and $T$-estimator')) +
   theme(plot.title = element_text(hjust = 0.5, size = 14)) +
   scale_color_discrete(name = "Expression",

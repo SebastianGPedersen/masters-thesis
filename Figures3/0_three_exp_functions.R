@@ -1,5 +1,6 @@
 library(ggplot2)
 library(latex2exp)
+library(reshape2) #Til Melt function
 
 
 mat <- 6.5
@@ -31,9 +32,9 @@ colnames(plot_frame) <- c("time_point", "Bandwidth", "weight")
 ggplot(plot_frame, aes(time_point,weight,color = Bandwidth)) +
   geom_line() +
   xlab("Time in hours") +
-  ylab(TeX('Value of $\\frac{1}{h_n} \\cdot K\\left( \\frac{t_i-t}{h_n} \\right)')) +
-  ggtitle(TeX('Weights of $\\Delta X_{t_i}$ for different bandwidths at t_i = 4 hours')) +
-  theme(plot.title = element_text(hjust = 0.5, size = 14))
+  ylab(TeX('Value of $\\frac{1}{h_n} \\cdot K\\left( \\frac{t_i-t}{h_n} \\right)'))
+  #ggtitle(TeX('Weights of $\\Delta X_{t_i}$ for different bandwidths at t_i = 4 hours')) +
+  #theme(plot.title = element_text(hjust = 0.5, size = 14))
   
   
   

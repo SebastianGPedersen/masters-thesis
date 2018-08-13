@@ -174,7 +174,7 @@ ggplot(data = plot_data_frame, aes(ratios, mean, color = mu_bandwidth)) +
   theme(plot.title = element_text(hjust = 0.5, size = 15)) +
   scale_color_discrete(name = "Drift bandwidth",
                        labels = unname(TeX(
-                         c("$5\\%$","$h_{\\mu} = 2$", "$h_{\\mu} = 5$", "$h_{\\mu} = 10$"))))
+                         c("$5\\%$","$h_{\\mu} = 2$min", "$h_{\\mu} = 5$min", "$h_{\\mu} = 10$min"))))
 
 
 #save(plot_data_frame, file="Figures2/Saved_data_for_plots/13_bandwidth_ratio.Rda")

@@ -62,7 +62,6 @@ c_2_func <- function(beta) {
   return(c_2)
 }
 
-
 burstsettings <- list()
 burstsettings[[1]] <- sim.burstsetting(jump = F,
                                        alpha = 0,

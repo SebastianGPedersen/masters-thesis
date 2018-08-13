@@ -70,7 +70,7 @@ ggplot() +
   geom_line(data=data, aes(x=hd, y=var_bias, col = "Var_mu"), size = 1) +
   geom_line(data=data, aes(x=hd, y=var_bias_noise, col = "var-noise"), size = 1) +
   geom_line(data=data, aes(x=hd, y=target, col = "1"), size = 1) +
-  xlab(TeX("Bandwidth, $h_n$")) + ylab("Value") +
+  xlab(TeX("Bandwidth in minutes")) + ylab("Value") +
   ggtitle('Bias of drift estimator') +
   theme(plot.title = element_text(hjust = 0.5, size = 14)) +
   scale_color_discrete(name = "Expression",

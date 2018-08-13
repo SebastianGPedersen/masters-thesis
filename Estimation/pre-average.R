@@ -21,6 +21,9 @@ est.PreAverage<-function(logRet_Data, K){
 # Consider adding k-1 zeros in the beginning
 
 
+#delta_y <- dy[,1]
+#k_n <- k_n_list[1]
+#kernel_func = NA
 #The function below has to be quick, so the loop is in counter-intuitive order (k_n is outer and n is inner loop)
 est.NewPreAverage <- function(delta_y, k_n, kernel_func = NA) {
 
@@ -30,14 +33,15 @@ est.NewPreAverage <- function(delta_y, k_n, kernel_func = NA) {
   }
   
   #Calculate kernel_values outside loop
-  kernel_values <- sapply((1:k_n-1)/k_n, kernel_func)
+  kernel_values <- sapply((1:(k_n-1))/k_n, kernel_func)
   
   #Initialize
-  y_bar <- rep(0,length(delta_y)-k_n)
+  y_bar <- rep(0,length(delta_y)-k_n+2)
   
   #Loop over k_n
   for (i in 1:(k_n-1)){
-    y_bar <-  y_bar + kernel_values[i]*delta_y[i:(length(delta_y)-k_n-1+i)]
+    #i <- 1
+    y_bar <- y_bar + kernel_values[i]*delta_y[(k_n-i):(length(delta_y)+1-i)] #længde n-k_n+2
   }
 
   return(y_bar)
