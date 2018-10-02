@@ -23,7 +23,7 @@ est.PreAverage<-function(logRet_Data, K){
 
 #delta_y <- dy[,1]
 #k_n <- k_n_list[1]
-#kernel_func = NA
+#kernel_func = parzen_kernel_func
 #The function below has to be quick, so the loop is in counter-intuitive order (k_n is outer and n is inner loop)
 est.NewPreAverage <- function(delta_y, k_n, kernel_func = NA) {
 

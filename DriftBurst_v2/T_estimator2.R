@@ -1,8 +1,3 @@
-#Kommentar fra Sebastian:
-#   Grunden til de får at drift er normalfordelt er fordi de sætter k_n = 3,
-#   så gælder det netop at leddet psi_1 * k_n = 1 og vores skalering er irrelevant.
-#   Jeg viser dette nedenstående ved at lave QQ-plot med forskellige k_n værdier
-
 
 set.seed(100)
 
@@ -24,10 +19,10 @@ Npaths <- 500
 sigma2 <- 0.0457
 sigma <- sqrt(sigma2)
 h_mu <- 5 / (60*24*7*52)
-lag <- 8
+lag <- 5
 
 ### k_n's
-k_n_list <- c(2,3,4,5,10)
+k_n_list <- c(2,10)
 
 
 #Because of lack of memory, it is done in loops
@@ -54,7 +49,7 @@ for (memory in 1:n_loops) {
     
     ###Pre-averaging doesn't take vector
     pre_y <- matrix(NA, nrow = temp_paths, ncol = n-1) #Does NOT include 0 because BS$Y does not
-  
+    
     
     for (i in 1:temp_paths){
       test <- c(rep(0,k_n_list[k_n]-2),est.NewPreAverage(dy[,i],k_n_list[k_n])) #
@@ -66,7 +61,7 @@ for (memory in 1:n_loops) {
     ## Calculate mu
     mu_hat <- est.mu.mat(BS, hd = h_mu, t.index = desired_index)$mu
     sig_hat <- est.sigma.mat(BS, hv = 5*h_mu, t.index = desired_index, lag = lag)$sig
-
+    
     #T_estimator[((memory-1)*temp_paths+1):(memory*temp_paths),k_n] <- sqrt(h_mu) * mu_hat / sqrt(K2*sig_hat)
     T_estimator[((memory-1)*temp_paths+1):(memory*temp_paths),k_n] <- sqrt(h_mu) * mu_hat / sqrt(sig_hat)
     
@@ -78,10 +73,7 @@ for (memory in 1:n_loops) {
 #Re-shape to data-frame
 plot_data_frame <- data.frame(do.call("rbind",
                                       list(cbind(T_estimator[,1],rep("2",dim(T_estimator)[1])), 
-                                           cbind(T_estimator[,2],rep("3",dim(T_estimator)[1])),
-                                           cbind(T_estimator[,3],rep("4",dim(T_estimator)[1])),
-                                           cbind(T_estimator[,4],rep("5",dim(T_estimator)[1])),
-                                           cbind(T_estimator[,5],rep("10",dim(T_estimator)[1])))))
+                                           cbind(T_estimator[,2],rep("10",dim(T_estimator)[1])))))
 
 colnames(plot_data_frame) <- c("T_estimator", "kn")
 
@@ -96,6 +88,7 @@ ggplot(plot_data_frame) +
   xlab("Quantile of standard normal") + ylab("Quantile of T") +
   ggtitle(TeX("T-estimator from Drift Burst v2 (without $K_2$)")) +
   theme(plot.title = element_text(hjust = 0.5, size = 15)) +
-  scale_color_discrete(name = unname(TeX("$k_n")))
+  scale_color_discrete(name = unname(TeX("$(k_n,lag)$")),
+                       labels = unname(TeX(c("$(10,5)$", "$(2,5)$"))))
 
-save(plot_data_frame, file = "DriftBurst_v2/Saved_data_for_plots/QQ_plot_T.Rda")
+#save(plot_data_frame, file = "DriftBurst_v2/Saved_data_for_plots/QQ_plot_T.Rda")

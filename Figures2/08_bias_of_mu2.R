@@ -61,6 +61,7 @@ for (hd in 1:length(hd_list)) {
 #Compute the the bias from the last noise term
 noise <- 1+omega^2 / (hd_list*K2*sigma2)
 
+#4min, 33sek pr. kilometer.
 
 #################### PLOT ####################
 hd_minutes <- hd_list*(60*24*7*52)
